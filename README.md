@@ -12,3 +12,5 @@ A few handy aliases:
 
 `alias "update=home; cls; killall; git-pull.js"` = command `update` will get download / update the code from github
 
+
+https://github.com/bitburner-official/bitburner-filesync
