@@ -1,0 +1,13 @@
+/*
+CorpEmployeePosition
+CorpIndustryName
+CorpMaterialName
+CorpResearchName
+CorpSmartSupplyOption
+CorpStateName
+CorpUnlockName
+CorpUpgradeName
+
+CreatingCorporationCheckResult
+CreatingCorporationCheckResultEnumType
+*/
