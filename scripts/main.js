@@ -2,6 +2,7 @@ import * as evaluate from 'scripts/sub/eval.js'
 import * as root from 'scripts/sub/root.js'
 import * as hack from 'scripts/sub/hack.js'
 import * as share from 'scripts/sub/share.js'
+import * as ui from 'scripts/sub/share.js'
 
 //var ram_script
 var tools_owned = []
@@ -15,12 +16,15 @@ export async function main(ns) {
   var servers_rooted = []
   // @ignore-infinite
   while (true) {
+	
     //root server
     servers_rooted = await root.exec(ns, servers_rooted)
     //debug
     //ns.tprint("servers_rooted: '" + JSON.stringify(servers_rooted) + "'")
     //start hacking
     await hack.exec(ns, servers_rooted)
+	//update ui
+	await ui.update(ns)
     //wait a bit
     await ns.sleep(100)
   }
@@ -40,7 +44,10 @@ async function init(ns) {
     ns.killall("home",true)
     //init eval
     evaluate.init(ns)
-    //init root
+    
+	//init ui
+	await ui.init(ns)
+	//init root
     await root.init(ns)
     //init hack
     hack.init()
@@ -55,18 +62,15 @@ async function init(ns) {
 }
 
 
-
-
-
 /** @param {NS} ns */
 async function manage_tools(ns) {
   //dict of tools (key) and value (cost in dark web & hacking level for creating ourselves) 
   const hacking_tools = new Map(
-    ["BruteSSH.exe", 0], //augment: x
-    ["FTPCrack.exe", 0], //augment: x
+    ["BruteSSH.exe", 0], 	//augment: x
+    ["FTPCrack.exe", 0], 	//augment: x
     ["relaySMTP.exe", 250], //augment: x
-    ["HTTPWorm.exe", 500], //augment: x
-    ["SQLInject.exe", 750] //augment: x
+    ["HTTPWorm.exe", 500], 	//augment: x
+    ["SQLInject.exe", 750] 	//augment: x
   )
 
   //check if we need to execute this function at all
@@ -130,6 +134,7 @@ async function manage_tools(ns) {
 
 /** @param {NS} ns */
 async function manage_servers(ns) {
+	//hacknet?
 }
 
 

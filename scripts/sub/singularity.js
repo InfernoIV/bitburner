@@ -120,23 +120,20 @@ async function determine_next_bitnode(ns) {
 		[1,1],	//This Source-File lets the player start with 32GB of RAM on their home computer when entering a new BitNode
 				//increases all of the player's multipliers by: 16%			
 		
-		
+
 		//automation
 		[4,1],	//This Source-File lets you access and use the Singularity functions outside of this BitNode.
 				//reduces the RAM cost of singularity functions in other BitNodes: 16x
 		[4,2],	//reduces the RAM cost of singularity functions in other BitNodes: 4x
 		[4,3],	//reduces the RAM cost of singularity functions in other BitNodes: 1x
-		
 		[5,1],	//This Source-File grants you a new stat called Intelligence. Intelligence is unique because it is permanent and persistent (it never gets reset back to 1). However, gaining Intelligence experience is much slower than other stats. Higher Intelligence levels will boost your production for many actions in the game.
 				//In addition, this Source-File will unlock: getBitNodeMultipliers(), Permanent access to formulas, Access to BitNode multiplier information on the Stats page
 				//It will also raise all of your hacking-related multipliers by: 8%
+		[10,1],	//Unlocks Sleeve and Grafting API in other BitNodes. 
 		[9,1],	//Permanently unlocks the Hacknet Server in other BitNodes
 				//increases hacknet production and reduces hacknet costs by: 12%
 		[9,2],	//You start with 128GB of RAM on your home computer when entering a new BitNode
 				//increases hacknet production and reduces hacknet costs by: 18%
-		[10,1],	//Unlocks Sleeve and Grafting API in other BitNodes. 
-		
-		[15,1],	//Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
 		
 		
 		//unlocks
@@ -158,6 +155,7 @@ async function determine_next_bitnode(ns) {
 				//increases the player's company salary and reputation gain multipliers by: 32%
 				//reduces the price increase for every augmentation bought by: 4%		
 		[13,1],	//Unlock Stanek's gift
+		[15,1],	//Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
 		[15,2],	//Your charisma level increases job salary and rep gain. Also increases authentication speed by 20%
 		[15,3],	//Your charisma level increases faction work rep gain. Also increases the xp and money gained from .cache files by 50%.
 		
