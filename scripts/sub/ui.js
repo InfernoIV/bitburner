@@ -9,7 +9,7 @@ var doc
 export async function init(ns) {
 	//clear the ui
 	//get the UI -> can this be done once during init?
-    doc = await evaluate.exec('document')
+    doc = await evaluate.exec(ns,'document')
 	//send text to html element 
     doc.getElementById('overview-extra-hook-0').innerText = ""
     doc.getElementById('overview-extra-hook-1').innerText = ""
@@ -22,7 +22,7 @@ export async function init(ns) {
 	add(ns, "# augments", "ns.getResetInfo().ownedAugs.size")
 	
 	//fixed information
-	const reset_info = await evaluate.exec(ns.getResetInfo()) 
+	const reset_info = await evaluate.exec(ns,"ns.getResetInfo()") 
 	//default to level to 1
 	var level = 1
 	//if we already have a source file
@@ -58,7 +58,7 @@ export async function update(ns) {
 		//get text
 		headers.push(element[0])
 		//refresh the data
-		values.push(await evaluate.exec(element[1]))
+		values.push(await evaluate.exec(ns,element[1]))
 	}
 	//send text to html element 
     doc.getElementById('overview-extra-hook-0').innerText = headers.join("\n")
