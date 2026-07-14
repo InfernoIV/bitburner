@@ -1,6 +1,10 @@
 const script_eval = "scripts/manage_eval.js"
 
-export function init(ns) { 
+//var port_command = 1
+//var port_reply = 2
+
+
+export function init(ns) { //, port_start = 1, hostname = "home") { 
   //clear ports
   ns.getPortHandle(1).clear()
   ns.getPortHandle(2).clear()

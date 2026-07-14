@@ -2,6 +2,8 @@
 export async function main(ns) {
   //TODO: (how) to make dynamic? or just take the highest ram usage?
   ns.ramOverride(8)
+  //get port
+  //const port = ns.args[0]
   //get command
   const command = ns.args[0]
   //debug

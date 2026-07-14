@@ -24,7 +24,10 @@ export async function main(ns) {
             //stop
             return
     }    
-    
+    //debug
+    //ns.tprint("Hack server '" + hostname + "' with delay '" + delay + "'")
     //perform weaken
     await ns.hack(hostname, {additionalMsec: delay} )
+    //debug
+    //ns.tprint("Hack server '" + hostname + "' completed")
 }

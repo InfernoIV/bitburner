@@ -1,4 +1,4 @@
-import * as evaluate from 'scripts/sub/eval.js'
+import * as evaluate from 'scripts/sub/evaluate.js'
 
 //list to keep track of elements to show
 var ui_elements_to_show = []

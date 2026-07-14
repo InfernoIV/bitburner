@@ -24,7 +24,10 @@ export async function main(ns) {
             //stop
             return
     }    
-    
+    //debug
+    //ns.tprint("Grow server '" + hostname + "' with delay '" + delay + "'")
     //perform weaken
     await ns.grow(hostname, {additionalMsec: delay} )
+    //debug
+    //ns.tprint("Grow server '" + hostname + "' completed")
 }

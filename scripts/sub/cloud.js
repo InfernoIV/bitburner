@@ -1,14 +1,14 @@
 //requires no SF?
 //https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.cloud.md
 
-import * as evaluate from 'scripts/sub/eval.js'
+import * as evaluate from 'scripts/sub/evaluate.js'
 import * as log from 'scripts/sub/log.js'
 
 
 //variables that are set once
 var server_max_amount
 var server_max_ram
-var server_cost_purchase
+//var server_cost_purchase
 
 //map of servers owned (key = hostname, value = ram)
 var servers_owned = new Map()

@@ -1,4 +1,4 @@
-import * as evaluate from 'scripts/sub/eval.js'
+import * as evaluate from 'scripts/sub/evaluate.js'
 
 const script_share = "scripts/exec/share.js"
 

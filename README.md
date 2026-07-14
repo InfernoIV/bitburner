@@ -15,5 +15,6 @@ A few handy aliases:
 
 https://github.com/bitburner-official/bitburner-filesync
 
-run npx bitburner-filesync
+run:
+npx bitburner-filesync
 

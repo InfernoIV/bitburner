@@ -24,7 +24,11 @@ export async function main(ns) {
             //stop
             return
     }    
-    
+    //debug
+    //ns.tprint("Weaken server '" + hostname + "' with delay '" + delay + "', " + ns.args)
+
     //perform weaken
     await ns.weaken(hostname, {additionalMsec: delay} )
+    //debug
+    //ns.tprint("Weaken server '" + hostname + "' completed")
 }

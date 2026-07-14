@@ -17,6 +17,7 @@ export function init(ns, flag_log_to_file = false) {
     log_to_file = flag_log_to_file
     //if we need to log to file
     if (log_to_file) {
+        /*
         //base location to log to
         const base_folder = "log"
         //format of the log file
@@ -24,13 +25,14 @@ export function init(ns, flag_log_to_file = false) {
         //get time
         const date = Date.now()
         //set file name to new name
-        const string_date = date.getUTCFullYear() + "-" + (date.getUTCMonth()+1) + "-" + date.getUTCDate()
+        //const string_date = "13-07-2026" //date.toLocaleDateString('nl')//date.getUTCFullYear() + "-" + (date.getUTCMonth()+1) + "-" + date.getUTCDate()
         //format time
-        const string_time = date.getUTCHours() + ":" + date.getUTCMinutes() + ":" + date.getUTCSeconds()
+        //const string_time = h + ":" + m + ":" + s//ns.format.time(date)   //date.getUTCHours() + ":" + date.getUTCMinutes() + ":" + date.getUTCSeconds()
         //format: base folder / date / time . extention
         file_name = base_folder + "/" + string_date + "/" + string_time + file_extention
         //create the file, needed?
         //ns.write(file_name, time + '\t' + "Start of log", "w")
+        */
     }
 }
 
@@ -66,11 +68,11 @@ export function error(ns, prefix, message) {
 //function that execute the formatting and printing of the message 
 function print_message(ns, message, type, prefix, print_in_terminal = false) {
     //get time
-    const date = Date.now()
+    //const date = Date.now()
     //format time
-    const time = date.getUTCHours() + ":" + date.getUTCMinutes() + ":" + date.getUTCSeconds()
+    //const time = ns.format.time(date) //date.getUTCHours() + ":" + date.getUTCMinutes() + ":" + date.getUTCSeconds()
     //build message
-    var formatted_message = type + '\t' + time + '\t' + prefix + '\t' + message
+    var formatted_message = type + '\t' + prefix + '\t' + message
     
     //print in the logs
     ns.print(formatted_message)
@@ -84,4 +86,40 @@ function print_message(ns, message, type, prefix, print_in_terminal = false) {
         //append to file
         ns.write(file_name, formatted_message, "a")
     }
+}
+
+
+export function format_number(number) {
+    //if number is less than 1000
+    if (number < 1000) {
+        return number.toString()
+    }
+    //if number is less than 1 million
+    else if (number < 1000000) {
+        return (number / 1000).toFixed(2) + "K"
+    }
+    //if number is less than 1 billion
+    else if (number < 1000000000) {
+        return (number / 1000000).toFixed(2) + "M"
+    }
+    //if number is less than 1 trillion
+    else if (number < 1000000000000) {
+        return (number / 1000000000).toFixed(2) + "B"
+    }
+    //if number is less than 1 quadrillion
+    else if (number < 1000000000000000) {
+        return (number / 1000000000000).toFixed(2) + "T"
+    }
+    //if number is less than 1 quintillion
+    else if (number < 1000000000000000000) {
+        return (number / 1000000000000000).toFixed(2) + "Qa"
+    }
+    //if number is less than 1 sextillion
+    else if (number < 1000000000000000000000) {
+        return (number / 1000000000000000000).toFixed(2) + "Qi"
+    }
+    //if number is less than 1 septillion
+    else if (number < 1000000000000000000000000) {
+        return (number / 1000000000000000000000).toFixed(2) + "Sx"
+    }   
 }

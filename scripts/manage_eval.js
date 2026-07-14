@@ -4,6 +4,10 @@ export async function main(ns) {
   ns.ramOverride(2.9)
   //disable logging
   ns.disableLog("sleep")
+  //get port command
+  //const port_command = ns.args[0]
+  //get port reply
+  //const port_reply = ns.args[1]
   //data input
   var port_input = ns.getPortHandle(1)
   // @ignore-infinite
