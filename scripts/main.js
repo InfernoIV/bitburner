@@ -4,7 +4,7 @@ import * as evaluate from 'scripts/sub/evaluate.js'
 import {root_obj} from 'scripts/sub/root.js'
 import {hack_obj} from 'scripts/sub/hack.js'
 //import * as hack from 'scripts/sub/hack.js'
-import * as darknet from 'scripts/sub/darkweb.js'
+import {darkweb_obj} from 'scripts/sub/darkweb.js'
 //import * as cloud from 'scripts/sub/cloud.js'
 //import * as share from 'scripts/sub/share.js'
 //import * as ui from 'scripts/sub/share.js'
@@ -23,10 +23,12 @@ export async function main(ns) {
     //init
     await hack.init(ns)
 
+    var darkweb = new darkweb_obj()
+
     // @ignore-infinite
     while (true) {
         //start darknet main loop on darkweb
-        //await darknet.init(ns)
+        await darkweb.deploy(ns)
 
         //check and add cloud servers
         //await cloud.manage_servers(ns)
@@ -55,7 +57,7 @@ async function init(ns) {
 
     //disable generic logging
     //ns.disableLog("disableLog")
-    ns.disableLog("ALL")
+    //ns.disableLog("ALL")
 
     //open tail
     const [x, y] = ns.ui.windowSize()

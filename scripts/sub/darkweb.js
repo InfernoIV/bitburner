@@ -5,12 +5,22 @@ import * as log from 'scripts/sub/log.js'
 const server_darkweb = "darkweb"
 const script_darkweb = "scripts/exec/darkweb.js"
 const scripts_to_copy = [script_darkweb, 'scripts/sub/evaluate.js', 'scripts/sub/log.js', "scripts/manage_eval.js", "scripts/run_eval.js"]
-var darkweb_started = false
 
-//function that starts the darkweb chain
-export async function init(ns) {
-	//if darkweb not started yet
-	if (!darkweb_started) {
+
+// Declaration
+export class darkweb_obj {
+    constructor() {
+		//flag to keep track of launch
+		this.darkweb_started = false
+	}
+
+
+	async deploy(ns) {
+		//if darkweb started
+		if (this.darkweb_started) {
+			//stop
+			return
+		}
 		//scan from home
 		const servers_darknet = await evaluate.exec(ns, "ns.dnet.probe() ")
 		//debug
@@ -22,13 +32,16 @@ export async function init(ns) {
 				//copy scripts
 				await evaluate.exec(ns, "ns.scp('" + script + "','" + server_darkweb + "')")
 			}
+			//TODO: calc threads
+			var threads = 1
 			//start main script
-			ns.exec(script_darkweb, server_darkweb)
+			ns.exec(script_darkweb, server_darkweb, {threads: threads, preventDuplicates: true})
+			//temporary
+			ns.exit()
 			//signal start is done, to prevent multiple starts
-			darkweb_started = true
+			this.darkweb_started = true
 			//log
-			log.success(ns, "Darkweb", "darkweb started")
+			log.success(ns, "Darkweb", "darkweb crawler deployed")
 		}
 	}
 }
-

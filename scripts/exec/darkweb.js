@@ -4,7 +4,12 @@ import * as log from 'scripts/sub/log.js'
 
 const server_darkweb = "darkweb"
 const script_darkweb = "scripts/exec/darkweb.js"
-const scripts_to_copy = [script_darkweb, 'scripts/sub/evaluate.js', 'scripts/sub/log.js', "scripts/manage_eval.js", "scripts/run_eval.js"]
+const scripts_to_copy = [script_darkweb, 'scripts/sub/evaluate.js', 'scripts/sub/log.js', "scripts/manage_eval.js",
+    "scripts/run_eval.js"
+]
+
+
+const PASSWORD_NOT_FOUND = "PASSWORD_NOT_FOUND"
 
 
 //main loop
@@ -19,47 +24,61 @@ export async function main(ns) {
         //log.info(ns, "Darknet", "Scanning for darknet servers: '" + JSON.stringify(servers_darknet) + "'")
         //for each server found
         for (const server of servers_darknet) {
-            //debug
-            log.info(ns, "Darknet", "Found darknet server '" + server + "' => '" + JSON.stringify(servers_darknet) + "'", true)
+
             //check if applicable            
             //get the server details
-            const server_details = ns.dnet.getServerDetails(server) //await evaluate.exec(ns, "ns.dnet.getServerDetails('" + server + "')")
+            const server_details = ns.dnet.getServerDetails(
+                server) //await evaluate.exec(ns, "ns.dnet.getServerDetails('" + server + "')")
+            //debug
+            log.info(ns, "Darkweb", "Found darkweb server '" + server + "' => '" + JSON.stringify(server_details) + "'")
             //if we can hack it
             if (server_details.requiredCharismaSkill) {
                 //guess the password
                 const password = guess_password(ns, server_details)
+                //log.info(ns, "Darkweb", "Guessed '" + password + "' for server '" + server + "' => '" + JSON
+                //    .stringify(server_details) + "'")
                 // if we could guess the password
-                if (password != "NO PASSWORD FOUND") {
-                    //try to authenticate
-                    const authenticated = await ns.dnet.authenticate(server, password) //await evaluate.exec(ns, "ns.dnet.authenticate('" + server + "','" + password + "')")
-                    //if sucessfull
-                    if (authenticated) {
-                        //debug
-                        log.info(ns, "Darknet", "Authenticated to darknet server '" + server + "' with password '" + password + "'")
-                        //copy scripts
-                        for (const script of scripts_to_copy) {
-                            //copy script
-                            ns.scp(script, server) //await evaluate.exec(ns, "ns.scp('" + script + "','" + server + "')")
-                        }
-                        //start main script
-                        ns.exec(script_darkweb, server)
-                        //log
-                        log.success(ns, "Darknet", "Started darknet script on server '" + server + "'")
-
-                    } else {
-                        //debug
-                        log.info(ns, "Darknet", "Failed to authenticate to darknet server '" + server + "' with password '" + password + "' => '" + + JSON.stringify(servers_darknet) + "'")
+                if (password == PASSWORD_NOT_FOUND) {
+                    //debug
+                    //log.warning(ns, "Darkweb", "Could not guess password for darkweb server '" + server + "' => '" +
+                    //    JSON.stringify(server_details) + "'")
+                    //go to next
+                    continue
+                }
+                //try to authenticate
+                const authenticated = await ns.dnet.authenticate(server,
+                    password) //await evaluate.exec(ns, "ns.dnet.authenticate('" + server + "','" + password + "')")
+                //if sucessfull
+                if (authenticated) {
+                    //debug
+                    log.success(ns, "Darkweb", "Authenticated to darkweb server '" + server + "' with password '" +
+                        password + "'")
+                    //copy scripts
+                    for (const script of scripts_to_copy) {
+                        //copy script
+                        ns.scp(script,
+                            server) //await evaluate.exec(ns, "ns.scp('" + script + "','" + server + "')")
                     }
+                    //TODO: calc threads
+                    var threads = 1
+                    //start main script
+                    ns.exec(script_darkweb, server, {
+                        threads: threads,
+                        preventDuplicates: true
+                    })
+                    //log
+                    log.success(ns, "Darkweb", "Started darkweb script on server '" + server + "'")
+
                 } else {
                     //debug
-                    log.warning(ns, "Darknet", "Could not guess password for darknet server '" + server + "' => '" + + JSON.stringify(servers_darknet) + "'")
+                    log.info(ns, "Darkweb", "Failed to authenticate to darkweb server '" + server +
+                        "' with password '" + password + "' => '" + +JSON.stringify(server_details) + "'")
                 }
             }
         }
-        //wait until next mutation
-        await ns.dnet.nextMutation() //ns.sleep(1000) 
-        //evaluate.exec(ns, "")
     }
+    //wait until next mutation
+    await ns.dnet.nextMutation() 
 }
 
 
@@ -68,14 +87,38 @@ function guess_password(ns, server) {
     const password_hint = server.passwordHint
     //get the password length
     const password_length = server.passwordLength
+    //get the password format
+    const password_format = server.passwordFormat
+    //create a blank password to fill
+    var password = PASSWORD_NOT_FOUND
 
-    if (password_length == 0) {
-        log.info(ns, "Darknet", "Server '" + server + "' has no password, no need to guess")
-        return ""
-    } else if (password_hint == "") {
-        //TODO
+    log.info(ns, "Darkweb", "Guessing for password: '" + JSON.stringify(server) + "'")
+    //if no password needed
+    if(password_length == 0) {
+        //set password to empty
+        password = ""
+
+    } else if (password_hint == "Type the numbers to prove you are human") {
+        //for each character in the data
+        for (const character in server.data) {
+            //check if a number
+            if (character >= '0' && character <= '9') {
+                password += character
+            }
+        }
+
+    } else if (password_hint.includes("the default password")) {
+        //password is default
+        return "0000"
+
+    } else if (password_hint.includes("The password is") || password_hint.includes("Remember to use") || password_hint.includes("It's set to")) {
+        //password are the last characters of the hint
+        password = password_hint.substring(password_hint.length - password_length)
     }
-    return "NO PASSWORD FOUND"
+
+    log.info(ns, "Darkweb", "Guessed: '" + password + "'")
+    //passwordHint":"","data":"8-]5","logTrafficInterval":31,"passwordLength":2,"passwordFormat":"numeric","blockedRam":2,"difficult
+    return password
 }
 
 /*
