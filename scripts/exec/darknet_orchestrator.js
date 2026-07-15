@@ -1,9 +1,21 @@
 import * as log from 'scripts/sub/log.js'
+import {
+    port_no_data,
+    port_darknet_information,
+    port_darknet_password,
+    port_darknes_servers_done,
+    script_darknet_worker,
+    scripts_to_copy_darknet
+} from "scripts/constants.js"
+import * as evaluate from 'scripts/sub/evaluate.js'
+/*
+export port_darknet_information = 3 //information send from workers to the orchestrator
+export const port_darknet_password = 4 //map of servers and passwords, filled from orchestrator
+export const port_darknes_servers_done = 5 //list of servers that are authenticated, filled by workers, edited by orchestrator
+*/
 
 
-const script_darknet = "scripts/exec/darknet.js"
-const scripts_to_copy = [script_darknet,  'scripts/sub/log.js']
-const PASSWORD_NOT_FOUND = "PASSWORD_NOT_FOUND"
+
 
 //TODO
 //use darkweb server as controller?
@@ -79,24 +91,196 @@ unleashStormSeed()
     Warning: That exe file creates a webstorm that can cause catastrophic damage to the darknet. Run at your own risk.
 */
 
+
 //main loop
 export async function main(ns) {
-    //save our own hostname
-    const hostname_self = ns.args[0]
+
     //stop logging
     ns.disableLog("ALL")
+    //save our own hostname
+    const hostname_self = ns.args[0]
+    //init
+    evaluate.init(ns, hostname_self)
+
+    //create map of servers
+    var servers_done = new Map()
+    //add self (darkweb server)
+    servers_done.set(hostname_self, "")
+    //add to port
+    ns.getPortHandle(port_darknes_servers_done).tryWrite(JSON.stringify(servers_done))
+
+    //create map of passwords
+    var servers_passwords = new Map()
+    //add self (darkweb server)
+    servers_passwords.set(hostname_self, "")
+    //add to port
+    ns.getPortHandle(port_darknet_password).tryWrite(JSON.stringify(servers_passwords))
+
     //loop forever
     while (true) {
         //wait until next mutation
-        await ns.dnet.nextMutation()
-        //try to spread
-        await spread(ns)
-        //build charisma
-        await perform_activities(ns, hostname_self)
+        //await ns.dnet.nextMutation()
+        await ns.sleep(5)
+
+        //solve passwords
+        await solve_passwords(ns)
+
+        //check servers if they are still online 
+        //needed? Do we need to re-authenticate with a direct server or is local possible?
+        await check_servers(ns)
     }
 }
 
 
+//function that checks servers if they are still online
+async function check_servers(ns) {
+    //create port object
+    var port = ns.getPortHandle(port_darknes_servers_done)
+    //if there is any data
+    if (port.peek() == port_no_data) {
+        //stop
+        return
+    }
+    //parse the data to get list of servers
+    var servers_online = JSON.parse(port.peek())
+    //for each server
+    for (const server_hostname of servers.keys()) {
+        //get status
+        var server_status = ns.dnet.getServerDetails(server_hostname)
+        //if offline
+        if (!server_status.isOnline) {
+            //remove from list
+            servers_online.delete(server_hostname)
+        }
+    }
+    //remove the entry from the list
+    port.read()
+    //add the information to the list
+    port.tryWrite(JSON.stringify(servers_online))
+}
+
+
+
+function solve_passwords(ns) {
+    //create port object for information
+    var port_information = ns.getPortHandle(port_darknet_information)
+    //create port object for passwords
+    var port_password = ns.getPortHandle(port_darknet_password)
+    //get list of solved passwords
+    var password_map = JSON.parse(port_password.peek())
+
+    //while there is data
+    while (port_information.peek() != port_no_data) {
+        //save the information
+        var heartbleed = port_information.read()
+        //get server information
+        var server = ns.dnet.getServerDetails(information_heartbleed.hostname)
+        /*
+        port.tryWrite(JSON.stringify({
+            hostname: server_darknet_hostname,
+            result: result,
+            logs: logs
+        }))
+        */
+        //log information
+        log.info(ns, "Darknet", "Received password information: '" + JSON.stringify(heartbleed) + "' from server '" +
+            JSON.stringify(server) + "'")
+
+
+        //try to solve
+        //flag to keep track if successfull
+        flag_solved = false
+        //do stuff
+        var password = ""
+
+        //try to solve by model
+        switch (server.modelId) {
+            case "":
+                break
+            default:
+                break
+        }
+        //if not yet solved
+        if (!flag_solved) {
+            //solve by hints
+            //if no password needed
+            if (server.passwordLength == 0) {
+                //set flag
+                flag_solved = true
+            } else if (server.passwordHint == "Type the numbers to prove you are human") {
+                //for each character in the data
+                for (const character in server.data) {
+                    //check if a number
+                    if (character >= '0' && character <= '9') {
+                        //add to password
+                        password += character
+                    }
+                }
+            } else if (server.passwordHint.includes("the default password")) {
+                //for the lenght of the password
+                for (let i = 0; i < server.passwordLength; i++) {
+                    //add zeroes
+                    password += "0"
+                }
+            } else if (server.passwordHint.includes("The password is") || server.passwordHint.includes(
+                    "Remember to use") ||
+                server.passwordHint
+                .includes("It's set to")) {
+                //password are the last characters of the hint
+                password = server.passwordHint.substring(server.passwordHint.length - server.passwordLength)
+            }
+            //if solved or set to something different
+            if (flag_solved || password != "") {
+                //debug
+                log.info(ns, "Darknet", "Guessed: '" + password + "' for '" + JSON.stringify(server) + "'")
+                //save the password
+                password_map.set(information.hostname, password)
+            }
+        }
+        //remove the password data
+        port_password.read()
+        //upload the password map
+        port_password.tryWrite(JSON.stringify(password_map))
+    }
+}
+
+
+
+
+/*
+//function that prepares and launched the script to the target server
+async function launch(ns, hostname) {
+    //copy scripts
+    ns.scp(scripts_to_copy_darknet, hostname)
+    //check if ram need to be freed
+    var blocked_ram = ns.dnet.getBlockedRam(hostname)
+    //if there is blocked ram
+    while (blocked_ram > 0) {
+        //free ram
+        await ns.dnet.memoryReallocation(hostname)
+        //update ram
+        blocked_ram = ns.dnet.getBlockedRam(hostname)
+    }
+    //get server details
+    const server = ns.getServer(hostname)
+    //get ram cost
+    const ram_cost = ns.getScriptRam(script_darknet)
+
+    //calc threads (we assume no scripts are running)
+    var threads = Math.floor(server.maxRam / ram_cost)
+    //start main script
+    ns.exec(script_darknet, hostname, {
+        threads: threads,
+        preventDuplicates: true
+    }, hostname)
+    //increase the chance of the server moving
+    await ns.dnet.induceServerMigration(hostname)
+    //log
+    log.success(ns, "darknet", "Started darknet script on server '" + hostname + "'")
+}*/
+
+
+/*
 //function that tries to spreak scripts across servers
 async function spread(ns) {
     //scan for darknet servers every time, since they might shift
@@ -140,141 +324,7 @@ async function spread(ns) {
         }
     }
 }
-
-
-//function that tries to derive the password
-function guess_password(ns, server) {
-    //get the password hint
-    const password_hint = server.passwordHint
-    //get the password length
-    const password_length = server.passwordLength
-    //get the password format
-    const password_format = server.passwordFormat
-    //create a blank password to fill
-    var password = ""
-    //TODO
-    /*
-    switch (server.modelId) {
-        case "": 
-        default:
-            log.info(ns, "darknet", "Uncaught model: '" + server.modelId + "'")
-    }
-            */
-
-    //if no password needed
-    if (password_length == 0) {
-        //set password to empty
-        password = ""
-    } else if (password_hint == "Type the numbers to prove you are human") {
-        //for each character in the data
-        for (const character in server.data) {
-            //check if a number
-            if (character >= '0' && character <= '9') {
-                //add to password
-                password += character
-            }
-        }
-    } else if (password_hint.includes("the default password")) {
-        //for the lenght of the password
-        for (let i = 0; i < password_length; i++) {
-            //add zeroes
-            password += "0"
-        }
-    } else if (password_hint.includes("The password is") || password_hint.includes("Remember to use") || password_hint
-        .includes("It's set to")) {
-        //password are the last characters of the hint
-        password = password_hint.substring(password_hint.length - password_length)
-
-    
-    //check if we can heart bleed for a password
-    } else if (charisma_player >= server_details.requiredCharismaSkill) {
-        //try to use 
-        const results =  await ns.dnet.heartbleed(hostname)
-        // then check server logs for clues
-        //TODO: what to do???
-        password = PASSWORD_NOT_FOUND
-    //no password found or not enough skill
-    } else {
-        //indicate failure
-        return PASSWORD_NOT_FOUND
-    }
-    //log information
-    log.info(ns, "darknet", "Guessed: '" + password + "' for '" + JSON.stringify(server) + "'")
-    //return the password
-    return password
-}
-
-
-//function that prepares and launched the script to the target server
-async function launch(ns, hostname) {
-    //copy scripts
-    ns.scp(scripts_to_copy, hostname)
-    //check if ram need to be freed
-    var blocked_ram = ns.dnet.getBlockedRam(hostname)
-    //if there is blocked ram
-    while (blocked_ram > 0) {
-        //free ram
-        await ns.dnet.memoryReallocation(hostname)
-        //update ram
-        blocked_ram = ns.dnet.getBlockedRam(hostname)
-    }
-    //get server details
-    const server = ns.getServer(hostname)
-    //get ram cost
-    const ram_cost = ns.getScriptRam(script_darknet)
-
-    //calc threads (we assume no scripts are running)
-    var threads = Math.floor(server.maxRam / ram_cost)
-    //start main script
-    ns.exec(script_darknet, hostname, {
-        threads: threads,
-        preventDuplicates: true
-    }, hostname)
-    //increase the chance of the server moving
-    await ns.dnet.induceServerMigration(hostname)
-    //log
-    log.success(ns, "darknet", "Started darknet script on server '" + hostname + "'")
-}
-
-
-//activities that can be performed multiple times
-async function perform_activities(ns, hostname_self) {
-    //Spends time sending out phishing emails, attempting to find some non-technical middle manager to fall for the scam. 
-    // Builds charisma. Often the attempt will fail, but success can be increased with crime success rate and charisma stats.
-    //The amount of money lifted scales with the number of threads used, if successful. 
-    //Very occasionally you can retrieve a cache file from the attempt.
-    //Phishing attacks can only be run from scripts on darknet servers.
-    var result_phishing = await ns.dnet.phishingAttack()
-    //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
-    log.info(ns, "darknet", "PhishingAttack: " + JSON.stringify(DarknetResult))
-    //get files on current server
-    const files_cache = ns.ls(hostname_self, ".cache")
-    //for each cache file found
-    for (const file_name of files_cache) {
-        //collect cache
-        const reward = ns.dnet.openCache(file_name)
-        //debug
-        log.success(ns, "Darknet", "Opened cache: '" + JSON.stringify(reward) + "'")
-    }
-
-    //TODO: how to check which stock we own and how to communicate this?
-    //var result_promote = await ns.dnet.promoteStock(sym)
-    //Spends some time spreading propaganda about a stock to increase its volatility. 
-    // This does not actually change the stock's forecasts, but a savvy investor can take advantage of the chaos. 
-    // The effect scales with charisma and the number of threads used, but degrades over time if left alone.
-    //This function requires TIX API access. You can use purchaseTixApi to purchase it.
-
-    //TODO: investigate
-    //There is more than meets the eye.
-    var result_radar = await ns.dnet.labradar()
-    //debug
-    log.info(ns, "darknet", "result_radar: " + JSON.stringify(result_radar))
-    //Not all who wander are lost.
-    var result_report = await ns.dnet.labreport()
-    //debug
-    log.info(ns, "darknet", "result_report: " + JSON.stringify(result_report))
-
-}
+*/
 
 /*
 DarknetResponseCodeType type

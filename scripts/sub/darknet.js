@@ -1,10 +1,7 @@
 //requires no SF? Or SF 15?
 import * as evaluate from 'scripts/sub/evaluate.js'
 import * as log from 'scripts/sub/log.js'
-
-const server_darkweb = "darkweb"
-const script_darknet = "scripts/exec/darknet.js"
-const scripts_to_copy = [script_darknet, 'scripts/sub/log.js']
+import { script_darknet_orchestrator, scripts_to_copy_darknet, script_darknet_worker } from "scripts/constants.js"
 
 
 // Declaration
@@ -23,20 +20,23 @@ export class darkweb_obj {
 		}
 		//scan from home
 		const servers_darknet = await evaluate.exec(ns, "ns.dnet.probe() ")
-		//debug
-		log.info(ns, "Darknet", "Found servers from home: '" + JSON.stringify(servers_darknet) + "'",true)
 		//if darkweb server is available
-		if (servers_darknet.includes(server_darkweb)) {
+		if (servers_darknet.includes(script_darknet_orchestrator)) {
 			//copy scripts
-			await evaluate.exec(ns, "ns.scp('" + scripts_to_copy + "','" + server_darkweb + "')")
+			await evaluate.exec(ns, "ns.scp('" + scripts_to_copy_darknet.push(script_darknet_orchestrator) + "','" + script_darknet_orchestrator + "')")
 			//TODO: calc threads
+			//needed?
 			var threads = 1
-			//start main script, prevent duplicates
-			ns.exec(script_darknet, server_darkweb, {threads: threads, preventDuplicates: true}, server_darkweb)
+			//start orchestrator
+			ns.exec(script_darknet_orchestrator, server_darkweb, {threads: threads, preventDuplicates: true}, server_darkweb)
+			//wait a little bit
+			await ns.sleep(100)
+			//start worker
+			ns.exec(script_darknet_worker, server_darkweb, {preventDuplicates: true}, server_darkweb)
 			//signal start is done, to prevent multiple starts
 			this.darknet_started = true
 			//log
-			log.success(ns, "Darkweb", "darkweb crawler deployed")
+			log.success(ns, "Darkweb", "darkweb orchestrator deployed")
 		}
 	}
 }

@@ -3,9 +3,9 @@ export async function main(ns) {
   //TODO: (how) to make dynamic? or just take the highest ram usage?
   ns.ramOverride(8)
   //get port
-  //const port = ns.args[0]
+  const port = ns.args[0] //2
   //get command
-  const command = ns.args[0]
+  const command = ns.args[1] //ns.args[0]
   //debug
   ns.print("trying to execute: '" + command + "'") 
   //execute the command
@@ -19,5 +19,5 @@ export async function main(ns) {
   }
   ns.print("'" + command + "' resulted into '" + result + "'")
   //write to port
-  ns.getPortHandle(2).tryWrite(JSON.stringify(result))
+  ns.getPortHandle(port).tryWrite(JSON.stringify(result))
 }

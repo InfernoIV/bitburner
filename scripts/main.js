@@ -1,13 +1,17 @@
 import * as log from 'scripts/sub/log.js'
 import * as evaluate from 'scripts/sub/evaluate.js'
-//import * as root from 'scripts/sub/root.js'
-import {root_obj} from 'scripts/sub/root.js'
-import {hack_obj} from 'scripts/sub/hack.js'
-//import * as hack from 'scripts/sub/hack.js'
-import {darkweb_obj} from 'scripts/sub/darkweb.js'
-//import * as cloud from 'scripts/sub/cloud.js'
-//import * as share from 'scripts/sub/share.js'
-//import * as ui from 'scripts/sub/share.js'
+import {
+    root_obj
+} from 'scripts/sub/root.js'
+import {
+    hack_obj
+} from 'scripts/sub/hack.js'
+import {
+    darkweb_obj
+} from 'scripts/sub/darkweb.js'
+import {
+    server_home
+} from './constants'
 
 
 /** @param {NS} ns */
@@ -65,7 +69,7 @@ async function init(ns) {
     const height = y / 3
     ns.ui.openTail()
     ns.ui.resizeTail(width, height)
-    ns.ui.moveTail(x-width-5,y-height-5)
+    ns.ui.moveTail(x - width - 5, y - height - 5)
 
     //callback
     ns.atExit(() => {
@@ -81,7 +85,7 @@ async function init(ns) {
     ns.killall("home", true)
 
     //init eval
-    evaluate.init(ns)
+    evaluate.init(ns, server_home)
 
     //wait a little bit
     await ns.sleep(100)
