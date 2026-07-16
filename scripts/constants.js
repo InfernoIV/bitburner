@@ -16,15 +16,26 @@ export const scripts_to_copy_hack = [script_weaken, script_grow, script_hack]
 //darknet
 export const script_darknet_orchestrator = "scripts/exec/darknet_orchestrator.js"
 export const script_darknet_worker = "scripts/exec/darknet_worker.js"
-export const scripts_to_copy_darknet = [script_darknet,  "scripts/sub/log.js", "scripts/constants.js"]
+export const scripts_to_copy_darknet = [script_darknet, script_eval_orchestrator, script_eval_worker,
+    "scripts/sub/log.js", "scripts/constants.js", "scripts/sub/eval.js"
+]
 
+//ram costs
+export const ram_eval_orchestrator = 3 //2.9
+
+export const ram_darknet_orchestrator = 4 //TODO
+export const ram_darknet_orchestrator_eval = 4 //TODO
+
+export const ram_darknet_worker = 2
+export const ram_darknet_worker_eval = 2
 
 //ports
 export const port_no_data = "NULL PORT DATA"
 //eval
-export const port_eval_command = 1
-export const port_eval_reply = 2
+/*export const port_eval_command = 1
+export const port_eval_reply = 2*/
 //darknet
-export const port_darknet_information = 3 //information send from workers to the orchestrator
-export const port_darknet_password = 4 //map of servers and passwords, filled from orchestrator
-export const port_darknes_servers_done = 5 //list of servers that are authenticated, filled by workers, edited by orchestrator
+export const port_darknet_information = 1 //3 //information send from workers to the orchestrator
+export const port_darknet_password = 2 //4 //map of servers and passwords, filled from orchestrator
+export const port_darknes_servers_done =
+3 //5 //list of servers that are authenticated, filled by workers, edited by orchestrator

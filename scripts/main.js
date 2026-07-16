@@ -85,7 +85,7 @@ async function init(ns) {
     ns.killall("home", true)
 
     //init eval
-    evaluate.init(ns, server_home)
+    evaluate.init(ns, server_home, 8)
 
     //wait a little bit
     await ns.sleep(100)

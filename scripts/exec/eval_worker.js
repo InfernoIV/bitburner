@@ -1,11 +1,15 @@
 /** @param {NS} ns */
 export async function main(ns) {
-  //TODO: (how) to make dynamic? or just take the highest ram usage?
-  ns.ramOverride(8)
   //get port
   const port = ns.args[0] //2
+  //get ram
+  const ram = ns.args[1] //2
   //get command
-  const command = ns.args[1] //ns.args[0]
+  const command = ns.args[2] //ns.args[0]
+
+  //TODO: (how) to make dynamic? or just take the highest ram usage?
+  ns.ramOverride(ram)
+
   //debug
   ns.print("trying to execute: '" + command + "'") 
   //execute the command

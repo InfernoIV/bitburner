@@ -1,15 +1,15 @@
-import {script_eval, port_no_data} from "scripts/constants.js"
+import {script_eval_orchestrator, port_no_data} from "scripts/constants.js"
 
 //var port_command = 1
 //var port_reply = 2
 
 
-export function init(ns, hostname) { //, port_start = 1, hostname = "home") { 
+export function init(ns, hostname, script_ram, fill_ram = false, max_ram = script_ram) { //, port_start = 1, hostname = "home") { 
   //clear ports
   ns.getPortHandle(ns.pid).clear() //1
   //ns.getPortHandle(2).clear()
   //execute port script
-  ns.exec(script_eval, hostname)
+  ns.exec(script_eval_orchestrator, hostname, scriptram, fill_ram, max_ram)
 }
 
 /** @param {NS} ns */

@@ -1,13 +1,16 @@
 import * as log from 'scripts/sub/log.js'
+import * as evaluate from 'scripts/sub/evaluate.js'
 import {
     port_no_data,
     port_darknet_information,
     port_darknet_password,
     port_darknes_servers_done,
     script_darknet_worker,
-    scripts_to_copy_darknet
+    scripts_to_copy_darknet,
+    ram_darknet_worker,
+    ram_eval_orchestrator
 } from "scripts/constants.js"
-import * as evaluate from 'scripts/sub/evaluate.js'
+
 /*
 export port_darknet_information = 3 //information send from workers to the orchestrator
 export const port_darknet_password = 4 //map of servers and passwords, filled from orchestrator
@@ -99,8 +102,10 @@ export async function main(ns) {
     ns.disableLog("ALL")
     //save our own hostname
     const hostname_self = ns.args[0]
+    //get our max ram
+    const allowed_ram = ns.args[1]
     //init
-    evaluate.init(ns, hostname_self)
+    evaluate.init(ns, hostname_self, ram_darknet_worker, true, allowed_ram)
 
     //create map of servers
     var servers_done = new Map()
@@ -125,15 +130,26 @@ export async function main(ns) {
         //solve passwords
         await solve_passwords(ns)
 
-        //check servers if they are still online 
-        //needed? Do we need to re-authenticate with a direct server or is local possible?
+        //check servers
         await check_servers(ns)
     }
 }
 
 
+
 //function that checks servers if they are still online
 async function check_servers(ns) {
+    //Some possible mutations that can occur somewhere on the darknet each cycle:
+    //Nothing changes.
+    //Some servers move to other locations on the net, breaking existing connections and forming new ones.
+    //not an issue
+    //Some servers go offline, which in many cases is permanent - they are effectively deleted.
+    //bad, but nothing can be done
+    //Some servers restart, which kills all running scripts on the server.
+    //need a way to check this
+    //New servers appear on the net (which may be previously offline servers, but cleaned and with a new password).
+    //delete from list
+
     //create port object
     var port = ns.getPortHandle(port_darknes_servers_done)
     //if there is any data
@@ -141,16 +157,60 @@ async function check_servers(ns) {
         //stop
         return
     }
+    //get the map of passwords
+    var passwords = JSON.stringify(ns.getPortHandle(port_darknet_password).peek())
     //parse the data to get list of servers
     var servers_online = JSON.parse(port.peek())
     //for each server
-    for (const server_hostname of servers.keys()) {
+    for (const server_hostname of servers_online.keys()) {
+        //get server details
+        var server_info = ns.getServer(server_hostname)
         //get status
-        var server_status = ns.dnet.getServerDetails(server_hostname)
+        var server_info_darknet = ns.dnet.getServerDetails(server_hostname)
+
         //if offline
-        if (!server_status.isOnline) {
+        if (!server_info.isOnline) {
             //remove from list
             servers_online.delete(server_hostname)
+        } else {
+            //if we don't have a session
+            if (!server_info_darknet.hasSession) {
+                //if we have don't have a password
+                if (!passwords.has(server_hostname)) {
+                    //go to next
+                    continue
+                }
+                //get password
+                const password = passwords.get(server_hostname)
+                //connect to server
+                const result = ns.dnet.connectToSession(server_hostname, password)
+                //check if not successfull
+                if (!result.success) {
+                    log.warning(ns, "Darknet", "Could not authenticate '" + server_hostname + "' with '" +
+                        password + "' => " + JSON.stringify(result))
+                }
+            }
+
+            //calculate ram usage
+
+            /*
+			export const ram_eval_orchestrator = 3 //2.9
+
+export const ram_darknet_orchestrator = 4 //TODO
+export const ram_darknet_orchestrator_eval = 4 //TODO
+
+export const ram_darknet_worker = 2
+export const ram_darknet_worker_eval = 2
+			*/
+
+            //max server ram - darknet worker script ram - eval orchestrator ram
+            const max_ram_eval = server_info.maxRam - ram_darknet_worker - ram_eval_orchestrator
+            //copy the scripts
+            ns.scp(scripts_to_copy_darknet)
+            //run the script
+            ns.exec(script_darknet_worker, server_hostname, {
+                preventDuplicates: true
+            }, server_hostname, max_ram_eval)
         }
     }
     //remove the entry from the list
