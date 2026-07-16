@@ -1,11 +1,7 @@
 //requires no SF? Or SF 15?
-import * as evaluate from 'scripts/sub/evaluate.js'
-import * as log from 'scripts/sub/log.js'
-import {
-    server_darkweb,
-    scripts_to_copy_darknet,
-    script_darknet_worker
-} from "scripts/constants.js"
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
+import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
 
 
 // Declaration
@@ -25,30 +21,30 @@ export class darkweb_obj {
         //scan from home
         const servers_darknet = await evaluate.exec(ns, "ns.dnet.probe() ")
         //if darkweb server is available
-        if (servers_darknet.includes(server_darkweb)) {
+        if (servers_darknet.includes(CONSTANTS.SERVER.DARKWEB)) {
             //get server information
-            const server_info =  await evaluate.exec(ns, "ns.getServer('" + server_darkweb + "')")
+            const server_info =  await evaluate.exec(ns, "ns.getServer('" + CONSTANTS.SERVER.DARKWEB + "')")
 			//calc ram costs
-            const max_ram_eval_orchestrator = 4 
-			const max_ram_eval_worker = server_info.maxRam - (ram_darknet_orchestrator + ram_eval_orchestrator + ram_darknet_orchestrator_eval) - (ram_darknet_worker - ram_eval_orchestrator)
+			//darkweb server:
+			//orchestrator + eval + eval worker
+			//worker + eval + eval worker
+			//the eval worker for the darknet worker needs to scale, therefore it is not counted
+			const max_ram_eval_worker = server_info.maxRam - (CONSTANTS.RAM.DARKNET.ORCHESTRATOR + CONSTANTS.RAM.EVAL_ORCHESTRATOR + CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL) - 
+			(CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM.EVAL_ORCHESTRATOR)
             //copy scripts
-            await evaluate.exec(ns, "ns.scp('" + scripts_to_copy_darknet.push(script_darknet_orchestrator) + "','" +
-                script_darknet_orchestrator + "')")
-            
-				//start orchestrator
-            ns.exec(script_darknet_orchestrator, server_darkweb, {
+            await evaluate.exec(ns, "ns.scp('" + scripts_to_copy_darknet.push(CONSTANTS.SCRIPT.DARKNET.ORCHESTRATOR) + "','" +
+                CONSTANTS.SCRIPT.DARKNET.ORCHESTRATOR + "')")
+			//start orchestrator
+            ns.exec(CONSTANTS.SCRIPT.DARKNET.ORCHESTRATOR, CONSTANTS.SERVER.DARKWEB, {
                 preventDuplicates: true
-            }, server_darkweb, max_ram_eval_orchestrator)
-
+            }, CONSTANTS.SERVER.DARKWEB, CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL)
             //wait a little bit
-            await ns.sleep(100)
-
+            await ns.sleep(CONSTANTS.TIME.WAIT)
             //start worker
-            ns.exec(script_darknet_worker, server_darkweb, {
+            ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, CONSTANTS.SERVER.DARKWEB, {
                 preventDuplicates: true
-            }, server_darkweb, max_ram_eval_worker)
-            
-			//signal start is done, to prevent multiple starts
+            }, CONSTANTS.SERVER.DARKWEB, max_ram_eval_worker)
+			//signal start is done, to speed up execution
             this.darknet_started = true
             //log
             log.success(ns, "Darkweb", "darkweb orchestrator deployed")

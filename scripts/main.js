@@ -1,41 +1,40 @@
-import * as log from 'scripts/sub/log.js'
-import * as evaluate from 'scripts/sub/evaluate.js'
-import {
-    root_obj
-} from 'scripts/sub/root.js'
-import {
-    hack_obj
-} from 'scripts/sub/hack.js'
-import {
-    darkweb_obj
-} from 'scripts/sub/darkweb.js'
-import {
-    server_home
-} from './constants'
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
+import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
+import { root_obj } from CONSTANTS.SCRIPT.SUB.ROOT
+import { hack_obj } from CONSTANTS.SCRIPT.SUB.HACK
+import { darkweb_obj } from CONSTANTS.SCRIPT.SUB.DARKNET
+import { share_exec } from CONSTANTS.SCRIPT.SUB.SHARE
 
 
 /** @param {NS} ns */
 export async function main(ns) {
     //initialize
     await init(ns)
+
     //do root
     var root = new root_obj()
     //init
     await root.init(ns)
+
     //hack
     var hack = new hack_obj()
-    //init
-    await hack.init(ns)
+    //darknet
+    var darknet = new darkweb_obj()
 
-    var darkweb = new darkweb_obj()
+    //start share
+    //TODO
+    //share_exec(ns)
 
     // @ignore-infinite
     while (true) {
         //start darknet main loop on darkweb
-        await darkweb.deploy(ns)
+        await darknet.deploy(ns)
 
         //check and add cloud servers
+        //TODO
         //await cloud.manage_servers(ns)
+        
         //root servers
         await root.root_servers(ns)
 
@@ -48,7 +47,7 @@ export async function main(ns) {
         //await ui.update(ns)
 
         //wait a bit (what is the lowest time we can pick?)
-        await ns.sleep(10)
+        await ns.sleep(CONSTANTS.TIME.WAIT)
     }
 }
 
@@ -56,8 +55,7 @@ export async function main(ns) {
 /** @param {NS} ns */
 async function init(ns) {
     //static ram
-    ns.ramOverride(4)
-
+   // ns.ramOverride(4)
 
     //disable generic logging
     //ns.disableLog("disableLog")
@@ -81,17 +79,15 @@ async function init(ns) {
     //init logging, set to true if log to file is desired
     log.init(ns, false)
 
-    //kill all scripts
-    ns.killall("home", true)
+    //kill all other scripts 
+    ns.killall(CONSTANTS.SERVER.HOME, true)
 
     //init eval
-    evaluate.init(ns, server_home, 8)
+    evaluate.init(ns, CONSTANTS.SERVER.HOME, CONSTANTS.RAM.MAIN_EVAL)
 
     //wait a little bit
-    await ns.sleep(100)
+    await ns.sleep(CONSTANTS.TIME.WAIT)
 
-    //share (leftover) ram with factions
-    //await share.exec(ns)
 
     //signal start of program
     log.success(ns, "Main", "Init complete!")

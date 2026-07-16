@@ -1,23 +1,21 @@
-import * as evaluate from 'scripts/sub/evaluate.js'
-
-const script_share = "scripts/exec/share.js"
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
+import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
 
 
 /** @param {NS} ns */
-export async function exec(ns) {
-  const ram_share = parseFloat(await evaluate.exec(ns, "ns.getScriptRam('" + script_share + "')"))
-  //get the max ram of home, minus 8 for the evaluate.exec script
-  const ram_server_max = parseFloat(await evaluate.exec(ns, "ns.getServerMaxRam('home')")) - 8.0
-  const ram_server_used = parseFloat(await evaluate.exec(ns, "ns.getServerUsedRam('home')"))
+export async function share_exec(ns) {  
+  //the the ram available
+  const ram_server_max = parseFloat(await evaluate.exec(ns, "ns.getServerMaxRam('" + CONSTANTS.SERVER.HOME + "')"))
   //get the available ram
-  const ram_available = ram_server_max - ram_server_used
+  const ram_available = ram_server_max  - CONSTANTS.RAM.MAIN.ORCHESTRATOR - CONSTANTS.RAM.EVAL_ORCHESTRATOR - CONSTANTS.RAM.MAIN.EVAL
   //check how many times we can run the script
-  const threads = Math.floor(ram_available / ram_share)
+  const threads = Math.floor(ram_available / CONSTANTS.RAM.SHARE)
   //debug
-  ns.print("Home has " + ram_server_used + "/" + ram_server_max + " = " + ram_available + ", need " + ram_share + " => " + threads + " threads for sharing")
+  log.info(ns, "Share", "Home has " + ram_server_used + "/" + ram_server_max + " = " + ram_available + ", need " + CONSTANTS.RAM.SHARE + " => " + threads + " threads for sharing")
   //if there is a possibility to share
   if (threads > 0) {
     //share ram
-    ns.exec(script_share, "home", threads)
+    ns.exec(CONSTANTS.SCRIPT.SHARE_WORKER, CONSTANTS.SERVER.HOME, threads)
   }
 }

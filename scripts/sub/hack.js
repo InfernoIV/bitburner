@@ -1,19 +1,6 @@
-import * as log from 'scripts/sub/log.js'
-import * as evaluate from 'scripts/sub/evaluate.js'
-import * as root from 'scripts/sub/root.js'
-import {
-    script_weaken,
-    script_grow,
-    script_hack
-} from 'scripts/constants.js'
-
-
-//enum to keep track of server status
-const STATUS = {
-    WEAKEN: "WEAKEN",
-    GROW: "GROW",
-    HACK: "HACK"
-}
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
+import * as evaluate from CONSTANTS.SCRIPT.SUB.EVALUATE
 
 
 // Declaration
@@ -22,29 +9,7 @@ export class hack_obj {
         //keep track of changes and target
         this.hack_level_previous = -1
         this.hack_target = ""
-        //ram of the scripts
-        this.ram_weaken = 0
-        this.ram_grow = 0
-        this.ram_hack = 0
-        //or make it generic?
-        this.script_ram = 1.75 //1.75, 1.75, 1.70
         this.time_of_next_check = Date.now()
-    }
-
-
-    //function that initializes
-    /** @param {NS} ns */
-    async init(ns) {
-        //set the time for check to now
-        this.time_of_next_check = Date.now()
-        //reset target
-        this.hack_target = ""
-        //get the ram of the weaken script
-        this.ram_weaken = await evaluate.exec(ns, "ns.getScriptRam('" + script_weaken + "', 'home')")
-        //get the ram of the grow script 
-        this.ram_grow = await evaluate.exec(ns, "ns.getScriptRam('" + script_grow + "', 'home')")
-        //get the ram of the hack script
-        this.ram_hack = await evaluate.exec(ns, "ns.getScriptRam('" + script_hack + "', 'home')")
     }
 
 
@@ -56,8 +21,6 @@ export class hack_obj {
             //stop
             return
         }
-        //safety timing
-        const time_safety = 20 //ms
         //update the target, if needed (global variable)
         await this.find_target(ns, root_obj)
         //check if we HAVE a target
@@ -65,51 +28,50 @@ export class hack_obj {
             //debug
             log.warning(ns, "Hack", "No hack target found, waiting for next cycle")
             //wait a bit before checking again
-            this.time_of_next_check = Date.now() + time_safety
+            this.time_of_next_check = Date.now() + CONSTANTS.TIME.SAFETY
         } else {
             //get the executing servers
             var execute_servers = root_obj.servers_ram
             //re-set the wait time, to be set later
             var time_wait = 0
-            //check the status
-            const status = await this.check_target(ns)
+            //check the state
+            const state = await this.check_target(ns)
             //get the timings
             const time_hack = await evaluate.exec(ns, "ns.getHackTime('" + this.hack_target + "')")
             const time_weaken = await evaluate.exec(ns, "ns.getWeakenTime('" + this.hack_target + "')")
             const time_grow = await evaluate.exec(ns, "ns.getGrowTime('" + this.hack_target + "')")
             //calc timings
-            const delay_grow_1 = time_weaken - time_grow - time_safety
+            const delay_grow_1 = time_weaken - time_grow - CONSTANTS.TIME.SAFETY
             const delay_weaken = 0
             //calc timings
-            var delay_hack = time_weaken - time_hack - time_safety
+            var delay_hack = time_weaken - time_hack - CONSTANTS.TIME.SAFETY
             var delay_weaken1 = 0
-            var delay_grow_2 = time_weaken - time_grow + time_safety
-            var delay_weaken2 = time_safety + time_safety
+            var delay_grow_2 = time_weaken - time_grow + CONSTANTS.TIME.SAFETY
+            var delay_weaken2 = (2 * CONSTANTS.TIME.SAFETY)
             //job stuff
             var job_delay = 0
             var job_size = 0
             var threads = 1
 
-            //depending on the status
-            switch (status) {
+            //depending on the state
+            switch (state) {
                 //if we need to weaken
-                case STATUS.WEAKEN:
+                case CONSTANTS.STATE.HACK.WEAKEN:
                     //set the time to wait
-                    time_wait = time_weaken +
-                        time_safety //await evaluate.exec(ns, "ns.getWeakenTime('" + hack_target + "')")
+                    time_wait = time_weaken + CONSTANTS.TIME.SAFETY
                     //do stuff
                     for (const [server, ram_available] of execute_servers) {
                         //get the number of threads we can run
-                        const threads = Math.floor(ram_available / this.ram_weaken)
+                        const threads = Math.floor(ram_available / CONSTANTS.RAM.HACK.WEAKEN)
                         //if possible to run
                         if (threads > 0) {
                             //copy the script
-                            if (!await evaluate.exec(ns, "ns.scp('" + script_weaken + "','" + server + "')")) {
+                            if (!await evaluate.exec(ns, "ns.scp('" + CONSTANTS.SCRIPT.HACK.WEAKEN + "','" + server + "')")) {
                                 //debug
-                                log.warning(ns, "Hack", "error copying '" + script_weaken + "' to " + server)
+                                log.warning(ns, "Hack", "error copying '" + CONSTANTS.SCRIPT.HACK.WEAKEN + "' to " + server)
                             }
                             //run the script
-                            ns.exec(script_weaken, server, threads, this.hack_target)
+                            ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target)
                             //debug
                             //log.info(ns, "Hack", "Started weaken on '" + server + "' (x" + threads + ")")
                         }
@@ -120,7 +82,7 @@ export class hack_obj {
                     break
 
                     //if we need to grow
-                case STATUS.GROW:
+                case CONSTANTS.STATE.HACK.GROW:
                     //weaken > grow > hack (time needed)
                     /*
                         <------------->			grow = weaken - grow - buffer
@@ -128,7 +90,7 @@ export class hack_obj {
                     */
 
                     //ram calc
-                    job_size = this.ram_grow + this.ram_weaken
+                    job_size = CONSTANTS.RAM.HACK.GROW + CONSTANTS.RAM.HACK.WEAKEN
                     //do stuff
                     for (const [server, ram_available] of execute_servers) {
                         //if we can run the total job on this server
@@ -136,21 +98,21 @@ export class hack_obj {
                             //calc threads
                             threads = Math.floor(ram_available / job_size)
                             //execute scripts with the correct timing
-                            ns.exec(script_grow, server, threads, this.hack_target, delay_grow_1 + job_delay)
-                            ns.exec(script_weaken, server, threads, this.hack_target, delay_weaken + job_delay)
+                            ns.exec(CONSTANTS.SCRIPT.HACK.GROW, server, threads, this.hack_target, delay_grow_1 + job_delay)
+                            ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target, delay_weaken + job_delay)
                             //increase job delay
-                            job_delay += 4 * time_safety
+                            job_delay += (2 * CONSTANTS.TIME.SAFETY)
                         }
                     }
                     //set the time to wait
-                    time_wait = time_weaken + job_delay - time_safety
+                    time_wait = time_weaken + job_delay - CONSTANTS.TIME.SAFETY
                     //debug
                     log.info(ns, "Hack", "Started grow for '" + this.hack_target + "'", true)
                     //stop
                     break
 
                     //if we need to hack
-                case STATUS.HACK:
+                case STATE.HACK:
                     //weaken > grow > hack (time needed)
                     /*
                                 <------->			hack = weaken - hack - buffer
@@ -160,8 +122,7 @@ export class hack_obj {
                     */
 
                     //ram calc
-                    job_size = this.ram_hack + this.ram_weaken + this.ram_grow + this.ram_weaken
-
+                    job_size = CONSTANTS.RAM.HACK.HACK + CONSTANTS.RAM.HACK.GROW + ( 2 * CONSTANTS.RAM.HACK.WEAKEN)
                     //do stuff
                     for (const [server, ram_available] of execute_servers) {
                         //if we can run the total job on this server
@@ -169,16 +130,16 @@ export class hack_obj {
                             //calc threads
                             threads = Math.floor(ram_available / job_size)
                             //execute scripts with the correct timing
-                            ns.exec(script_hack, server, 1, this.hack_target, delay_hack + job_delay)
-                            ns.exec(script_weaken, server, 1, this.hack_target, delay_weaken1 + job_delay)
-                            ns.exec(script_grow, server, 1, this.hack_target, delay_grow_2 + job_delay)
-                            ns.exec(script_weaken, server, 1, this.hack_target, delay_weaken2 + job_delay)
+                            ns.exec(CONSTANTS.SCRIPT.HACK.HACK, server, threads, this.hack_target, delay_hack + job_delay)
+                            ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target, delay_weaken1 + job_delay)
+                            ns.exec(CONSTANTS.SCRIPT.HACK.GROW, server, threads, this.hack_target, delay_grow_2 + job_delay)
+                            ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target, delay_weaken2 + job_delay)
                             //increase job delay
-                            job_delay += 4 * time_safety
+                            job_delay += 4 * CONSTANTS.TIME.SAFETY
                         }
                     }
                     //set the time to wait
-                    time_wait = time_weaken + job_delay - time_safety
+                    time_wait = time_weaken + job_delay //- CONSTANTS.TIME.SAFETY
                     //debug
                     log.info(ns, "Hack", "Started hack for '" + this.hack_target + "'", true)
                     //stop
@@ -186,15 +147,10 @@ export class hack_obj {
                     //any other scenario
                 default:
                     //indicate issue
-                    log.error(ns, "Hack", "Uncaught case of 'status': '" + status + "'")
+                    log.error(ns, "Hack", "Uncaught case of 'state': '" + state + "'")
             }
             //update the check time
-            this.time_of_next_check = Date.now() + time_wait + time_safety
-            //create time string
-            //const time = time_of_next_check.prototype.toLocaleTimeString("nl-NL", { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-            //time_of_next_check.prototype.getHours() + ":" + time_of_next_check.getMinutes() + ":" + time_of_next_check.getSeconds()
-            //debug
-            //log.info(ns, "Hack", "Next cycle (" + (cycle + 1) + ") @ " + time, true)
+            this.time_of_next_check = Date.now() + time_wait + CONSTANTS.TIME.SAFETY
         }
     }
 
@@ -238,7 +194,7 @@ export class hack_obj {
     }
 
 
-    //function that checks the status of the target
+    //function that checks the state of the target
     async check_target(ns) {
         //get server data
         const server = await evaluate.exec(ns, "ns.getServer('" + this.hack_target + "')")
@@ -250,60 +206,15 @@ export class hack_obj {
         //if security is not min
         if (server.hackDifficulty > server.minDifficulty) {
             //lower security
-            return STATUS.WEAKEN
+            return CONSTANTS.STATE.HACK.WEAKEN
             //if money is not max
         } else if (server.moneyAvailable < server.moneyMax) {
             //grow money
-            return STATUS.GROW
+            return CONSTANTS.STATE.HACK.GROW
         } else {
             //debug
             log.info(ns, "Hack", "hack target '" + this.hack_target + "' is prepared for hacking", true)
         }
-        return STATUS.HACK
-    }
-
-
-    //function to provides a list of hacking scripts
-    async copy_hack_scripts(ns, hostname) {
-        return [script_weaken, script_grow, script_hack, script_hack_exec]
+        return CONSTANTS.STATE.HACK.HACK
     }
 }
-
-
-/*
-//function that gets the servers that can execute scripts
-export async function get_execute_servers(ns) {
-    //just blindly return the list?
-    return root.get_servers_ram()
-    
-    
-    //create a map to return
-    var execute_servers = new Map()
-    //get the list of server
-    const ram_servers = root.get_servers_ram()
-    //config
-    const ignore_home = true
-    //for each server we have root access
-    for (const server of servers_rooted) {
-        //if the server is home and we want to ignore it (due to other scripts like EVAL
-        if (server == "home" && ignore_home) {
-            //skip
-            continue
-        }
-        //get the max ram
-        const ram_max = await evaluate.exec(ns, "ns.getServerMaxRam('" + server + "')")
-        //get the used ram
-        const ram_used = await evaluate.exec(ns, "ns.getServerUsedRam('" + server + "')")
-        //get the available ram
-        const ram_available = ram_max - ram_used
-        //if we have available ram (at least the minumum for the script)
-        if (ram_available > script_ram) {
-            //add to the map
-            execute_servers.set(server, ram_available)
-        }
-    }
-    //return the map
-    return execute_servers
-    
-}
-*/

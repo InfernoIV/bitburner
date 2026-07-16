@@ -1,25 +1,23 @@
-import { port_darknet_information, port_darknet_password, port_darknes_servers_done, ram_darknet_worker } from "scripts/constants.js"
-import * as log from 'scripts/sub/log.js'
-import * as evaluate from 'scripts/sub/evaluate.js'
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
+import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
 
 /*
+base                        1.6
 ns.dnet.probe()             0.2 GB
 ns.dnet.heartbleed()        0.6 GB
 ns.dnet.authenticate()      0.4 GB
---
-ns.dnet.phishingAttack()    2 GB
+
+ns.dnet.phishingAttack()    2 GB + 1.6 = 3.6
 ns.dnet.openCache()         2 GB
 ns.dnet.promoteStock()      2 GB
+
 ???
 ns.dnet.labradar()          0 GB
 ns.dnet.labreport()         0 GB
 */
 
-/*
-export port_darknet_information = 3 //information send from workers to the orchestrator
-export const port_darknet_password = 4 //map of servers and passwords, filled from orchestrator
-export const port_darknes_servers_done = 5 //list of servers that are authenticated, filled by workers, edited by orchestrator
-*/
+
 
 /*
     Function that:
@@ -42,109 +40,113 @@ export async function main(ns) {
     const hostname_self = ns.args[0]
     //get max ram usage
     const max_ram = ns.args[1]
-    //create port object for replies
-    var port_password = ns.getPortHandle(port_darknet_password)
     //init eval
-    evaluate.init(ns, hostname_self, ram_darknet_worker, true, max_ram)
+    evaluate.init(ns, hostname_self, CONSTANTS.RAM.DARKNET.WORKER_EVAL, true, max_ram)
     //endless work
     while (true) {
-        //scan servers
-        var servers_found = await scan_servers(ns)
         //authenticate servers
-        await authenticate_servers(ns, servers_found)
-        //phish
+        await authenticate_servers(ns, hostname_self)
+        //perform different activities
         await perform_activities(ns)
         //wait a bit
-        await ns.sleep(5)
+        await ns.sleep(CONSTANTS.TIME.WAIT)
     }
 }
-            
 
-//function that scan servers and provides information back to the orchestrator
-async function scan_servers(ns) {
+
+/* mesage data is formatted like:
+    hostname = hostname of worker (either sent from or sent to, depending on the port)
+    type = type of request
+    data = data (depends on the request)
+*/
+//function that tries to authenticate adjacent servers, with information provided by the orchestrator
+async function authenticate_servers(ns, hostname_self) {
+    //port for sending questions
+    const port_information = ns.getPortHandle(CONSTANTS.PORT.DARKNET.INFORMATION)
+    //port for checking answers
+    const port_password = ns.getPortHandle(CONSTANTS.PORT.DARKNET.PASSWORD)
+
     //scan for darknet servers every time, since they might shift
     const servers_darknet_hostnames = await evaluate.exec(ns, "ns.dnet.probe()")
-    //create port object
-    var port = ns.getPortHandle(port_darknet_information)
-    //for each server found
-    for (const server_darknet_hostname of servers_darknet_hostnames) {
-        //heartbleed the server for information
-        //Uses an exploit to extract log data from a server by sending a malformed heartbeat request. 
-        //Retrieves the most recent logs on the server. 
-        //This can be used to get more feedback on authentication attempts. 
-        //The retrieved logs are removed from the server, unless the "peek" flag is set to true in the provided HeartbleedOptions.
-        //Servers will periodically produce logs themselves, as well, which sometimes are useful, but most times are not.
-        //The speed of capture scales with the number of threads used. 
-        //See formulas.dnet.getHeartbleedTime for more information. 
-        //Note that you cannot scrape logs from servers whose required charisma is higher than your charisma level.
-        //get heartbleed information
 
-        const result, logs = await evaluate.exec(ns, "ns.dnet.heartbleed('" + server_darknet_hostname + "')") //: HeartbleedOptions): Promise<DarknetResult & { logs: string[] }>;
-        //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
-        //if there is an message
-        if (result.message != "") {
-            //log it
-            log.info(ns, "Darknet", "heartbleed of '" + server_darknet_hostname + "': '" + result.message + "'")
-        }
-        /*
-        type DarknetResponseCodeType = {
-  Success: 200;
-  DirectConnectionRequired: 351;
-  AuthFailure: 401;
-  Forbidden: 403;
-  NotFound: 404;
-  RequestTimeOut: 408;
-  NotEnoughCharisma: 451;
-  StasisLinkLimitReached: 453;
-  NoBlockRAM: 454;
-  PhishingFailed: 455;
-  ServiceUnavailable: 503;
-}; */
-
-        //provide input to orchestrator (darknet server information can be accessed remotely)
-        port.tryWrite(JSON.stringify({
-            hostname: server_darknet_hostname,
-            result: result,
-            logs: logs
-        }))
-    }
-    //return the list of servers
-    return servers_darknet_hostnames
-}
-
-
-//function that tries to authenticate adjacent servers, with information provided by the orchestrator
-async function authenticate_servers(ns, servers_found) {
-    //get server and password information from port
-    
-    //port_darknet_information, port_darknet_password, port_darknes_servers_done
-    var port_servers_done = ns.getPortHandle(port_darknes_servers_done)
-    //check which servers are already authenticated (managed by workers, shared on port)
-    const servers_authenticated = JSON.parse(port_servers_done.peek())
     //for each server found by scan
-    for (const darknet_hostname of servers_found) {
-        //if already authenticated
-        if(servers_authenticated.includes(darknet_hostname)){
-            //go to next
-            continue
-        }
-        //get saved password
-        const password_map = JSON.parse(ns.getPortHandle(port_darknet_password).peek())
-        //if server in map
-        if (password_map.has(darknet_hostname)) {
-            //get the password
-            const password = password_map.get(darknet_hostname)
+    for (const darknet_hostname of servers_darknet_hostnames) {
+        //get server information
+        const server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + darknet_hostname + "')")
+        //check if not authenticated
+        if (!server_details.hasSession) {
+            //get more information to share
+            //heartbleed the server for information
+            //Uses an exploit to extract log data from a server by sending a malformed heartbeat request. 
+            //Retrieves the most recent logs on the server. 
+            //This can be used to get more feedback on authentication attempts. 
+            //The retrieved logs are removed from the server, unless the "peek" flag is set to true in the provided HeartbleedOptions.
+            //Servers will periodically produce logs themselves, as well, which sometimes are useful, but most times are not.
+            //The speed of capture scales with the number of threads used. 
+            //See formulas.dnet.getHeartbleedTime for more information. 
+            //Note that you cannot scrape logs from servers whose required charisma is higher than your charisma level.
+            //what happens?
+            //get heartbleed information
+            const result, logs = await evaluate.exec(ns, "ns.dnet.heartbleed('" + darknet_hostname +
+                "')") //: HeartbleedOptions): Promise<DarknetResult & { logs: string[] }>;
+            //send information to orchestrator
+            //ask for password
+            port_information.tryWrite(JSON.stringify({
+                hostname: hostname_self,
+                type: CONSTANTS.MESSAGE.DARKNET.INFORMATION,
+                data: {
+                    target: darknet_hostname,
+                    server_details: server_details,
+                    heartbleed: logs
+                }
+            }))
+
+            //wait a little bit
+            await ns.sleep(CONSTANTS.TIME.WAIT)
+
+            //variable to save the password into
+            var password = ""
+            //ask for password
+            port_information.tryWrite(JSON.stringify({
+                hostname: hostname_self,
+                type: CONSTANTS.MESSAGE.DARKNET.PASSWORD_REQUEST,
+                data: darknet_hostname
+            }))
+            //wait for answer
+            while (true) {
+                //read the data
+                var reply = port_password.peek()
+                //if there is data
+                if (reply != CONSTANTS.PORT.NO_DATA) {
+                    //check if we are the recipient
+                    if (hostname_self == reply.hostname) {
+                        //get password
+                        password = reply.data
+                        //stop
+                        break
+                    }
+                }
+                //wait a bit
+                await ns.sleep(CONSTANTS.TIME.WAIT)
+            }
             //try to authenticate
             var result = await evaluate.exec("ns.dnet.authenticate('" + darknet_hostname + "','" + password + "')")
+            //set message type
+            var message_type = CONSTANTS.MESSAGE.DARKNET.AUTHENTICATION_FAILED
             //if successfull
             if (result.success) {
-                //get the results
-                var servers_authenticated_new = JSON.parse(port_servers_done.read())
-                //add the hostname
-                servers_authenticated_new.set(darknet_hostname, "")
-                //write back to port
-                port_servers_done.tryWrite(JSON.stringify(servers_authenticated_new))
+                //set type to successfull          
+                message_type = CONSTANTS.MESSAGE.DARKNET.AUTHENTICATED
             }
+            //write back to port
+            port_information.tryWrite(JSON.stringify({
+                hostname: hostname_self,
+                type: message_type,
+                data: darknet_hostname
+            }))
+            //authenticated
+        } else {
+            //nothing to do if already authenticated?
         }
     }
 }

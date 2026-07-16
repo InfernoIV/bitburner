@@ -1,103 +1,10 @@
-import * as log from 'scripts/sub/log.js'
-import * as evaluate from 'scripts/sub/evaluate.js'
-import {
-    port_no_data,
-    port_darknet_information,
-    port_darknet_password,
-    port_darknes_servers_done,
-    script_darknet_worker,
-    scripts_to_copy_darknet,
-    ram_darknet_worker,
-    ram_eval_orchestrator
-} from "scripts/constants.js"
-
-/*
-export port_darknet_information = 3 //information send from workers to the orchestrator
-export const port_darknet_password = 4 //map of servers and passwords, filled from orchestrator
-export const port_darknes_servers_done = 5 //list of servers that are authenticated, filled by workers, edited by orchestrator
-*/
-
-
-
-
-//TODO
-//use darkweb server as controller?
-//keep list of servers and passwords, which can be used to run ns.dnet.connectToSession(hostName, password)
-//then run the worker scripts on those servers, get cache, etc.
-//workers have small ram size to maximize threads: scan, phishingAttack and promote stock
-/*
-Darknet script design considerations
-
-As you design your darknet scripts, here are some ideas to keep in mind as you decide on your approach.
-The darknet is unstable, and scripts will sometimes be killed or servers will disappear.
-
-    How can passwords be preserved so that they are not lost if the script holding them is killed?
-    How can you watch for neighbor servers that have been restarted?
-    How can you recover if many or all of the running scripts are killed?
-
-The darknet is a tangled web that you cannot easily remotely traverse.
-
-    How can you find a path to a server to connect there via terminal?
-    How do you update your scripts when a new version of them is made?
-    How do you get scripts into parts of the network that aren't connected to areas where you are?
-
-There is a lot of ram on the darknet, but it is harder to access than the standard network.
-
-    What is the best use of all that ram?
-    How do you coordinate scripts using that ram when the situation changes?
-
-The darknet is a treasure trove of data, if you know where to look.
-
-    Some data files on darknet servers have authentication info.
-    Sometimes a server will authenticate to another server, and those credentials will be visible in the server logs or active packets.
-    There are lists of commonly re-used passwords that can be found on some data files.
-
-*/
-
-/*
-freezeServer(host)
-    Overloads a darknet server with feedback to lock it down. 
-    Similar to status link, it will no longer move or go offline, although servers connected to it may still move. 
-    However, it also loses all of its max ram, and no longer gives experience.
-    This technique is sometimes used to sacrifice a new device that appears on the network to make it easier to probe it for weaknesses and develop scripts against it.
-    -> can you unfreeze?
-
-getDarknetInstability()
-    Gets the current instability of the darknet caused by excessive backdoor-ing of servers.
-    -> instability of backdooring normal servers?
-
-getDepth(host)
-    Gets the current depth of the specified server into the darknet. Servers immediately below Darkweb are depth 0, and each visual row in the UI below that increases the depth of the server.
-    Returns -1 if the server is offline, not found, or not a darkweb server.
-    -> needed?
-
-
-Stasis: -> needed?
-    getStasisLinkedServers(returnByIP)
-        Returns the hostnames/IPs of servers that have a stasis link applied.
-    
-    getStasisLinkLimit()
-        Returns the maximum number of stasis links that can be applied globally, based on the player's current status. 
-        Stasis link limit can be increased by finding special augmentations in the deep darknet.
-
-    setStasisLink(shouldLink)	
-        Applies or removes a stasis link to the script's current server. 
-        This will allow you to connectToSession() or exec() to the server remotely, even if it is not directly connected to the server a script is running on. 
-        It also allows direct connection to the server via the terminal.
-        Stasis links also prevent the server from going offline or moving. 
-        It does not prevent other servers from moving or going offline, though, so it does not guarantee that the stasis link server will never lose connections to other servers.
-        There is a maximum of stasis links that can be applied globally, which can be seen using getStasisLinkLimit(). 
-        This limit can be increased by finding special augmentations in the deep darknet.
-
-unleashStormSeed()
-    Executes STORM_SEED.exe, if it is present on the server the script is running on.
-    Warning: That exe file creates a webstorm that can cause catastrophic damage to the darknet. Run at your own risk.
-*/
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
+import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
 
 
 //main loop
 export async function main(ns) {
-
     //stop logging
     ns.disableLog("ALL")
     //save our own hostname
@@ -105,446 +12,240 @@ export async function main(ns) {
     //get our max ram
     const allowed_ram = ns.args[1]
     //init
-    evaluate.init(ns, hostname_self, ram_darknet_worker, true, allowed_ram)
-
-    //create map of servers
-    var servers_done = new Map()
-    //add self (darkweb server)
-    servers_done.set(hostname_self, "")
-    //add to port
-    ns.getPortHandle(port_darknes_servers_done).tryWrite(JSON.stringify(servers_done))
-
+    evaluate.init(ns, hostname_self, CONSTANTS.RAM.DARKNET.WORKER, true, allowed_ram)
     //create map of passwords
     var servers_passwords = new Map()
     //add self (darkweb server)
-    servers_passwords.set(hostname_self, "")
-    //add to port
-    ns.getPortHandle(port_darknet_password).tryWrite(JSON.stringify(servers_passwords))
-
+    servers_passwords.set(hostname_self, {
+        password: "",
+        confirmed: true,
+        heartbleed: {},
+        server_info: {}
+    })
     //loop forever
     while (true) {
         //wait until next mutation
-        //await ns.dnet.nextMutation()
-        await ns.sleep(5)
-
-        //solve passwords
-        await solve_passwords(ns)
-
-        //check servers
-        await check_servers(ns)
+        await ns.sleep(CONSTANTS.TIME.WAIT) //await ns.dnet.nextMutation()
+        //communicate with workers
+        await communicate_with_workers(ns, servers_passwords)
     }
 }
 
 
-
-//function that checks servers if they are still online
-async function check_servers(ns) {
-    //Some possible mutations that can occur somewhere on the darknet each cycle:
-    //Nothing changes.
-    //Some servers move to other locations on the net, breaking existing connections and forming new ones.
-    //not an issue
-    //Some servers go offline, which in many cases is permanent - they are effectively deleted.
-    //bad, but nothing can be done
-    //Some servers restart, which kills all running scripts on the server.
-    //need a way to check this
-    //New servers appear on the net (which may be previously offline servers, but cleaned and with a new password).
-    //delete from list
-
+//function that communicate with worker scripts
+/* mesage data is formatted like:
+    hostname = hostname of worker (either sent from or sent to, depending on the port)
+    type = type of request
+    data = data (depends on the request)
+*/
+async function communicate_with_workers(ns, servers_passwords) {
     //create port object
-    var port = ns.getPortHandle(port_darknes_servers_done)
-    //if there is any data
-    if (port.peek() == port_no_data) {
-        //stop
-        return
-    }
-    //get the map of passwords
-    var passwords = JSON.stringify(ns.getPortHandle(port_darknet_password).peek())
-    //parse the data to get list of servers
-    var servers_online = JSON.parse(port.peek())
-    //for each server
-    for (const server_hostname of servers_online.keys()) {
-        //get server details
-        var server_info = ns.getServer(server_hostname)
-        //get status
-        var server_info_darknet = ns.dnet.getServerDetails(server_hostname)
+    const port_information = ns.getPortHandle(CONSTANTS.PORT.DARKNET.INFORMATION)
+    //create port object
+    const port_password = ns.getPortHandle(CONSTANTS.PORT.DARKNET.PASSWORD)
 
-        //if offline
-        if (!server_info.isOnline) {
-            //remove from list
-            servers_online.delete(server_hostname)
-        } else {
-            //if we don't have a session
-            if (!server_info_darknet.hasSession) {
-                //if we have don't have a password
-                if (!passwords.has(server_hostname)) {
-                    //go to next
-                    continue
-                }
-                //get password
-                const password = passwords.get(server_hostname)
-                //connect to server
-                const result = ns.dnet.connectToSession(server_hostname, password)
-                //check if not successfull
-                if (!result.success) {
-                    log.warning(ns, "Darknet", "Could not authenticate '" + server_hostname + "' with '" +
-                        password + "' => " + JSON.stringify(result))
-                }
-            }
 
-            //calculate ram usage
-
-            /*
-			export const ram_eval_orchestrator = 3 //2.9
-
-export const ram_darknet_orchestrator = 4 //TODO
-export const ram_darknet_orchestrator_eval = 4 //TODO
-
-export const ram_darknet_worker = 2
-export const ram_darknet_worker_eval = 2
-			*/
-
-            //max server ram - darknet worker script ram - eval orchestrator ram
-            const max_ram_eval = server_info.maxRam - ram_darknet_worker - ram_eval_orchestrator
-            //copy the scripts
-            ns.scp(scripts_to_copy_darknet)
-            //run the script
-            ns.exec(script_darknet_worker, server_hostname, {
-                preventDuplicates: true
-            }, server_hostname, max_ram_eval)
+    //check if we need to delete messages in the outbound port first
+    while (true) {
+        //if there is no data
+        if (port_password.peek() == CONSTANTS.PORT.NO_DATA) {
+            //stop
+            break
         }
-    }
-    //remove the entry from the list
-    port.read()
-    //add the information to the list
-    port.tryWrite(JSON.stringify(servers_online))
-}
-
-
-
-function solve_passwords(ns) {
-    //create port object for information
-    var port_information = ns.getPortHandle(port_darknet_information)
-    //create port object for passwords
-    var port_password = ns.getPortHandle(port_darknet_password)
-    //get list of solved passwords
-    var password_map = JSON.parse(port_password.peek())
-
-    //while there is data
-    while (port_information.peek() != port_no_data) {
-        //save the information
-        var heartbleed = port_information.read()
-        //get server information
-        var server = ns.dnet.getServerDetails(information_heartbleed.hostname)
-        /*
-        port.tryWrite(JSON.stringify({
-            hostname: server_darknet_hostname,
-            result: result,
-            logs: logs
-        }))
-        */
-        //log information
-        log.info(ns, "Darknet", "Received password information: '" + JSON.stringify(heartbleed) + "' from server '" +
-            JSON.stringify(server) + "'")
-
-
-        //try to solve
-        //flag to keep track if successfull
-        flag_solved = false
-        //do stuff
-        var password = ""
-
-        //try to solve by model
-        switch (server.modelId) {
-            case "":
-                break
-            default:
-                break
+        //read the sent message
+        var sent_message = port_password.peek()
+        //get server information of the target server
+        const server_info = await evaluate.exec(ns, "ns.getServer('" + sent_message.hostname + "')")
+        //check if NOT online
+        if (server_info.isOnline) {
+            //stop
+            break
         }
-        //if not yet solved
-        if (!flag_solved) {
-            //solve by hints
-            //if no password needed
-            if (server.passwordLength == 0) {
-                //set flag
-                flag_solved = true
-            } else if (server.passwordHint == "Type the numbers to prove you are human") {
-                //for each character in the data
-                for (const character in server.data) {
-                    //check if a number
-                    if (character >= '0' && character <= '9') {
-                        //add to password
-                        password += character
-                    }
-                }
-            } else if (server.passwordHint.includes("the default password")) {
-                //for the lenght of the password
-                for (let i = 0; i < server.passwordLength; i++) {
-                    //add zeroes
-                    password += "0"
-                }
-            } else if (server.passwordHint.includes("The password is") || server.passwordHint.includes(
-                    "Remember to use") ||
-                server.passwordHint
-                .includes("It's set to")) {
-                //password are the last characters of the hint
-                password = server.passwordHint.substring(server.passwordHint.length - server.passwordLength)
-            }
-            //if solved or set to something different
-            if (flag_solved || password != "") {
-                //debug
-                log.info(ns, "Darknet", "Guessed: '" + password + "' for '" + JSON.stringify(server) + "'")
-                //save the password
-                password_map.set(information.hostname, password)
-            }
-        }
-        //remove the password data
+        //remove the message from the list (target is offline)
         port_password.read()
-        //upload the password map
-        port_password.tryWrite(JSON.stringify(password_map))
+    }
+
+    //while there is data incoming
+    while (port_information.peek() != CONSTANTS.PORT.NO_DATA) {
+        //get the message
+        var message = JSON.parse(port_information.read())
+        //decide on what to do
+        switch (message.type) {
+
+            //information is provided from workers to orchestrator
+            case CONSTANTS.MESSAGE.DARKNET.INFORMATION:
+                //data contains the hint and server information
+                //solve passwords
+                await solve_passwords(ns, servers_passwords, message)
+                //stop
+                break
+
+                //worker indicates a server has been authenticated
+            case CONSTANTS.MESSAGE.DARKNET.AUTHENTICATED:
+                break
+                //data is the hostname which has been authenticated
+                //get saved password data
+                var password_data = servers_passwords.get(message.data)
+                //set to true
+                password_data.confirmed = true
+                //save to map
+                servers_passwords.set(message.data, password_data)
+                //log
+                log.success(ns, "Darknet", "Authentication success for '" + message.data + "' with password '" +
+                    password_data.password + "' and hint: '" + password_data.hint + "'")
+                //stop
+                break
+
+                //server indicated authentication failed
+            case CONSTANTS.MESSAGE.DARKNET.AUTHENTICATION_FAILED:
+                break
+                //data contains the target hostname of which authentication failed
+                //get saved password data
+                const password_data = servers_passwords.get(message.data)
+                //log
+                log.warning(ns, "Darknet", "Authentication failed for '" + message.data + "' with information '" +
+                    JSON.stringify(password_data) + "'")
+                //remove from map
+                servers_passwords.delete(message.data)
+
+                //if worker requests a password 
+            case CONSTANTS.MESSAGE.DARKNET.PASSWORD_REQUEST:
+                break
+                //data contains the hostname of which the password is requested
+                //create password to return
+                var password = CONSTANTS.PASSWORD_NOT_FOUND
+                //if we have a password for this
+                if (servers_passwords.includes(message.data)) {
+                    //write to port
+                    password = servers_passwords.get(message.data).password
+                }
+                //reply with password
+                port_password.tryWrite(JSON.stringify({
+                    worker: message.hostname,
+                    password: password
+                }))
+                //stop
+                break
+
+                //uncaught
+            default:
+                log.error(ns, "Darknet", "Uncaught condition on 'message.type': " + JSON.stringify(message.type) +
+                    "'")
+        }
     }
 }
 
 
+//try to solve the passwords
+function solve_passwords(ns, servers_passwords, message) {
+    //we assume the data is for the same server
+    var hostname_target = message.data.target
+    //get server info from message
+    const server_info = message.data.server_details
+    //get heartbleed logs from message
+    const heartbleed = message.data.heartbleed
 
 
-/*
-//function that prepares and launched the script to the target server
-async function launch(ns, hostname) {
-    //copy scripts
-    ns.scp(scripts_to_copy_darknet, hostname)
-    //check if ram need to be freed
-    var blocked_ram = ns.dnet.getBlockedRam(hostname)
-    //if there is blocked ram
-    while (blocked_ram > 0) {
-        //free ram
-        await ns.dnet.memoryReallocation(hostname)
-        //update ram
-        blocked_ram = ns.dnet.getBlockedRam(hostname)
-    }
-    //get server details
-    const server = ns.getServer(hostname)
-    //get ram cost
-    const ram_cost = ns.getScriptRam(script_darknet)
-
-    //calc threads (we assume no scripts are running)
-    var threads = Math.floor(server.maxRam / ram_cost)
-    //start main script
-    ns.exec(script_darknet, hostname, {
-        threads: threads,
-        preventDuplicates: true
-    }, hostname)
-    //increase the chance of the server moving
-    await ns.dnet.induceServerMigration(hostname)
-    //log
-    log.success(ns, "darknet", "Started darknet script on server '" + hostname + "'")
-}*/
-
-
-/*
-//function that tries to spreak scripts across servers
-async function spread(ns) {
-    //scan for darknet servers every time, since they might shift
-    const servers_darknet = ns.dnet.probe()
-    //for each server found
-    for (const hostname of servers_darknet) {
-        //get player information
-        const charisma_player = ns.getPlayer().skills.charisma
-        //get the server details
-        const server_details = ns.dnet.getServerDetails(hostname)
+    //try to guess the password
+    var password = guess_password(ns, hostname_target, server_info, heartbleed)
+    //if password was found
+    if (password != null) {
         //debug
-        log.info(ns, "darknet", "Found darknet server '" + hostname + "' => '" + JSON.stringify(server_details) +
-            "'")
-        //flag to check if authenticated
-        var flag_authenticated = false
-        //if the server is online and connected to the current server (which is should?)
-        if (server_details.hasSession) {
-            //no action needed?
-            flag_authenticated = true
-            //check charisma? affects timing and or makes it impossible
+        log.success(ns, "Darknet", "Guessed: '" + password + "' for '" + JSON.stringify(server_info) + "'")
+        //if we don't have an entry
+        if (!servers_passwords.has(hostname_target)) {
+            //save password
+            servers_passwords.set(hostname_target, {
+                password: password,
+                confirmed: false,
+                heartbleed: heartbleed,
+                server_info: server_info
+            })
+        //password entry exists
         } else {
-            //guess the password
-            const password = guess_password(ns, server_details)
-            // if we could not guess the password
-            if (password == PASSWORD_NOT_FOUND) {
-                //go to next
-                continue
+            //check if different
+            if (password != servers_passwords.get(hostname_target).password) {
+                //either the server has rebooted and had a password change, or ???
+                const saved_password_information = servers_passwords.get(hostname_target)
+                //save password
+                servers_passwords.set(hostname_target, {
+                    password: password,
+                    confirmed: false,
+                    heartbleed: heartbleed,
+                    server_info: server_info
+                })
+                //log information
+                log.warning(ns, "Darknet", "Found different saved password for '" + hostname_target + "': '" + JSON.stringify(saved_password_information) + "'")
             }
-            //try to authenticate
-            const result = await ns.dnet.authenticate(server, password)
-            //set the flag
-            flag_authenticated = result.success //if sucessfull
-            //debug
-            log.info(ns, "darknet", "Authentication for '" + hostname + "' => " + JSON.stringify(result))
         }
-
-        //if authenticated
-        if (flag_authenticated) {
-            //launch toward this server
-            await launch(ns, hostname)
-        }
+    //password was not found
+    } else {
+        //debug
+        log.warning(ns, "Darknet", "Could not guess password for: '" + hostname_target + "', info: '" + JSON.stringify(
+            server_info) + "', heartbleed: '" + heartbleed + "'")
     }
 }
-*/
-
-/*
-DarknetResponseCodeType type
-
-Errors:
-
-    DirectConnectionRequired: The target server is not directly connected to the current server. This may be caused by a user error (specifying the wrong neighbor host's hostname) or a network change (the target server was moved).
-
-    AuthFailure: Authentication failed. The password is incorrect.
-
-    NotFound: The API requires a specific resource (e.g., an exe file), but it does not exist on the server.
-
-    RequestTimeOut: The request failed (though the password may or may not have been correct). Caused by network instability.
-
-    ServiceUnavailable: The server is offline.
-
-Signature:
-
-type DarknetResponseCodeType = {
-  Success: 200;
-  DirectConnectionRequired: 351;
-  AuthFailure: 401;
-  Forbidden: 403;
-  NotFound: 404;
-  RequestTimeOut: 408;
-  NotEnoughCharisma: 451;
-  StasisLinkLimitReached: 453;
-  NoBlockRAM: 454;
-  PhishingFailed: 455;
-  ServiceUnavailable: 503;
-};
 
 
-*/
+//function to return the information as soon as it is available
+async function guess_password(ns, hostname_target, server_info, heartbleed) {
+    //log information
+    log.info(ns, "Darknet", "Received password information: '" + JSON.stringify(heartbleed) + "' fom server '" +
+        hostname_target + "', with server data: '" + JSON.stringify(server_info) + "'")
+        
+    //variable to fill (sometimes)
+    var password = ""
 
-/*
-Darknet	Found darknet server 'darknet' with details: '{
-	"isOnline":true,
-	"isConnectedToCurrentServer":true,
-	"hasSession":true,
-	"modelId":"ZeroLogon",
-	"passwordHint":"There is no password",
-	"data":"",
-	"logTrafficInterval":31,
-	"passwordLength":0,
-	"passwordFormat":"numeric",
-	"blockedRam":0,
-	"difficulty":0,
-	"requiredCharismaSkill":1,
-	"depth":-1,
-	"isStationary":true
-}'
-*/
+    //try to solve by model
+    switch (server_info.modelId) {
+        case "":
+            return null
+        default:
+            //check other things
+            break
+    }
 
+    //solve by hints
+    //if no password needed
+    if (server_info.passwordLength == 0) {
+        //no password
+        return ""
+    }
 
-/*
-Darknet					Darknet API
-DarknetFormulas			Darknet formulas
-DarknetInstability		Instability of the darknet caused by excessive backdoor-ing of servers.
-DarknetServerDetails	Details about a darknet server
+    //if we need to extract the password from the data (numeric)
+    if (server_info.passwordHint == "Type the numbers to prove you are human") {
+        //for each character in the data
+        for (const character in server_info.data) {
+            //check if a number
+            if (character >= '0' && character <= '9') {
+                //add to password
+                password += character
+            }
+        }
+        //return the pieced password
+        return password
+    }
 
-https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.darknet.md
+    //if the password is default = 0's
+    if (server_info.passwordHint.includes("the default password")) {
+        //for the lenght of the password
+        for (let i = 0; i < server.passwordLength; i++) {
+            //add zeroes
+            password += "0"
+        }
+        //return the generated password
+        return password
+    }
 
-authenticate(host, password, additionalMsec)		Sends a network request to try to authenticate on a darknet server. The target server must be directly connected to the server that the script is running on. The speed of authentication scales with the number of threads used.
-	If successful, grants the current script a session, allowing it to exec() scripts on that server, or scp() files to it. (scp() *from* the server is always allowed.)
-	Note that the charisma level on a server is not a requirement for authentication, but authentication takes longer if the player's charisma is below the server's charisma level.
-	Note that the session granted is only for the current script instance (by PID) - other running scripts will need to use connectToSession with the correct password to also get a session with the target server.
+    //if the password is part of the hint
+    if (server_info.passwordHint.includes("The password is") || server_info.passwordHint.includes(
+            "Remember to use") ||
+        server_info.passwordHint
+        .includes("It's set to")) {
+        //password are the last characters of the hint
+        return server.passwordHint.substring(server_info.passwordHint.length - server_info.passwordLength)
+    }
 
-connectToSession(host, password)		Attempts to connect to a target darknet server that you have previously authenticated on. Unlike authenticate, connectToSession can be used to get a session on servers at any distance.
-	If successful, grants the script a session, allowing it to scp() files to that target. It also allows starting scripts with exec() on that target, if the target is directly connected to the server that the script is running on, or has a backdoor or stasis link.
-	If unsuccessful, more detail may be able to be gathered by using heartbleed() to look at the resulting logs on the server.
-	Note that the session granted is only for the current script instance (by PID) - other running scripts will need to use connectToSession with the correct password to also get a session with the target server.
-
-freezeServer(host)		Overloads a darknet server with feedback to lock it down. Similar to status link, it will no longer move or go offline, although servers connected to it may still move. However, it also loses all of its max ram, and no longer gives experience.
-	This technique is sometimes used to sacrifice a new device that appears on the network to make it easier to probe it for weaknesses and develop scripts against it.
-
-getBlockedRam(host)	Gets the amount of RAM blocked by the server owner's processes. This ram can be freed for use using dnet.memoryReallocation() .
-
-getDarknetInstability()	Gets the current instability of the darknet caused by excessive backdoor-ing of servers.
-
-getDepth(host)	Gets the current depth of the specified server into the darknet. Servers immediately below darknet are depth 0, and each visual row in the UI below that increases the depth of the server.
-	Returns -1 if the server is offline, not found, or not a darknet server.
-
-getServerDetails(host)		Returns the darknet-specific details of the server.
-	If the darknet server has recently gone offline, the returned object will be a dummy server object with isOnline: false.
-
-getServerRequiredCharismaLevel(host)		Gets the required charisma level to target the server with dnet.heartbleed().
-	Insufficient charisma will also cause authentication to take much longer - or, in certain servers deep in the darknet, be impossible.
-
-getStasisLinkedServers(returnByIP)		Returns the hostnames/IPs of servers that have a stasis link applied.
-
-getStasisLinkLimit()		Returns the maximum number of stasis links that can be applied globally, based on the player's current status. Stasis link limit can be increased by finding special augmentations in the deep darknet.
-
-heartbleed(host, options)	Uses an exploit to extract log data from a server by sending a malformed heartbeat request. Retrieves the most recent logs on the server. This can be used to get more feedback on authentication attempts. The retrieved logs are removed from the server, unless the "peek" flag is set to true in the provided HeartbleedOptions.
-	Servers will periodically produce logs themselves, as well, which sometimes are useful, but most times are not.
-	The speed of capture scales with the number of threads used. See formulas.dnet.getHeartbleedTime for more information. Note that you cannot scrape logs from servers whose required charisma is higher than your charisma level.
-
-induceServerMigration(host)		Increases the chance that the target server will move to other parts of the darknet, by overloading the connections between it and the current server. The target must be a connected, non-stationary, darknet server - scripts cannot target the server they are running on.
-	Effect scales with threads and charisma level.
-
-isDarknetServer(host)		Returns whether the server is a darknet server.
-	Returns false if the server does not exist or has gone offline recently. This function does not require DarkscapeNavigator.exe.
-
-labradar()		There is more than meets the eye.
-
-labreport()		Not all who wander are lost.
-
-memoryReallocation(host)		Spends some time freeing some of the RAM currently blocked by the server owner. Must target an authenticated and directly connected server.
-	The amount of ram recovered scales with charisma and the number of threads used.
-
-nextMutation()		Sleep until the next mutation of the network of darknet servers (which occur frequently). Note that in the majority of cases, whatever changed out on the net (if anything) will not be nearby to, or visible from, the current server.
-	Some possible mutations that can occur somewhere on the darknet each cycle:
-		Nothing changes.
-		Some servers move to other locations on the net, breaking existing connections and forming new ones.
-		Some servers go offline, which in many cases is permanent - they are effectively deleted.
-		Some servers restart, which kills all running scripts on the server.
-		New servers appear on the net (which may be previously offline servers, but cleaned and with a new password).
-
-openCache(filename, suppressToast)		Opens a .cache file on the current server to acquire its valuable contents.
-
-phishingAttack()		Spends time sending out phishing emails, attempting to find some non-technical middle manager to fall for the scam. Builds charisma. Often the attempt will fail, but success can be increased with crime success rate and charisma stats.
-	The amount of money lifted scales with the number of threads used, if successful. Very occasionally you can retrieve a cache file from the attempt.
-	Phishing attacks can only be run from scripts on darknet servers.
-
-probe(returnByIP)		Returns a list of all darknet servers connected to the script's current server. For example, if called from a script running on home, it will return ["darknet"]. It will return an empty list if there are no darknet servers connected to the current server.
-	Note that there is no guarantee about the order of servers in the returned list.
-
-promoteStock(sym)		Spends some time spreading propaganda about a stock to increase its volatility. This does not actually change the stock's forecasts, but a savvy investor can take advantage of the chaos. The effect scales with charisma and the number of threads used, but degrades over time if left alone.
-
-setStasisLink(shouldLink)		Applies or removes a stasis link to the script's current server. This will allow you to connectToSession() or exec() to the server remotely, even if it is not directly connected to the server a script is running on. It also allows direct connection to the server via the terminal.
-	Stasis links also prevent the server from going offline or moving. It does not prevent other servers from moving or going offline, though, so it does not guarantee that the stasis link server will never lose connections to other servers.
-	There is a maximum of stasis links that can be applied globally, which can be seen using getStasisLinkLimit(). This limit can be increased by finding special augmentations in the deep darknet.
-
-unleashStormSeed()		Executes STORM_SEED.exe, if it is present on the server the script is running on.
-	Warning: That exe file creates a webstorm that can cause catastrophic damage to the darknet. Run at your own risk.
-
-https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.darknetinstability.md
-
-DarknetInstability interface	Instability of the darknet caused by excessive backdoor-ing of servers.
-
-authenticationDurationMultiplier		number		The increase in time that authentication takes, as a decimal
-authenticationTimeoutChance				number		The chance that authentication will time out instead of resolving, as a decimal
-
-
-DarknetServerDetails interface		Details about a darknet server
-
-blockedRam						number		The amount of ram blocked by the server owner
-data							string		Data from the passwordHint, if any.
-depth							number		The current depth in the darknet of the server
-difficulty						number		The difficulty rating of the server, associated with its original depth in the net
-hasSession						boolean		True if the current script has authenticated to this server with the right password using authenticate() or connectToSesssion()
-isConnectedToCurrentServer		boolean		True if the server is directly connected to the current server
-isStationary					boolean		If this darknet server cannot be moved. True for fixed/story servers.
-logTrafficInterval				number		The frequency (in seconds) of the server adding its own messages to its logs, visible with heartBleed().
-modelId							string		The model of the server. Similar models have similar vulnerabilities. The model list is intentionally undocumented. You are supposed to experiment and discover the models.
-passwordFormat					"numeric" | "alphabetic" | "alphanumeric" | "ASCII" | "unicode"		The character set used in the password
-passwordHint					string		Static password reminder text set for this server.
-passwordLength					number		The number of characters in the password
-requiredCharismaSkill			number		The charisma skill required to authenticate on the server
-
-
-
-*/
+    //nothing found
+    return null
+}

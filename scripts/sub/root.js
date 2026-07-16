@@ -1,15 +1,9 @@
-import * as evaluate from 'scripts/sub/evaluate.js'
-import * as log from 'scripts/sub/log.js'
-import {
-    scripts_to_copy
-} from 'scripts/constants.js'
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
+import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
 
 //import * as singularity from 'scripts/sub/singularity.js'
 //import * as hack from 'scripts/sub/hack.js'
-
-//hostname of home server
-const server_home = "home"
-
 
 
 // Declaration
@@ -28,7 +22,7 @@ export class root_obj {
         //for each server
         for (const hostname of scan_results) {
             //if home server
-            if (hostname == server_home) {
+            if (hostname == CONSTANTS.SERVER.HOME) {
                 //do nothing
                 continue
             }
@@ -36,10 +30,9 @@ export class root_obj {
             ns.killall(hostname)
             //get number of ports to open
             const server = await evaluate.exec(ns, "ns.getServer('" + hostname + "')")
-
-            //log.info(ns, "Root", "Found server '" + hostname + "' with '" + JSON.stringify(server) + "'")
             //add to the map (value is required hacking tools)
             this.servers_found.set(hostname, server)
+            //log.info(ns, "Root", "Found server '" + hostname + "' with '" + JSON.stringify(server) + "'")
         }
         //debug
         log.info(ns, "Root", "Init fomplete, found '" + this.servers_found.size + "' servers", true)
@@ -49,12 +42,13 @@ export class root_obj {
     //function that provides a list of servers
     async scan_servers(ns) {
         //create a list of servers
-        var servers_found = [server_home]
+        var servers_found = [CONSTANTS.SERVER.HOME]
         //start scanning from home
-        await this.scan_server(ns, servers_found, server_home)
+        await this.scan_server(ns, servers_found, CONSTANTS.SERVER.HOME)
         //return
         return servers_found
     }
+
 
     //function that scans for servers
     async scan_server(ns, servers_found, server_name) {
@@ -84,12 +78,12 @@ export class root_obj {
         for (const [hostname, server] of servers) {
             //log.info(ns, "Root", "Checking '" + hostname + "': '" + server.requiredHackingSkill + "', '" + server.numOpenPortsRequired + "'")
             //check if we can hack it (according to hacking level)
-            if (level_hacking >= server.requiredHackingSkill && hacking_tools_owned >= server
-                .numOpenPortsRequired) {
+            if (level_hacking >= server.requiredHackingSkill && hacking_tools_owned >= server.numOpenPortsRequired) {
                 //flag to check to remove or not
                 var flag_rooted = false
-                var flag_backdoored = false
-                //if not yet rooted or backdoored
+                //flag to check if backdoored
+                //var flag_backdoored = false
+                //if not yet rooted
                 if (!server.hasAdminRights) {
                     //check on what actions to perform
                     switch (server.numOpenPortsRequired) {
@@ -107,24 +101,26 @@ export class root_obj {
                             break //no action needed
                         default:
                             log.error(ns, "Root", "Uncaught condition on 'required_hacking_tools': '" +
-                                required_hacking_tools + "'");
+                                JSON.stringify(required_hacking_tools) + "'");
                             break
                     }
                     //nuke to get root access
                     if (await evaluate.exec(ns, "ns.nuke('" + hostname + "')")) {
+                        //set flag
+                        flag_rooted = true
                         //log success
                         log.success(ns, "Root", "Rooted '" + hostname + "'")
-                        flag_rooted = true
-
                     }
                 } else {
-                    //log success
-                    log.success(ns, "Root", "Already rooted '" + hostname + "'")
+                    //set flag
                     flag_rooted = true
+                    //log success
+                    log.success(ns, "Root", "Already rooted '" + hostname + "'")                    
                 }
+                //if rooted
                 if (flag_rooted) {
                     //copy scripts to server
-                    for (const script of scripts_to_copy) {
+                    for (const script of CONSTANTS.SCRIPT.HACK.TO_COPY) {
                         //copy script to server
                         await evaluate.exec(ns, "ns.scp('" + script + "', '" + hostname + "')")
                     }
@@ -183,39 +179,18 @@ export class root_obj {
     async get_number_of_hacking_tools_owned(ns) {
         //counter for hacking tools
         var hacking_tools_owned = 0
-        //dict of tools (key) and value (cost in dark web & hacking level for creating ourselves) 
-        const hacking_tools = ["BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe"]
         //get the available executables on home
-        var executables = await evaluate.exec(ns, "ns.ls('home', '.exe')")
+        var executables = await evaluate.exec(ns, "ns.ls('" + CONSTANTS.SERVER.HOME + "', '" + CONSTANTS.FILE_EXTENSION.EXECUTABLE + "')")
         //for each tool
-        for (const tool of hacking_tools) {
+        for (const tool of CONSTANTS.TOOLS.HACKING.LIST) {
+            //if the list is found
             if (executables.includes(tool)) {
                 //up the counter
                 hacking_tools_owned++
             }
         }
+        //return the counter
         return hacking_tools_owned
     }
 }
 
-
-/*
-//function that returns servers with money
-export function get_servers_money() {
-    //return the map of servers with money (and other properties)
-    return servers_money
-}
-
-
-//function that returns servers with money
-export function get_servers_ram(ignore_home = false) {
-    //if we want to ignore home
-    if (ignore_home) {
-        servers = servers_ram
-        server.delete(server_home)
-        return servers
-    }
-    //return the map of servers with ram
-    return servers_ram
-}
-*/

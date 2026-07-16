@@ -1,10 +1,4 @@
-//enum for message formatting
-const FORMAT = {
-    INFO: "INFO", //blue
-    SUCCESS: "SUCCESS", //green, default color (no extra text needed)
-    WARNING: "WARNING",
-    ERROR: "ERROR",
-}
+import * as CONSTANTS from "scripts/constants.js"
 
 //global variables, set at init
 var log_to_file = false
@@ -40,28 +34,28 @@ export function init(ns, flag_log_to_file = false) {
 //function that logs info messages
 export function info(ns, prefix, message, print_in_terminal = false) {
     //pass to execute script
-    print_message(ns, message, FORMAT.INFO, prefix, print_in_terminal)
+    print_message(ns, message, CONSTANTS.FORMAT.INFO, prefix, print_in_terminal)
 }
 
 
 //function that logs info messages
 export function success(ns, prefix, message, print_in_terminal = false) {
     //pass to execute script
-    print_message(ns, message, FORMAT.SUCCESS, prefix, print_in_terminal)
+    print_message(ns, message, CONSTANTS.FORMAT.SUCCESS, prefix, print_in_terminal)
 }
 
 
 //function that logs warning messages
 export function warning(ns, prefix, message) {
     //pass to execute script
-    print_message(ns, message, FORMAT.WARNING, prefix, true)
+    print_message(ns, message, CONSTANTS.FORMAT.WARNING, prefix, true)
 }
 
 
 //function that logs error messages
 export function error(ns, prefix, message) {
     //pass to execute script
-    print_message(ns, message, FORMAT.ERROR, prefix, true)
+    print_message(ns, message, CONSTANTS.FORMAT.ERROR, prefix, true)
 }
 
 

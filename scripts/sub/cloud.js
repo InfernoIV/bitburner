@@ -5,6 +5,8 @@ import * as evaluate from 'scripts/sub/evaluate.js'
 import * as log from 'scripts/sub/log.js'
 
 
+//TODO: create object instead of using globals
+
 //variables that are set once
 var server_max_amount
 var server_max_ram
