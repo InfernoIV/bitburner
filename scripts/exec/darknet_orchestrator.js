@@ -1,6 +1,6 @@
 import * as CONSTANTS from "scripts/constants.js"
-import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
-import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
+import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
 
 
 //main loop
@@ -12,7 +12,7 @@ export async function main(ns) {
     //get our max ram
     const allowed_ram = ns.args[1]
     //init
-    evaluate.init(ns, hostname_self, CONSTANTS.RAM.DARKNET.WORKER, true, allowed_ram)
+    evaluate.init(ns, hostname_self, CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL, true, allowed_ram)
     //create map of passwords
     var servers_passwords = new Map()
     //add self (darkweb server)
@@ -54,13 +54,18 @@ async function communicate_with_workers(ns, servers_passwords) {
         }
         //read the sent message
         var sent_message = port_password.peek()
-        //get server information of the target server
-        const server_info = await evaluate.exec(ns, "ns.getServer('" + sent_message.hostname + "')")
-        //check if NOT online
-        if (server_info.isOnline) {
-            //stop
-            break
-        }
+        //if not a correct message
+        if  (typeof sent_message === 'object' && sent_message !== null) {
+            //debug
+            log.info(ns, "Darknet_orch", "Found message: " + sent_message, true)
+            //get server information of the target server
+            const server_info = await evaluate.exec(ns, "ns.getServer('" + sent_message.hostname + "')")
+            //check if online
+            if (server_info.isOnline) {
+                //stop
+                break
+            }
+        }   
         //remove the message from the list (target is offline)
         port_password.read()
     }
@@ -69,23 +74,28 @@ async function communicate_with_workers(ns, servers_passwords) {
     while (port_information.peek() != CONSTANTS.PORT.NO_DATA) {
         //get the message
         var message = JSON.parse(port_information.read())
+
+        //debuy
+        //log.info(ns, "Darknet_orchestrator", "Received message: " + JSON.stringify(message), true)
+        //create password date variable
+        var password_data = null
+
         //decide on what to do
         switch (message.type) {
-
+            
             //information is provided from workers to orchestrator
             case CONSTANTS.MESSAGE.DARKNET.INFORMATION:
                 //data contains the hint and server information
                 //solve passwords
-                await solve_passwords(ns, servers_passwords, message)
+                solve_passwords(ns, servers_passwords, message)
                 //stop
                 break
 
                 //worker indicates a server has been authenticated
             case CONSTANTS.MESSAGE.DARKNET.AUTHENTICATED:
-                break
                 //data is the hostname which has been authenticated
                 //get saved password data
-                var password_data = servers_passwords.get(message.data)
+                password_data = servers_passwords.get(message.data)
                 //set to true
                 password_data.confirmed = true
                 //save to map
@@ -98,25 +108,24 @@ async function communicate_with_workers(ns, servers_passwords) {
 
                 //server indicated authentication failed
             case CONSTANTS.MESSAGE.DARKNET.AUTHENTICATION_FAILED:
-                break
                 //data contains the target hostname of which authentication failed
                 //get saved password data
-                const password_data = servers_passwords.get(message.data)
+                password_data = servers_passwords.get(message.data)
                 //log
                 log.warning(ns, "Darknet", "Authentication failed for '" + message.data + "' with information '" +
                     JSON.stringify(password_data) + "'")
+                
                 //remove from map
                 servers_passwords.delete(message.data)
 
                 //if worker requests a password 
             case CONSTANTS.MESSAGE.DARKNET.PASSWORD_REQUEST:
-                break
                 //data contains the hostname of which the password is requested
                 //create password to return
                 var password = CONSTANTS.PASSWORD_NOT_FOUND
                 //if we have a password for this
-                if (servers_passwords.includes(message.data)) {
-                    //write to port
+                if (servers_passwords.has(message.data)) {
+                    //save the password
                     password = servers_passwords.get(message.data).password
                 }
                 //reply with password
@@ -124,12 +133,16 @@ async function communicate_with_workers(ns, servers_passwords) {
                     worker: message.hostname,
                     password: password
                 }))
+                /*log.info(ns, "Darknet_orchestrator", "Replied to password request of '" + message.hostname + "' with: " + JSON.stringify({
+                    worker: message.hostname,
+                    password: password
+                }), true)*/
                 //stop
                 break
 
                 //uncaught
             default:
-                log.error(ns, "Darknet", "Uncaught condition on 'message.type': " + JSON.stringify(message.type) +
+                log.error(ns, "Darknet_orchestrator", "Uncaught condition on 'message.type': " + JSON.stringify(message.type) +
                     "'")
         }
     }
@@ -148,10 +161,12 @@ function solve_passwords(ns, servers_passwords, message) {
 
     //try to guess the password
     var password = guess_password(ns, hostname_target, server_info, heartbleed)
+        
     //if password was found
     if (password != null) {
         //debug
-        log.success(ns, "Darknet", "Guessed: '" + password + "' for '" + JSON.stringify(server_info) + "'")
+        //log.success(ns, "Darknet", "Guessed: '" + password + "' for '" + JSON.stringify(server_info) + "'", true)
+
         //if we don't have an entry
         if (!servers_passwords.has(hostname_target)) {
             //save password
@@ -188,18 +203,41 @@ function solve_passwords(ns, servers_passwords, message) {
 
 
 //function to return the information as soon as it is available
-async function guess_password(ns, hostname_target, server_info, heartbleed) {
+function guess_password(ns, hostname_target, server_info, heartbleed) {
     //log information
-    log.info(ns, "Darknet", "Received password information: '" + JSON.stringify(heartbleed) + "' fom server '" +
+    log.info(ns, "Darknet", "Received password HB information: '" + JSON.stringify(heartbleed) + "' fom server '" +
         hostname_target + "', with server data: '" + JSON.stringify(server_info) + "'")
-        
-    //variable to fill (sometimes)
+    //create a variable to use by multiple conditions
     var password = ""
 
+    //check if passwordExpected exists
+    if ("passwordExpected" in heartbleed) {
+        //return this
+        return heartbleed.passwordExpected
+    }
+    if ("message" in heartbleed) {
+        if (heartbleed.message.includes("The secret is")) {
+            return heartbleed.message.substring(heartbleed.message.length - server_info.passwordLength)
+        }
+    }
+
+
+    
     //try to solve by model
     switch (server_info.modelId) {
-        case "":
-            return null
+        case "FreshInstall_1.0":
+            if (server_info.passwordFormat == "numeric") {
+                return "0".repeat(server_info.passwordLength)
+            } else if (server_info.passwordFormat == "alphabetic") {
+                return "admin"
+            } 
+            //not found: stop
+            break
+            
+        case "ZeroLogon":
+            return ""
+        /*case "AccountsManager_4.2":
+            return "42"*/
         default:
             //check other things
             break
@@ -210,6 +248,10 @@ async function guess_password(ns, hostname_target, server_info, heartbleed) {
     if (server_info.passwordLength == 0) {
         //no password
         return ""
+    }
+
+    if (server_info.passwordHint == "you are one who's'nt authorized") {
+        return "admin"
     }
 
     //if we need to extract the password from the data (numeric)
@@ -241,9 +283,9 @@ async function guess_password(ns, hostname_target, server_info, heartbleed) {
     if (server_info.passwordHint.includes("The password is") || server_info.passwordHint.includes(
             "Remember to use") ||
         server_info.passwordHint
-        .includes("It's set to")) {
+        .includes("It's set to") || server_info.passwordHint.includes("The secret is")){
         //password are the last characters of the hint
-        return server.passwordHint.substring(server_info.passwordHint.length - server_info.passwordLength)
+        return server_info.passwordHint.substring(server_info.passwordHint.length - server_info.passwordLength)
     }
 
     //nothing found

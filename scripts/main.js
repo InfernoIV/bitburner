@@ -1,10 +1,10 @@
 import * as CONSTANTS from "scripts/constants.js"
-import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
-import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
-import { root_obj } from CONSTANTS.SCRIPT.SUB.ROOT
-import { hack_obj } from CONSTANTS.SCRIPT.SUB.HACK
-import { darkweb_obj } from CONSTANTS.SCRIPT.SUB.DARKNET
-import { share_exec } from CONSTANTS.SCRIPT.SUB.SHARE
+import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
+import { root_obj } from "scripts/sub/root.js"
+import { hack_obj } from "scripts/sub/hack.js"
+import { darknet_obj } from "scripts/sub/darknet.js"
+import { share_exec } from "scripts/sub/share.js"
 
 
 /** @param {NS} ns */
@@ -16,11 +16,11 @@ export async function main(ns) {
     var root = new root_obj()
     //init
     await root.init(ns)
-
+    
     //hack
     var hack = new hack_obj()
     //darknet
-    var darknet = new darkweb_obj()
+    var darknet = new darknet_obj()
 
     //start share
     //TODO
@@ -30,7 +30,7 @@ export async function main(ns) {
     while (true) {
         //start darknet main loop on darkweb
         await darknet.deploy(ns)
-
+        
         //check and add cloud servers
         //TODO
         //await cloud.manage_servers(ns)
@@ -58,7 +58,11 @@ async function init(ns) {
    // ns.ramOverride(4)
 
     //disable generic logging
-    //ns.disableLog("disableLog")
+    ns.disableLog("disableLog")
+    ns.disableLog("sleep")
+    ns.disableLog("killall")
+    //ns.disableLog("exec")
+    
     //ns.disableLog("ALL")
 
     //open tail
@@ -83,7 +87,7 @@ async function init(ns) {
     ns.killall(CONSTANTS.SERVER.HOME, true)
 
     //init eval
-    evaluate.init(ns, CONSTANTS.SERVER.HOME, CONSTANTS.RAM.MAIN_EVAL)
+    evaluate.init(ns, CONSTANTS.SERVER.HOME, CONSTANTS.RAM.MAIN.EVAL)
 
     //wait a little bit
     await ns.sleep(CONSTANTS.TIME.WAIT)

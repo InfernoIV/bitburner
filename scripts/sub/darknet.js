@@ -1,11 +1,11 @@
 //requires no SF? Or SF 15?
 import * as CONSTANTS from "scripts/constants.js"
-import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
-import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
+import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
 
 
 // Declaration
-export class darkweb_obj {
+export class darknet_obj {
     constructor() {
         //flag to keep track of launch
         this.darknet_started = false
@@ -31,19 +31,40 @@ export class darkweb_obj {
 			//the eval worker for the darknet worker needs to scale, therefore it is not counted
 			const max_ram_eval_worker = server_info.maxRam - (CONSTANTS.RAM.DARKNET.ORCHESTRATOR + CONSTANTS.RAM.EVAL_ORCHESTRATOR + CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL) - 
 			(CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM.EVAL_ORCHESTRATOR)
+            
+            for (const script of CONSTANTS.SCRIPT.DARKNET.TO_COPY) {
             //copy scripts
-            await evaluate.exec(ns, "ns.scp('" + scripts_to_copy_darknet.push(CONSTANTS.SCRIPT.DARKNET.ORCHESTRATOR) + "','" +
-                CONSTANTS.SCRIPT.DARKNET.ORCHESTRATOR + "')")
-			//start orchestrator
-            ns.exec(CONSTANTS.SCRIPT.DARKNET.ORCHESTRATOR, CONSTANTS.SERVER.DARKWEB, {
+            var results = await evaluate.exec(ns, "ns.scp('" + script + "','" +
+                CONSTANTS.SERVER.DARKWEB + "')")
+            }
+
+            
+                //start orchestrator
+            var result = ns.exec(CONSTANTS.SCRIPT.DARKNET.ORCHESTRATOR, CONSTANTS.SERVER.DARKWEB, {
                 preventDuplicates: true
             }, CONSTANTS.SERVER.DARKWEB, CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL)
+
+            //check if ok
+            if (result == false) {
+                //debug
+                log.error(ns, "Darknet", "Failed to start orchestrator!")
+                //stop
+                ns.exit()
+            }
             //wait a little bit
             await ns.sleep(CONSTANTS.TIME.WAIT)
             //start worker
-            ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, CONSTANTS.SERVER.DARKWEB, {
+            result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, CONSTANTS.SERVER.DARKWEB, {
                 preventDuplicates: true
             }, CONSTANTS.SERVER.DARKWEB, max_ram_eval_worker)
+            //check if ok
+            if (result == false) {
+                //debug
+                log.error(ns, "Darknet", "Failed to start worker!")
+                //stop
+                ns.exit()
+            }
+
 			//signal start is done, to speed up execution
             this.darknet_started = true
             //log

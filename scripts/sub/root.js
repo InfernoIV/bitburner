@@ -1,24 +1,25 @@
 import * as CONSTANTS from "scripts/constants.js"
-import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
-import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
-
-//import * as singularity from 'scripts/sub/singularity.js'
-//import * as hack from 'scripts/sub/hack.js'
+import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
 
 
 // Declaration
 export class root_obj {
     constructor() {
-        //maps of servers
-        this.servers_ram = new Map()
-        this.servers_money = new Map()
-        this.servers_found = new Map()
     }
 
 
     async init(ns) {
+        //maps of servers
+        this.servers_ram = new Map()
+        this.servers_money = new Map()
+        this.servers_found = new Map()
         //get the servers    
         var scan_results = await this.scan_servers(ns)
+
+        //debug
+        //log.info(ns, "Root", "Scan results: '" + scan_results + "'", true)
+        
         //for each server
         for (const hostname of scan_results) {
             //if home server
@@ -30,6 +31,8 @@ export class root_obj {
             ns.killall(hostname)
             //get number of ports to open
             const server = await evaluate.exec(ns, "ns.getServer('" + hostname + "')")
+            //debug
+            //log.info(ns, "Root", "Found '" + hostname + "' server: " + JSON.stringify(server))
             //add to the map (value is required hacking tools)
             this.servers_found.set(hostname, server)
             //log.info(ns, "Root", "Found server '" + hostname + "' with '" + JSON.stringify(server) + "'")
@@ -155,6 +158,7 @@ export class root_obj {
                         }
                     }
 
+                    
                     //check if there is money
                     if (server.moneyMax > 0 || server.moneyMax != "0") {
                         //only save money

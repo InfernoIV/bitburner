@@ -1,6 +1,6 @@
 import * as CONSTANTS from "scripts/constants.js"
-import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
-import * as evaluate from CONSTANTS.SCRIPT.LIBRARY.EVALUATE
+import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
 
 
 /** @param {NS} ns */

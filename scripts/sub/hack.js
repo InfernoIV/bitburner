@@ -1,7 +1,7 @@
 import * as CONSTANTS from "scripts/constants.js"
-import * as log from CONSTANTS.SCRIPT.LIBRARY.LOG
-import * as evaluate from CONSTANTS.SCRIPT.SUB.EVALUATE
-
+import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
+import { root_obj } from "scripts/sub/root.js"
 
 // Declaration
 export class hack_obj {
@@ -26,7 +26,7 @@ export class hack_obj {
         //check if we HAVE a target
         if (this.hack_target == "") {
             //debug
-            log.warning(ns, "Hack", "No hack target found, waiting for next cycle")
+            log.warning(ns, "Hack", "No hack target found, waiting for next cycle (" + JSON.stringify(root_obj) + ")")
             //wait a bit before checking again
             this.time_of_next_check = Date.now() + CONSTANTS.TIME.SAFETY
         } else {
@@ -112,7 +112,7 @@ export class hack_obj {
                     break
 
                     //if we need to hack
-                case STATE.HACK:
+                case CONSTANTS.STATE.HACK.HACK:
                     //weaken > grow > hack (time needed)
                     /*
                                 <------->			hack = weaken - hack - buffer

@@ -1,5 +1,6 @@
 import * as CONSTANTS from "scripts/constants.js"
 
+
 //global variables, set at init
 var log_to_file = false
 var file_name = ""

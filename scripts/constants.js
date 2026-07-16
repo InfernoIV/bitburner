@@ -13,11 +13,11 @@ export const TIME = {
 //enum of message types
 export const MESSAGE = {
     DARKNET: {
-        INFORMATION = "I",
-        PASSWORD_REQUEST =  "P",
-        AUTHENTICATED = "A",
-        AUTHENTICATION_FAILED = "F"
-    }
+        INFORMATION: "I",
+        PASSWORD_REQUEST: "P",
+        AUTHENTICATED: "A",
+        AUTHENTICATION_FAILED: "F"
+    },
 }
 
 
@@ -26,7 +26,7 @@ export const SCRIPT = {
     LIBRARY: {
         LOG: "scripts/sub/log.js",
         CONSTANTS: "scripts/constants.js",
-        EVALUATE: "scripts/sub/eval.js"
+        EVALUATE: "scripts/sub/evaluate.js",
     },
     SUB: {
         ROOT: "scripts/sub/root.js",
@@ -38,17 +38,19 @@ export const SCRIPT = {
         GROW: "scripts/exec/grow.js",
         WEAKEN: "scripts/exec/weaken.js",
         HACK: "scripts/exec/hack.js",
-        TO_COPY: [SCRIPT.HACK.GROW, SCRIPT.HACK.WEAKEN, SCRIPT.HACK.HACK]
+        TO_COPY: ["scripts/exec/grow.js", "scripts/exec/weaken.js", "scripts/exec/hack.js"]
     },
     EVAL: {
         ORCHESTRATOR: "scripts/exec/eval_orchestrator.js",
-        WORKER: "scripts/exec/eval_worker.js"
+        WORKER: "scripts/exec/eval_worker.js",
     },
     DARKNET: {
         ORCHESTRATOR: "scripts/exec/darknet_orchestrator.js",
         WORKER: "scripts/exec/darknet_worker.js",
-        TO_COPY: [SCRIPT.DARKNET.ORCHESTRATOR, SCRIPT.LIBRARY.LOG, SCRIPT.LIBRARY.CONSTANTS, SCRIPT.LIBRARY.EVAL,
-            SCRIPT.DARKNET.WORKER, SCRIPT.EVAL.ORCHESTRATOR, SCRIPT.EVAL.WORKER
+        TO_COPY: ["scripts/exec/darknet_orchestrator.js", "scripts/sub/log.js", "scripts/constants.js",
+            "scripts/sub/evaluate.js",
+            "scripts/exec/darknet_worker.js", "scripts/exec/eval_orchestrator.js",
+            "scripts/exec/eval_worker.js",
         ]
     },
     SHARE_WORKER: "scripts/exec/share.js",
@@ -61,7 +63,7 @@ export const SCRIPT = {
 export const RAM = {
     MAIN: {
         ORCHESTRATOR: 2.9, //1.6 + 1.3 + TODO
-        EVAL: 33.6, //1.6 + 32
+        EVAL: 8//33.6, //1.6 + 32
     },
     EVAL_ORCHESTRATOR: 2.9, //1.6 + 1.3
     DARKNET: {
@@ -74,19 +76,19 @@ export const RAM = {
         WEAKEN: 1.75, //1.6 + 0.15 
         GROW: 1.75, //1.6 + 0.15
         HACK: 1.7 //1.6 + 0.1
-    }, 
+    },
     SHARE: 4, //1.6 + 2.4 GB
 }
 
 
 //enum for port data
 export const PORT = {
-    NO_DATA: "NULL PORT DATA",    
+    NO_DATA: "NULL PORT DATA",
     //EVAL ports are on PID
     //information from darknet workers to orchestrator
     DARKNET: {
         INFORMATION: 1,
-    //information from darknet orchestrator to workers
+        //information from darknet orchestrator to workers
         PASSWORD: 2
     }
 }
@@ -111,7 +113,7 @@ export const TOOLS = {
         RELAY_SMTP: "relaySMTP.exe",
         HTTP_WORM: "HTTPWorm.exe",
         SQL_INJECT: "SQLInject.exe",
-        LIST: [BRUTE_SSH, FTP_CRACK, RELAY_SMTP, HTTP_WORM, SQL_INJECT]
+        LIST: ["BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe", ]
     }
 }
 
@@ -121,7 +123,7 @@ export const FILE_EXTENSION = {
 }
 
 //enum for message formatting
-const FORMAT = {
+export const FORMAT = {
     INFO: "INFO", //blue
     SUCCESS: "SUCCESS", //green, default color (no extra text needed)
     WARNING: "WARNING",
