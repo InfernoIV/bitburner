@@ -34,6 +34,12 @@ ns.dnet.labreport()         0 GB
         influence stock
 */
 export async function main(ns) {
+    //callback
+    /*
+    ns.atExit(() => {
+        ns.ui.openTail()
+    })*/
+
     //stop logging
     //ns.disableLog("ALL")
     ns.disableLog("sleep")
@@ -70,14 +76,18 @@ async function authenticate_servers(ns, hostname_self) {
 
     //scan for darknet servers every time, since they might shift
     const servers_darknet_hostnames = await evaluate.exec(ns, "ns.dnet.probe()")
+
+
+
     //for each server found by scan
     for (const darknet_hostname of servers_darknet_hostnames) {
-        //check if not already running
-        const running_script = await ns.getRunningScript(CONSTANTS.SCRIPT.DARKNET.WORKER, darknet_hostname)
-        //if already running
-        if (running_script != null) {
+        //get server information
+        //get server information
+        const server_info = await evaluate.exec(ns, "ns.getServer('" + darknet_hostname + "')")
+        //if already running something
+        if (server_info.ramUsed >= (CONSTANTS.RAM.DARKNET.WORKER + CONSTANTS.RAM.EVAL_ORCHESTRATOR)) {
             //log
-            log.info(ns, "Darknet_worker_" + ns.pid, "Host '" + hostname + "' is already running a worker!", true)
+            log.info(ns, "Darknet_worker_" + ns.pid, "Host '" + darknet_hostname + "' is already running a worker!: " + JSON.stringify(server_info))
             //no need to do anything: next
             continue
         }
@@ -88,18 +98,18 @@ async function authenticate_servers(ns, hostname_self) {
         //wait a little bit
         await ns.sleep(CONSTANTS.TIME.WAIT)
         //ask for password
-        const password = await ask_for_password(ns, port_information, port_password, hostname_self,
+        const passwords = await ask_for_passwords(ns, port_information, port_password, hostname_self,
             darknet_hostname)
         //check if we have a password
-        if (password != null) {
+        if (passwords != null || passwords.length > 0) {
             //authenticate
-            await authenticate(ns, port_information, hostname_self, darknet_hostname, password)
+            await authenticate(ns, port_information, hostname_self, darknet_hostname, passwords)
         }
     }
 }
 
 
-async function ask_for_password(ns, port_information, port_password, hostname_self, darknet_hostname) {
+async function ask_for_passwords(ns, port_information, port_password, hostname_self, darknet_hostname) {
     //ask for password
     await port_information.tryWrite(JSON.stringify({
         hostname: hostname_self,
@@ -122,7 +132,7 @@ async function ask_for_password(ns, port_information, port_password, hostname_se
                 //log.info(ns, "Darknet_worker_" + ns.pid, "password reply: '" + JSON.stringify(reply) + "'", true)
                 //remove message
                 port_password.read()
-                //return the password
+                //return the passwords
                 return reply.password
             }
         }
@@ -175,27 +185,37 @@ async function send_information(ns, port_information, hostname_self, darknet_hos
     }))
 }
 
-async function authenticate(ns, port_information, hostname_self, darknet_hostname, password) {
-    //try to authenticate
-    var result_auth = await ns.dnet.authenticate(darknet_hostname,
-        password
-    ) //await evaluate.exec(ns, "ns.dnet.authenticate('" + darknet_hostname + "','" + password + "')")
-    //if successfull
-    if (result_auth.success) {
-        //debug
-        log.success(ns, "Darknet_worker_" + ns.pid, "Authentication successfull with '" + darknet_hostname +
-            "' using password '" + password + "'")
-        //start worker
-        await start_worker(ns, darknet_hostname)
-        //not successfull
-    } else {
-        //send failure message
-        await port_information.tryWrite(JSON.stringify({
-            hostname: hostname_self,
-            type: CONSTANTS.MESSAGE.DARKNET.AUTHENTICATION_FAILED,
-            data: darknet_hostname
-        }))
+async function authenticate(ns, port_information, hostname_self, darknet_hostname, passwords) {
+    //for each password
+    for (const password of passwords) {
+        //try to authenticate
+        var result_auth = await ns.dnet.authenticate(darknet_hostname, password)
+        //if successfull
+        if (result_auth.success) {
+            //debug
+            log.success(ns, "Darknet_worker_" + ns.pid, "Authentication successfull with '" + darknet_hostname +
+                "' using password '" + password + "'", true)
+                    //send success message
+            await port_information.tryWrite(JSON.stringify({
+                hostname: hostname_self,
+                type: CONSTANTS.MESSAGE.DARKNET.AUTHENTICATED,
+                data: darknet_hostname,
+                password: password,
+            }))
+            //start worker
+            await start_worker(ns, darknet_hostname)
+            //exit function
+            return
+        }
     }
+    //not sucessfull
+    //send failure message
+    await port_information.tryWrite(JSON.stringify({
+        hostname: hostname_self,
+        type: CONSTANTS.MESSAGE.DARKNET.AUTHENTICATION_FAILED,
+        data: darknet_hostname,
+        pid: "Darknet_worker_" + ns.pid,
+    }))
 }
 
 
@@ -205,7 +225,6 @@ async function start_worker(ns, hostname) {
     const server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + hostname + "')")
     //get blocked ram
     var ram_blocked = await evaluate.exec(ns, "ns.dnet.getBlockedRam('" + hostname + "')")
-
 
     //variable for results
     var result = null
@@ -244,7 +263,7 @@ async function start_worker(ns, hostname) {
 
         //kill scripts on target server
         //await evaluate.exec(ns, "ns.killall('" + hostname + "')")
-        ns.killall(hostname)
+        await ns.killall(hostname)
 
         //launch worker
         result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, hostname, {

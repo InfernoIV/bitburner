@@ -23,7 +23,7 @@ export async function exec(ns, command) {
     //create port object
     var port = ns.getPortHandle(port_id)
     //data input
-    port.tryWrite(JSON.stringify({direction: "IN", data: command}))
+    await port.tryWrite(JSON.stringify({direction: "IN", data: command}))
     while (true) {
         //if there is data
         if (port.peek() != CONSTANTS.PORT.NO_DATA) {
