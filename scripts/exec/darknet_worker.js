@@ -35,7 +35,9 @@ ns.dnet.labreport()         0 GB
 */
 export async function main(ns) {
     //stop logging
-    ns.disableLog("ALL")
+    //ns.disableLog("ALL")
+    ns.disableLog("sleep")
+
     //get hostname
     const hostname_self = ns.args[0]
     //get max ram usage
@@ -68,113 +70,203 @@ async function authenticate_servers(ns, hostname_self) {
 
     //scan for darknet servers every time, since they might shift
     const servers_darknet_hostnames = await evaluate.exec(ns, "ns.dnet.probe()")
-    //get player charisma
-    const charisma_player = await evaluate.exec(ns, "ns.getPlayer().skills.charisma")
     //for each server found by scan
     for (const darknet_hostname of servers_darknet_hostnames) {
+        //check if not already running
+        const running_script = await ns.getRunningScript(CONSTANTS.SCRIPT.DARKNET.WORKER, darknet_hostname)
+        //if already running
+        if (running_script != null) {
+            //log
+            log.info(ns, "Darknet_worker_" + ns.pid, "Host '" + hostname + "' is already running a worker!", true)
+            //no need to do anything: next
+            continue
+        }
         //get server information
         const server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + darknet_hostname + "')")
-        //check if not authenticated
-        if (!server_details.hasSession) {
+        //send information to orchestrator
+        await send_information(ns, port_information, hostname_self, darknet_hostname, server_details)
+        //wait a little bit
+        await ns.sleep(CONSTANTS.TIME.WAIT)
+        //ask for password
+        const password = await ask_for_password(ns, port_information, port_password, hostname_self,
+            darknet_hostname)
+        //check if we have a password
+        if (password != null) {
+            //authenticate
+            await authenticate(ns, port_information, hostname_self, darknet_hostname, password)
+        }
+    }
+}
 
-            //send information to orchestrator
-            port_information.tryWrite(JSON.stringify({
-                hostname: hostname_self,
-                type: CONSTANTS.MESSAGE.DARKNET.INFORMATION,
-                data: {
-                    target: darknet_hostname,
-                    server_details: server_details,
-                    heartbleed: {code:"000"}
-                }
-            }))
 
-            //wait a little bit
-            await ns.sleep(CONSTANTS.TIME.WAIT)
-
-            //variable to save the password into
-            var password = ""
-            //ask for password
-            port_information.tryWrite(JSON.stringify({
-                hostname: hostname_self,
-                type: CONSTANTS.MESSAGE.DARKNET.PASSWORD_REQUEST,
-                data: darknet_hostname
-            }))
-            //debug
-            //log.info(ns, "Darknet_worker", "Sent password request", true)
-            //wait for answer
-            while (true) {
-                //read the data
-                var reply = port_password.peek()
-                //if there is data
-                if (reply != CONSTANTS.PORT.NO_DATA) {
-                    //format reply
-                    reply = JSON.parse(reply)
-                    //check if we are the recipient
-                    if (hostname_self == reply.worker) {
-                        //get password
-                        password = reply.password
-                        //stop
-                        break
-                    }
-                }
-                //wait a bit
-                await ns.sleep(CONSTANTS.TIME.WAIT)
-            }
-            //debug
-            //log.info(ns, "Darknet_worker", "Received password response of '" + JSON.stringify(reply) + "' for '" + darknet_hostname + "'", true)
-            //try to authenticate
-            var result_auth = await evaluate.exec(ns, "ns.dnet.authenticate('" + darknet_hostname + "','" +
-                password + "')")
-            //set message type
-            //var message_type = CONSTANTS.MESSAGE.DARKNET.AUTHENTICATION_FAILED
-            //if successfull
-            if (result_auth.success) {
+async function ask_for_password(ns, port_information, port_password, hostname_self, darknet_hostname) {
+    //ask for password
+    await port_information.tryWrite(JSON.stringify({
+        hostname: hostname_self,
+        type: CONSTANTS.MESSAGE.DARKNET.PASSWORD_REQUEST,
+        data: darknet_hostname
+    }))
+    //debug
+    //log.info(ns, "Darknet_worker", "Sent password request", true)
+    //wait for answer
+    while (true) {
+        //read the data
+        var reply = port_password.peek()
+        //if there is data
+        if (reply != CONSTANTS.PORT.NO_DATA) {
+            //format reply
+            reply = JSON.parse(reply)
+            //check if we are the recipient
+            if (hostname_self == reply.worker) {
                 //debug
-                log.success(ns, "Darknet_worker", "Authentication successfull with '" + darknet_hostname +
-                    "' using password '" + password + "'", true)
-                // //set type to successfull          
-                //message_type = 
-                //write back to port
-                port_information.tryWrite(JSON.stringify({
-                    hostname: hostname_self,
-                    type: CONSTANTS.MESSAGE.DARKNET.AUTHENTICATED,
-                    data: darknet_hostname
-                }))
-
-            } else {
-                //get more information
-                //check if enough charisma
-                if (charisma_player >= server_details.requiredCharismaSkill) {
-                    //debug
-                    log.info(ns, "Darknet_worker", "Bleeding '" + darknet_hostname + "' ")
-                    //heartbleed the server for information
-                    //Uses an exploit to extract log data from a server by sending a malformed heartbeat request. 
-                    //Retrieves the most recent logs on the server. 
-                    //This can be used to get more feedback on authentication attempts. 
-                    //The retrieved logs are removed from the server, unless the "peek" flag is set to true in the provided HeartbleedOptions.
-                    //Servers will periodically produce logs themselves, as well, which sometimes are useful, but most times are not.
-                    //The speed of capture scales with the number of threads used. 
-                    var result = await evaluate.exec(ns, "ns.dnet.heartbleed('" + darknet_hostname +
-                        "')") //: HeartbleedOptions): Promise<DarknetResult & { logs: string[] }>;
-                    //if successfull
-                    if (result.success) {
-                        //debug
-                        log.success(ns, "Darknet_worker", "heartbleed of '" + darknet_hostname + "': " + JSON
-                            .stringify(result))
-                        //send information to orchestrator
-                        port_information.tryWrite(JSON.stringify({
-                            hostname: hostname_self,
-                            type: CONSTANTS.MESSAGE.DARKNET.INFORMATION,
-                            data: {
-                                target: darknet_hostname,
-                                server_details: server_details,
-                                heartbleed: result.logs
-                            }
-                        }))
-                    }
-                }
+                //log.info(ns, "Darknet_worker_" + ns.pid, "password reply: '" + JSON.stringify(reply) + "'", true)
+                //remove message
+                port_password.read()
+                //return the password
+                return reply.password
             }
         }
+        //wait a bit
+        await ns.sleep(CONSTANTS.TIME.WAIT)
+    }
+}
+
+
+//function to gathers and sends information to orchestrator
+async function send_information(ns, port_information, hostname_self, darknet_hostname, server_details) {
+    //get player charisma
+    const charisma_player = await evaluate.exec(ns, "ns.getPlayer().skills.charisma")
+    //variable for heartbleed
+    var heartbleed = {
+        code: "000"
+    }
+    //get more information
+    //check if enough charisma for heartbleed
+    if (charisma_player >= server_details.requiredCharismaSkill) {
+        //debug
+        //log.info(ns, "Darknet_worker_" + ns.pid, "Bleeding '" + darknet_hostname + "' ")
+        //heartbleed the server for information
+        //Uses an exploit to extract log data from a server by sending a malformed heartbeat request. 
+        //Retrieves the most recent logs on the server. 
+        //This can be used to get more feedback on authentication attempts. 
+        //The retrieved logs are removed from the server, unless the "peek" flag is set to true in the provided HeartbleedOptions.
+        //Servers will periodically produce logs themselves, as well, which sometimes are useful, but most times are not.
+        //The speed of capture scales with the number of threads used. 
+        var result = await evaluate.exec(ns, "ns.dnet.heartbleed('" + darknet_hostname +
+            "')") //: HeartbleedOptions): Promise<DarknetResult & { logs: string[] }>;
+        //if successfull
+        if (result.success) {
+            //debug
+            log.success(ns, "Darknet_worker_" + ns.pid, "heartbleed of '" + darknet_hostname + "': " + JSON
+                .stringify(result))
+            //update heartbleed
+            heartbleed = result.logs
+        }
+    }
+    //send information to orchestrator
+    await port_information.tryWrite(JSON.stringify({
+        hostname: hostname_self,
+        type: CONSTANTS.MESSAGE.DARKNET.INFORMATION,
+        data: {
+            target: darknet_hostname,
+            server_details: server_details,
+            heartbleed: heartbleed
+        }
+    }))
+}
+
+async function authenticate(ns, port_information, hostname_self, darknet_hostname, password) {
+    //try to authenticate
+    var result_auth = await ns.dnet.authenticate(darknet_hostname,
+        password
+    ) //await evaluate.exec(ns, "ns.dnet.authenticate('" + darknet_hostname + "','" + password + "')")
+    //if successfull
+    if (result_auth.success) {
+        //debug
+        log.success(ns, "Darknet_worker_" + ns.pid, "Authentication successfull with '" + darknet_hostname +
+            "' using password '" + password + "'")
+        //start worker
+        await start_worker(ns, darknet_hostname)
+        //not successfull
+    } else {
+        //send failure message
+        await port_information.tryWrite(JSON.stringify({
+            hostname: hostname_self,
+            type: CONSTANTS.MESSAGE.DARKNET.AUTHENTICATION_FAILED,
+            data: darknet_hostname
+        }))
+    }
+}
+
+
+//function that starts worker on server
+async function start_worker(ns, hostname) {
+    //get server details
+    const server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + hostname + "')")
+    //get blocked ram
+    var ram_blocked = await evaluate.exec(ns, "ns.dnet.getBlockedRam('" + hostname + "')")
+
+
+    //variable for results
+    var result = null
+    //while still ram blocked
+    while (ram_blocked > 0) {
+        //free ram
+        result = await evaluate.exec(ns, "ns.dnet.memoryReallocation('" + hostname + "')")
+        //update blocked ram
+        ram_blocked = await evaluate.exec(ns, "ns.dnet.getBlockedRam('" + hostname + "')")
+    }
+    //copy scripts
+    for (const script of CONSTANTS.SCRIPT.DARKNET.TO_COPY) {
+        //copy scripts
+        result = await ns.scp(script, hostname)
+        //result = await evaluate.exec(ns, "ns.scp('" + script + "','" +  hostname + "')")
+
+        //if failed
+        if (!result) {
+            //log warning
+            log.warning(ns, "", "Failed to copy '" + script + "' to '" + hostname + "'")
+        }
+    }
+    //calc ram
+    //get server information
+    const server_info = await evaluate.exec(ns, "ns.getServer('" + hostname + "')")
+    //debug
+    log.info(ns, "Darknet_worker_" + ns.pid, "server '" + hostname + "' starting: " + JSON.stringify(server_info))
+    //if still online / connected
+    if (server_info.isOnline) { //} && server_info.isConnectedToCurrentServer) {
+        //calc ram costs
+        //darkweb server:
+        //worker + eval + eval worker
+        //the eval worker for the darknet worker needs to scale, therefore it is not counted
+        const max_ram_eval_worker = server_info.maxRam - CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM
+            .EVAL_ORCHESTRATOR
+
+        //kill scripts on target server
+        //await evaluate.exec(ns, "ns.killall('" + hostname + "')")
+        ns.killall(hostname)
+
+        //launch worker
+        result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, hostname, {
+            preventDuplicates: true
+        }, hostname, max_ram_eval_worker)
+        //check if ok
+        if (result == false) {
+            //debug
+            log.error(ns, "Darknet_worker_" + ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
+                .stringify(server_info))
+            //give alert
+            ns.alert(ns, "Darknet_worker_" + ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
+                .stringify(server_info))
+            /*
+                //open tail
+            ns.ui.openTail()
+            //stop
+            ns.exit()
+            */
+        }
+        //indicate success
+        log.success(ns, "Darknet_worker_" + ns.pid, "Launched worker on '" + hostname + "'")
     }
 }
 
@@ -188,7 +280,7 @@ async function perform_activities(ns, hostname_self) {
     //Phishing attacks can only be run from scripts on darknet servers.
     var result_phishing = await evaluate.exec(ns, "ns.dnet.phishingAttack()")
     //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
-    log.info(ns, "darknet", "PhishingAttack: " + JSON.stringify(result_phishing))
+    log.info(ns, "Darknet_worker_" + ns.pid, "PhishingAttack: " + JSON.stringify(result_phishing))
     //get files on current server
     const files_cache = await evaluate.exec(ns, "ns.ls('" + hostname_self + "', '.cache')")
     //for each cache file found
@@ -196,7 +288,7 @@ async function perform_activities(ns, hostname_self) {
         //collect cache
         const reward = await evaluate.exec(ns, "ns.dnet.openCache('" + file_name + "')")
         //debug
-        log.success(ns, "Darknet", "Opened cache: '" + JSON.stringify(reward) + "'", true)
+        log.success(ns, "Darknet_worker_" + ns.pid, "Opened cache: '" + JSON.stringify(reward) + "'", true)
     }
 
     //TODO: how to check which stock we own and how to communicate this?
@@ -212,13 +304,13 @@ async function perform_activities(ns, hostname_self) {
     //if success
     if (result_radar.success) {
         //debug
-        log.success(ns, "darknet", "result_radar: " + JSON.stringify(result_radar), true)
+        log.success(ns, "Darknet_worker_" + ns.pid, "result_radar: " + JSON.stringify(result_radar), true)
     }
 
     //Not all who wander are lost.
     var result_report = await ns.dnet.labreport()
     if (result_report.success) {
         //debug
-        log.success(ns, "darknet", "result_report: " + JSON.stringify(result_report), true)
+        log.success(ns, "Darknet_worker_" + ns.pid, "result_report: " + JSON.stringify(result_report), true)
     }
 }

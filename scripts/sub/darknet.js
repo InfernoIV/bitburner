@@ -18,6 +18,14 @@ export class darknet_obj {
             //stop
             return
         }
+        //check if we have the tool
+        //get server information
+        const tools =  await evaluate.exec(ns, "ns.ls('" + CONSTANTS.SERVER.HOME + "','" + CONSTANTS.FILE_EXTENSION.EXECUTABLE + "')")
+        //if we have don't have the tool
+        if (!tools.includes(CONSTANTS.TOOLS.DARKNET)) {
+            //stop
+            return
+        }
         //scan from home
         const servers_darknet = await evaluate.exec(ns, "ns.dnet.probe() ")
         //if darkweb server is available
@@ -29,8 +37,8 @@ export class darknet_obj {
 			//orchestrator + eval + eval worker
 			//worker + eval + eval worker
 			//the eval worker for the darknet worker needs to scale, therefore it is not counted
-			const max_ram_eval_worker = server_info.maxRam - (CONSTANTS.RAM.DARKNET.ORCHESTRATOR + CONSTANTS.RAM.EVAL_ORCHESTRATOR + CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL) - 
-			(CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM.EVAL_ORCHESTRATOR)
+			const max_ram_eval_worker = server_info.maxRam - CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM.EVAL_ORCHESTRATOR /* - CONSTANTS.RAM.DARKNET.ORCHESTRATOR + CONSTANTS.RAM.EVAL_ORCHESTRATOR + CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL */
+			
             
             for (const script of CONSTANTS.SCRIPT.DARKNET.TO_COPY) {
             //copy scripts
@@ -39,11 +47,11 @@ export class darknet_obj {
             }
 
             
-                //start orchestrator
-            var result = ns.exec(CONSTANTS.SCRIPT.DARKNET.ORCHESTRATOR, CONSTANTS.SERVER.DARKWEB, {
+                //start orchestrator (@ home)
+            var result = ns.exec(CONSTANTS.SCRIPT.DARKNET.ORCHESTRATOR, CONSTANTS.SERVER.HOME, { //CONSTANTS.SERVER.DARKWEB
                 preventDuplicates: true
-            }, CONSTANTS.SERVER.DARKWEB, CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL)
-
+            }, CONSTANTS.SERVER.HOME, CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL)
+            //}, CONSTANTS.SERVER.DARKWEB, CONSTANTS.RAM.DARKNET.ORCHESTRATOR_EVAL)
             //check if ok
             if (result == false) {
                 //debug

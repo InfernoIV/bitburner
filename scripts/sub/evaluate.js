@@ -11,7 +11,7 @@ export function init(ns, hostname, script_ram, fill_ram = false, max_ram = 0) {
         max_ram = script_ram
     }
     //execute port script
-    ns.exec(CONSTANTS.SCRIPT.EVAL.ORCHESTRATOR, hostname, 1, 
+    ns.exec(CONSTANTS.SCRIPT.EVAL.ORCHESTRATOR, hostname, {preventDuplicates: true}, 
         ns.pid, hostname, script_ram, fill_ram, max_ram)
 }
 

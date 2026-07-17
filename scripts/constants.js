@@ -47,10 +47,8 @@ export const SCRIPT = {
     DARKNET: {
         ORCHESTRATOR: "scripts/exec/darknet_orchestrator.js",
         WORKER: "scripts/exec/darknet_worker.js",
-        TO_COPY: ["scripts/exec/darknet_orchestrator.js", "scripts/sub/log.js", "scripts/constants.js",
-            "scripts/sub/evaluate.js",
-            "scripts/exec/darknet_worker.js", "scripts/exec/eval_orchestrator.js",
-            "scripts/exec/eval_worker.js",
+        TO_COPY: ["scripts/sub/log.js", "scripts/constants.js", "scripts/sub/evaluate.js",    
+            "scripts/exec/darknet_worker.js", "scripts/exec/eval_orchestrator.js", "scripts/exec/eval_worker.js",            
         ]
     },
     SHARE_WORKER: "scripts/exec/share.js",
@@ -68,8 +66,8 @@ export const RAM = {
     EVAL_ORCHESTRATOR: 2.9, //1.6 + 1.3
     DARKNET: {
         ORCHESTRATOR: 2.9, //1.6 + 1.3
-        ORCHESTRATOR_EVAL: 4, //1.6 + TODO (what is max ram for function cost for the orchestrator?)
-        WORKER: 2.9, //1.6 + 1.3 GB
+        ORCHESTRATOR_EVAL: 5.6, //1.6 + 5? (what is max ram for function cost for the orchestrator?)
+        WORKER: 4, //1.6 + 1.3 (exec) + 0.4 (dnet.authenticate) = 3.3
         WORKER_EVAL: 3.6 //1.6 + 2
     },
     HACK: {
@@ -114,7 +112,8 @@ export const TOOLS = {
         HTTP_WORM: "HTTPWorm.exe",
         SQL_INJECT: "SQLInject.exe",
         LIST: ["BruteSSH.exe", "FTPCrack.exe", "relaySMTP.exe", "HTTPWorm.exe", "SQLInject.exe", ]
-    }
+    },
+    DARKNET: "DarkscapeNavigator.exe",
 }
 
 export const FILE_EXTENSION = {

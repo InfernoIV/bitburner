@@ -6,7 +6,8 @@ import * as evaluate from "scripts/sub/evaluate.js"
 //main loop
 export async function main(ns) {
     //stop logging
-    ns.disableLog("ALL")
+    //ns.disableLog("ALL")
+    ns.disableLog("sleep")
     //save our own hostname
     const hostname_self = ns.args[0]
     //get our max ram
@@ -22,12 +23,20 @@ export async function main(ns) {
         heartbleed: {},
         server_info: {}
     })
+    //keep track of connected servers
+    //key = hostname, value = isStationary property
+    var connected_servers = new Map()
+    //add this server (for visibility?)
+    connected_servers.set(hostname_self, true)
+
     //loop forever
     while (true) {
         //wait until next mutation
         await ns.sleep(CONSTANTS.TIME.WAIT) //await ns.dnet.nextMutation()
         //communicate with workers
-        await communicate_with_workers(ns, servers_passwords)
+        await communicate_with_workers(ns, servers_passwords, connected_servers)
+        //move connected servers
+        //await move_servers(ns, connected_servers)
     }
 }
 
@@ -38,7 +47,7 @@ export async function main(ns) {
     type = type of request
     data = data (depends on the request)
 */
-async function communicate_with_workers(ns, servers_passwords) {
+async function communicate_with_workers(ns, servers_passwords, connected_servers) {
     //create port object
     const port_information = ns.getPortHandle(CONSTANTS.PORT.DARKNET.INFORMATION)
     //create port object
@@ -101,22 +110,26 @@ async function communicate_with_workers(ns, servers_passwords) {
                 //save to map
                 servers_passwords.set(message.data, password_data)
                 //log
-                log.success(ns, "Darknet", "Authentication success for '" + message.data + "' with password '" +
+                log.success(ns, "Darknet_orchestrator", "Authentication success for '" + message.data + "' with password '" +
                     password_data.password + "' and hint: '" + password_data.hint + "'")
                 //stop
                 break
 
                 //server indicated authentication failed
             case CONSTANTS.MESSAGE.DARKNET.AUTHENTICATION_FAILED:
-                //data contains the target hostname of which authentication failed
                 //get saved password data
                 password_data = servers_passwords.get(message.data)
                 //log
-                log.warning(ns, "Darknet", "Authentication failed for '" + message.data + "' with information '" +
+                log.warning(ns, "Darknet_orchestrator", "Authentication failed for '" + message.data + "' with information '" +
                     JSON.stringify(password_data) + "'")
+
+                //data contains the target hostname of which authentication failed
+                correct_password(ns, servers_passwords, message.data)
+                
                 
                 //remove from map
-                servers_passwords.delete(message.data)
+                //servers_passwords.delete(message.data)
+                
 
                 //if worker requests a password 
             case CONSTANTS.MESSAGE.DARKNET.PASSWORD_REQUEST:
@@ -133,10 +146,6 @@ async function communicate_with_workers(ns, servers_passwords) {
                     worker: message.hostname,
                     password: password
                 }))
-                /*log.info(ns, "Darknet_orchestrator", "Replied to password request of '" + message.hostname + "' with: " + JSON.stringify({
-                    worker: message.hostname,
-                    password: password
-                }), true)*/
                 //stop
                 break
 
@@ -205,10 +214,125 @@ function solve_passwords(ns, servers_passwords, message) {
 //function to return the information as soon as it is available
 function guess_password(ns, hostname_target, server_info, heartbleed) {
     //log information
-    log.info(ns, "Darknet", "Received password HB information: '" + JSON.stringify(heartbleed) + "' fom server '" +
+    log.info(ns, "Darknet_orchestrator", "Received password HB information: '" + JSON.stringify(heartbleed) + "' fom server '" +
         hostname_target + "', with server data: '" + JSON.stringify(server_info) + "'")
     //create a variable to use by multiple conditions
     var password = ""
+
+    //log.info(ns, "Darknet_orchestrator", "heartbleed: '" + JSON.stringify(heartbleed) + "'", true)
+
+    //works:
+
+    //if no password needed
+    if (server_info.passwordLength == 0) {
+        //no password
+        return ""
+    }
+
+    //if we need to extract the password from the data (numeric)
+    if (server_info.passwordHint == "Type the numbers to prove you are human") {
+        //for each character in the data
+        for (const index in server_info.data) {
+            var character = server_info.data[index]
+            //check if a number
+            if (!isNaN(character)) {// >= '0' && character <= '9') {
+                //add to password
+                password += character
+            }
+        }
+        //return the pieced password
+        return password
+    }
+    
+    //Password hint: 'The password is the value of the number 'CIII'
+    if (server_info.passwordHint.includes("The password is the value of the number")) {
+        //split string by ''
+
+        //convert roman into number ???
+        return ""
+    }
+
+
+    //if the password is default = 0's or 1234..
+    if (server_info.passwordHint.includes("default password")) {
+        //if numeric
+        if(server_info.passwordFormat == "numeric") {
+            //for the lenght of the password
+            for (let i = 0; i < server_info.passwordLength; i++) {            
+                //add zeroes
+                password += (i+1)
+            }
+            //debug
+            //log.info(ns, "Darknet_orchestrator", "the default password: '" + password + "' (" + server_info.passwordHint + ")", true)
+            //return the generated password
+            return password
+        //a-z
+        } else if ("alphabetic") {
+            if (server_info.passwordLength == 8) {
+                //return 
+                return "password"
+            } else if(server_info.passwordLength == 4) {
+                return "admin"
+            }
+        }
+        
+    }
+
+    //TODO: 
+    // "'The password is a number between 0 and 100' => '00'"
+
+
+
+    /*
+    the password is the base 5 number 3031 in base 10
+    "the password is the base 4 number 111 in base 10"
+    "passwordHint":"the password is the base 8 number 505 in base 10",
+    "data":"8,505",
+    "passwordLength":3,
+    "passwordFormat":"numeric"
+    */
+   if (server_info.passwordHint.includes("the password is the base")) {
+        //regex for base
+        const regex_base = /base \d{1,}/
+        //regex for number
+        const regex_number = /number \d{1,}/
+        //get radix (get the first entry of the regex array, then split by spaces, then take the 2nd value)
+        var radix = parseInt(server_info.passwordHint.match(regex_base)[0].split(" ")[1])
+        //get the number (get the first entry of the regex array, then split by spaces, then take the 2nd value)
+        var number_string = server_info.passwordHint.match(regex_number)[0].split(" ")[1]
+        //parse to base 10
+        var number = parseInt(number_string, radix)
+        //return (as string)
+        return "" + number
+   }
+
+
+
+    //SET TO LAST
+    //if the password is part of the hint
+    if (server_info.passwordHint.includes("The password is") || 
+        server_info.passwordHint.includes("Remember to use") ||
+        server_info.passwordHint.includes("It's set to") || 
+        server_info.passwordHint.includes("The secret is") || 
+        server_info.passwordHint.includes("The key is") ||
+        //"passwordHint":"The PIN uses 678","data":"678","passwordLength":3,"passwordFormat":"numeric"
+        server_info.passwordHint.includes("The PIN uses") ||
+        //"passwordHint":"The PIN is 26","data":"","passwordLength":2,"passwordFormat":"numeric"
+        server_info.passwordHint.includes("The PIN is")
+){
+        //password are the last characters of the hint
+        password = server_info.passwordHint.substring(server_info.passwordHint.length - server_info.passwordLength)
+        //debug
+        //log.info(ns, "Darknet_orchestrator", "Password hint: '" + server_info.passwordHint + "' => '" + password + "'", true)
+        //return password
+        return password
+    }
+
+    //doesn't work?
+
+
+    
+
 
     //check if passwordExpected exists
     if ("passwordExpected" in heartbleed) {
@@ -221,8 +345,6 @@ function guess_password(ns, hostname_target, server_info, heartbleed) {
         }
     }
 
-
-    
     //try to solve by model
     switch (server_info.modelId) {
         case "FreshInstall_1.0":
@@ -243,51 +365,70 @@ function guess_password(ns, hostname_target, server_info, heartbleed) {
             break
     }
 
-    //solve by hints
-    //if no password needed
-    if (server_info.passwordLength == 0) {
-        //no password
-        return ""
-    }
 
+
+
+
+
+    
+
+       //correct?
     if (server_info.passwordHint == "you are one who's'nt authorized") {
         return "admin"
     }
 
-    //if we need to extract the password from the data (numeric)
-    if (server_info.passwordHint == "Type the numbers to prove you are human") {
-        //for each character in the data
-        for (const character in server_info.data) {
-            //check if a number
-            if (character >= '0' && character <= '9') {
-                //add to password
-                password += character
-            }
-        }
-        //return the pieced password
-        return password
-    }
-
-    //if the password is default = 0's
-    if (server_info.passwordHint.includes("the default password")) {
-        //for the lenght of the password
-        for (let i = 0; i < server.passwordLength; i++) {
-            //add zeroes
-            password += "0"
-        }
-        //return the generated password
-        return password
-    }
-
-    //if the password is part of the hint
-    if (server_info.passwordHint.includes("The password is") || server_info.passwordHint.includes(
-            "Remember to use") ||
-        server_info.passwordHint
-        .includes("It's set to") || server_info.passwordHint.includes("The secret is")){
-        //password are the last characters of the hint
-        return server_info.passwordHint.substring(server_info.passwordHint.length - server_info.passwordLength)
+    //doesn't work
+    //"modelId":"Laika4","passwordHint":"It's my dog's name","data":"","passwordLength":4,"passwordFormat":"alphabetic"
+    if (server_info.passwordHint.includes("name")) {
+        return server_info.modelId.substring(0, server_info.passwordLength-1)
     }
 
     //nothing found
-    return null
+    return ""
 }
+
+
+//correct password
+async function correct_password(ns, servers_passwords, hostname) {
+     //get saved password data
+    var password_data = servers_passwords.get(hostname)
+
+    //if it should be the default password
+    if (password_data.server_info.passwordHint.includes("default password") && password_data.server_info.numeric) {
+        //set to 0's instead
+        servers_passwords.set(hostname, "0".repeat(password_data.server_info.passwordLength))
+    }
+}
+
+/*
+
+
+
+
+
+
+
+
+
+"passwordHint":"Warning: password buffer is 5 bytes",
+"data":"",
+"passwordLength":5,
+"passwordFormat":"alphabetic"
+
+"passwordHint":"Only a true master may pass",
+"data":"",
+"passwordLength":3,
+"passwordFormat":"numeric",
+heartbleed: '{
+    "code":401,
+    "message":"Hint: 0 symbols are match exactly,  and 0 symbols match but are in the wrong place.",
+    "data":"0,0",
+    "passwordAttempted":"PASSWORD_NOT_FOUND"
+}'
+
+"The default password is set\",\"data\":\"\",\"passwordAttempted\":\"00000\"}"],"server_info":{"isOnline":true,"isConnectedToCurrentServer":true,"hasSession":false,"modelId":"FreshInstall_1.0","passwordHint":"The default password is set","data":"","logTrafficInterval":31,"passwordLength":5,"passwordFormat":"numeric","blockedRam":1,"difficulty":0,"requiredCharismaSkill":1,"depth":0,"isStationary":false}}
+
+
+
+[2026-07-17 12:18:31] scripts/exec/darknet_orchestrator.js: INFO	Darknet_orchestrator	' => 'II''
+*/
