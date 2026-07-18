@@ -62,13 +62,13 @@ export function error(ns, prefix, message) {
 
 //function that execute the formatting and printing of the message 
 function print_message(ns, message, type, prefix, print_in_terminal = false) {
-    //get time
-    //const date = Date.now()
-    //format time
-    //const time = ns.format.time(date) //date.getUTCHours() + ":" + date.getUTCMinutes() + ":" + date.getUTCSeconds()
     //build message
-    var formatted_message = type + '\t' + prefix + '\t' + message
-    
+    var formatted_message = type 
+    //check if prefix is needed
+    if (prefix != "") {
+        formatted_message += '\t' + prefix 
+    }
+    formatted_message += '\t' + message
     //print in the logs
     ns.print(formatted_message)
     //if also in the terminal

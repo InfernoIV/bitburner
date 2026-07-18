@@ -87,7 +87,8 @@ async function authenticate_servers(ns, hostname_self) {
         //if already running something
         if (server_info.ramUsed >= (CONSTANTS.RAM.DARKNET.WORKER + CONSTANTS.RAM.EVAL_ORCHESTRATOR)) {
             //log
-            log.info(ns, "Darknet_worker_" + ns.pid, "Host '" + darknet_hostname + "' is already running a worker!: " + JSON.stringify(server_info))
+            log.info(ns, ns.pid, "Host '" + darknet_hostname +
+                "' is already running a worker!: " + JSON.stringify(server_info))
             //no need to do anything: next
             continue
         }
@@ -129,7 +130,7 @@ async function ask_for_passwords(ns, port_information, port_password, hostname_s
             //check if we are the recipient
             if (hostname_self == reply.worker) {
                 //debug
-                //log.info(ns, "Darknet_worker_" + ns.pid, "password reply: '" + JSON.stringify(reply) + "'", true)
+                //log.info(ns, ns.pid, "password reply: '" + JSON.stringify(reply) + "'", true)
                 //remove message
                 port_password.read()
                 //return the passwords
@@ -148,13 +149,14 @@ async function send_information(ns, port_information, hostname_self, darknet_hos
     const charisma_player = await evaluate.exec(ns, "ns.getPlayer().skills.charisma")
     //variable for heartbleed
     var heartbleed = {
+        //filler
         code: "000"
     }
     //get more information
     //check if enough charisma for heartbleed
     if (charisma_player >= server_details.requiredCharismaSkill) {
         //debug
-        //log.info(ns, "Darknet_worker_" + ns.pid, "Bleeding '" + darknet_hostname + "' ")
+        //log.info(ns, ns.pid, "Bleeding '" + darknet_hostname + "' ")
         //heartbleed the server for information
         //Uses an exploit to extract log data from a server by sending a malformed heartbeat request. 
         //Retrieves the most recent logs on the server. 
@@ -167,7 +169,7 @@ async function send_information(ns, port_information, hostname_self, darknet_hos
         //if successfull
         if (result.success) {
             //debug
-            log.success(ns, "Darknet_worker_" + ns.pid, "heartbleed of '" + darknet_hostname + "': " + JSON
+            log.success(ns, ns.pid, "heartbleed of '" + darknet_hostname + "': " + JSON
                 .stringify(result))
             //update heartbleed
             heartbleed = result.logs
@@ -193,9 +195,9 @@ async function authenticate(ns, port_information, hostname_self, darknet_hostnam
         //if successfull
         if (result_auth.success) {
             //debug
-            log.success(ns, "Darknet_worker_" + ns.pid, "Authentication successfull with '" + darknet_hostname +
+            log.success(ns, ns.pid, "Authentication successfull with '" + darknet_hostname +
                 "' using password '" + password + "'", true)
-                    //send success message
+            //send success message
             await port_information.tryWrite(JSON.stringify({
                 hostname: hostname_self,
                 type: CONSTANTS.MESSAGE.DARKNET.AUTHENTICATED,
@@ -214,7 +216,7 @@ async function authenticate(ns, port_information, hostname_self, darknet_hostnam
         hostname: hostname_self,
         type: CONSTANTS.MESSAGE.DARKNET.AUTHENTICATION_FAILED,
         data: darknet_hostname,
-        pid: "Darknet_worker_" + ns.pid,
+        pid: ns.pid,
     }))
 }
 
@@ -251,7 +253,7 @@ async function start_worker(ns, hostname) {
     //get server information
     const server_info = await evaluate.exec(ns, "ns.getServer('" + hostname + "')")
     //debug
-    log.info(ns, "Darknet_worker_" + ns.pid, "server '" + hostname + "' starting: " + JSON.stringify(server_info))
+    log.info(ns, ns.pid, "server '" + hostname + "' starting: " + JSON.stringify(server_info))
     //if still online / connected
     if (server_info.isOnline) { //} && server_info.isConnectedToCurrentServer) {
         //calc ram costs
@@ -272,20 +274,14 @@ async function start_worker(ns, hostname) {
         //check if ok
         if (result == false) {
             //debug
-            log.error(ns, "Darknet_worker_" + ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
+            log.error(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
                 .stringify(server_info))
             //give alert
-            ns.alert(ns, "Darknet_worker_" + ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
+            ns.alert(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
                 .stringify(server_info))
-            /*
-                //open tail
-            ns.ui.openTail()
-            //stop
-            ns.exit()
-            */
         }
         //indicate success
-        log.success(ns, "Darknet_worker_" + ns.pid, "Launched worker on '" + hostname + "'")
+        log.success(ns, ns.pid, "Launched worker on '" + hostname + "'")
     }
 }
 
@@ -299,15 +295,51 @@ async function perform_activities(ns, hostname_self) {
     //Phishing attacks can only be run from scripts on darknet servers.
     var result_phishing = await evaluate.exec(ns, "ns.dnet.phishingAttack()")
     //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
-    log.info(ns, "Darknet_worker_" + ns.pid, "PhishingAttack: " + JSON.stringify(result_phishing))
+    log.info(ns, ns.pid, "PhishingAttack: " + JSON.stringify(result_phishing))
     //get files on current server
-    const files_cache = await evaluate.exec(ns, "ns.ls('" + hostname_self + "', '.cache')")
+    const files_cache = await evaluate.exec(ns, "ns.ls('" + hostname_self + "')") //, '.cache')")
     //for each cache file found
     for (const file_name of files_cache) {
-        //collect cache
-        const reward = await evaluate.exec(ns, "ns.dnet.openCache('" + file_name + "')")
-        //debug
-        log.success(ns, "Darknet_worker_" + ns.pid, "Opened cache: '" + JSON.stringify(reward) + "'", true)
+        //get the extention
+        const file_extension = file_name.split('.').pop()
+        //depending on the extention
+        switch (file_extension) {
+            case CONSTANTS.FILE_EXTENSION.CACHE:
+                //collect cache
+                const reward = await evaluate.exec(ns, "ns.dnet.openCache('" + file_name + "')")
+                //debug
+                log.success(ns, ns.pid, "Opened cache: '" + JSON.stringify(reward) + "'", true)
+                //stop
+                break
+            case CONSTANTS.FILE_EXTENSION.TEXT:
+            case CONSTANTS.FILE_EXTENSION.LITERATURE:
+                //read file
+                const file_contents = await evaluate.exec(ns, "ns.read('" + file_name + "')")
+                //debug
+                log.success(ns, ns.pid, "Found file: '" + file_name + "' => '" + file_contents + "'", true)
+                //send success message
+                await port_information.tryWrite(JSON.stringify({
+                    hostname: hostname_self,
+                    type: CONSTANTS.MESSAGE.DARKNET.FILE,
+                    data: file_contents,
+                    file_name: file_name,
+                }))
+                //remove the file
+                await evaluate.exec(ns, "ns.rm('" + file_name + "','" + hostname_self + "')")
+                //stop
+                break
+            case CONSTANTS.FILE_EXTENSION.EXECUTABLE:
+                //what to do?
+                log.warning(ns, ns.pid, "Found executable '" + file_extension + "'")
+                //stop
+                break
+            default:
+                log.error(ns, ns.pid, "Uncaught condition 'file_extension': '" + file_extension + "'")
+        }
+
+        //if type of cache
+        //if type of txt or lit
+
     }
 
     //TODO: how to check which stock we own and how to communicate this?
@@ -323,13 +355,13 @@ async function perform_activities(ns, hostname_self) {
     //if success
     if (result_radar.success) {
         //debug
-        log.success(ns, "Darknet_worker_" + ns.pid, "result_radar: " + JSON.stringify(result_radar), true)
+        log.success(ns, ns.pid, "result_radar: " + JSON.stringify(result_radar), true)
     }
 
     //Not all who wander are lost.
     var result_report = await ns.dnet.labreport()
     if (result_report.success) {
         //debug
-        log.success(ns, "Darknet_worker_" + ns.pid, "result_report: " + JSON.stringify(result_report), true)
+        log.success(ns, ns.pid, "result_report: " + JSON.stringify(result_report), true)
     }
 }

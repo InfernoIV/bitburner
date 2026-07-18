@@ -14,9 +14,10 @@ export const TIME = {
 export const MESSAGE = {
     DARKNET: {
         INFORMATION: "I",
+        FILE: "F",
         PASSWORD_REQUEST: "P",
         AUTHENTICATED: "A",
-        AUTHENTICATION_FAILED: "F"
+        AUTHENTICATION_FAILED: "AF"
     },
 }
 
@@ -118,7 +119,9 @@ export const TOOLS = {
 
 export const FILE_EXTENSION = {
     EXECUTABLE: ".exe",
-    CACHE: "",
+    CACHE: ".cache",
+    TEXT: ".txt",
+    LITERATURE: ".lit",
 }
 
 //enum for message formatting
