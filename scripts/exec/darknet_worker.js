@@ -43,19 +43,22 @@ export async function main(ns) {
     //stop logging
     //ns.disableLog("ALL")
     ns.disableLog("sleep")
-
     //get hostname
     const hostname_self = ns.args[0]
     //get max ram usage
     const max_ram = ns.args[1]
     //init eval
     evaluate.init(ns, hostname_self, CONSTANTS.RAM.DARKNET.WORKER_EVAL, true, max_ram)
+    //port for sending questions
+    const port_information = ns.getPortHandle(CONSTANTS.PORT.DARKNET.INFORMATION)
+    //port for checking answers
+    const port_password = ns.getPortHandle(CONSTANTS.PORT.DARKNET.PASSWORD)
     //endless work
     while (true) {
         //authenticate servers
-        await authenticate_servers(ns, hostname_self)
+        await authenticate_servers(ns, hostname_self, port_information, port_password)
         //perform different activities
-        await perform_activities(ns, hostname_self)
+        await perform_activities(ns, hostname_self, port_information)
         //wait a bit
         await ns.sleep(CONSTANTS.TIME.WAIT)
     }
@@ -68,11 +71,8 @@ export async function main(ns) {
     data = data (depends on the request)
 */
 //function that tries to authenticate adjacent servers, with information provided by the orchestrator
-async function authenticate_servers(ns, hostname_self) {
-    //port for sending questions
-    const port_information = ns.getPortHandle(CONSTANTS.PORT.DARKNET.INFORMATION)
-    //port for checking answers
-    const port_password = ns.getPortHandle(CONSTANTS.PORT.DARKNET.PASSWORD)
+async function authenticate_servers(ns, hostname_self, port_information, port_password) {
+    
 
     //scan for darknet servers every time, since they might shift
     const servers_darknet_hostnames = await evaluate.exec(ns, "ns.dnet.probe()")
@@ -83,7 +83,13 @@ async function authenticate_servers(ns, hostname_self) {
     for (const darknet_hostname of servers_darknet_hostnames) {
         //get server information
         //get server information
-        const server_info = await evaluate.exec(ns, "ns.getServer('" + darknet_hostname + "')")
+        var server_info = await evaluate.exec(ns, "ns.getServer('" + darknet_hostname + "')")
+        //check if still online
+        if(!server_info.isOnline) {
+            //go to next
+            continue
+        }
+
         //if already running something
         if (server_info.ramUsed >= (CONSTANTS.RAM.DARKNET.WORKER + CONSTANTS.RAM.EVAL_ORCHESTRATOR)) {
             //log
@@ -92,15 +98,20 @@ async function authenticate_servers(ns, hostname_self) {
             //no need to do anything: next
             continue
         }
-        //get server information
-        const server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + darknet_hostname + "')")
         //send information to orchestrator
-        await send_information(ns, port_information, hostname_self, darknet_hostname, server_details)
+        await send_information(ns, port_information, hostname_self, darknet_hostname)
         //wait a little bit
         await ns.sleep(CONSTANTS.TIME.WAIT)
         //ask for password
         const passwords = await ask_for_passwords(ns, port_information, port_password, hostname_self,
             darknet_hostname)
+        //update server info
+        server_info = await evaluate.exec(ns, "ns.getServer('" + darknet_hostname + "')")
+        //check if still online
+        if(!server_info.isOnline) {
+            //go to next
+            continue
+        }
         //check if we have a password
         if (passwords != null || passwords.length > 0) {
             //authenticate
@@ -144,7 +155,7 @@ async function ask_for_passwords(ns, port_information, port_password, hostname_s
 
 
 //function to gathers and sends information to orchestrator
-async function send_information(ns, port_information, hostname_self, darknet_hostname, server_details) {
+async function send_information(ns, port_information, hostname_self, darknet_hostname) {
     //get player charisma
     const charisma_player = await evaluate.exec(ns, "ns.getPlayer().skills.charisma")
     //variable for heartbleed
@@ -153,6 +164,10 @@ async function send_information(ns, port_information, hostname_self, darknet_hos
         code: "000"
     }
     //get more information
+    //refresh server details AFTER heartbleed
+    var server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + darknet_hostname + "')")
+
+    /*
     //check if enough charisma for heartbleed
     if (charisma_player >= server_details.requiredCharismaSkill) {
         //debug
@@ -168,6 +183,14 @@ async function send_information(ns, port_information, hostname_self, darknet_hos
             "')") //: HeartbleedOptions): Promise<DarknetResult & { logs: string[] }>;
         //if successfull
         if (result.success) {
+            //check if not restarting
+            if(result.logs == ["Server restarting, terminating scripts..."]) {
+                //debug
+                log.warning(ns, ns.pid, "Server '" + darknet_hostname + "' is restarting due to heartbleed!")
+                //go to next server
+                continue
+            }
+
             //debug
             log.success(ns, ns.pid, "heartbleed of '" + darknet_hostname + "': " + JSON
                 .stringify(result))
@@ -175,6 +198,9 @@ async function send_information(ns, port_information, hostname_self, darknet_hos
             heartbleed = result.logs
         }
     }
+    //refresh server details AFTER heartbleed
+    server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + darknet_hostname + "')")
+    */
     //send information to orchestrator
     await port_information.tryWrite(JSON.stringify({
         hostname: hostname_self,
@@ -187,27 +213,64 @@ async function send_information(ns, port_information, hostname_self, darknet_hos
     }))
 }
 
+
+//try to authenticate with this server
 async function authenticate(ns, port_information, hostname_self, darknet_hostname, passwords) {
     //for each password
     for (const password of passwords) {
-        //try to authenticate
-        var result_auth = await ns.dnet.authenticate(darknet_hostname, password)
-        //if successfull
-        if (result_auth.success) {
+        //set retry to initiate first loop
+        var retry = true
+        //retry system
+        while (retry) {
+            //set retry to false, since the loop started
+            retry = false
+            //try to authenticate
+            var result_auth = await ns.dnet.authenticate(darknet_hostname, password)
+            //if successfull
+            if (result_auth.success) {
+                //debug
+                log.success(ns, ns.pid, "Authentication successfull with '" + darknet_hostname +
+                    "' using password '" + password + "'")
+                //debug
+                ns.toast("Dnet authenticated '" + darknet_hostname + "' using '" + password + "'")
+                //send success message
+                await port_information.tryWrite(JSON.stringify({
+                    hostname: hostname_self,
+                    type: CONSTANTS.MESSAGE.DARKNET.AUTHENTICATED,
+                    data: darknet_hostname,
+                    password: password,
+                }))
+                //start worker
+                await start_worker(ns, darknet_hostname)
+                //exit function
+                return
+            }
             //debug
-            log.success(ns, ns.pid, "Authentication successfull with '" + darknet_hostname +
-                "' using password '" + password + "'", true)
-            //send success message
-            await port_information.tryWrite(JSON.stringify({
-                hostname: hostname_self,
-                type: CONSTANTS.MESSAGE.DARKNET.AUTHENTICATED,
-                data: darknet_hostname,
-                password: password,
-            }))
-            //start worker
-            await start_worker(ns, darknet_hostname)
-            //exit function
-            return
+            log.warning(ns, ns.pid, "Auth failed: " + JSON.stringify(result_auth))
+            /*
+            Success: 200;
+            DirectConnectionRequired: 351;
+            AuthFailure: 401;
+            Forbidden: 403;
+            NotFound: 404;
+            RequestTimeOut: 408;
+            NotEnoughCharisma: 451;
+
+            StasisLinkLimitReached: 453;
+            NoBlockRAM: 454;
+            PhishingFailed: 455;
+            ServiceUnavailable: 503;
+            */
+            //check if we need to do anything
+            if (result_auth.code == "408") { //RequestTimeOut
+                retry = true
+            }
+            if (result_auth.code == "351" || //DirectConnectionRequired = server moved
+                result_auth.code == "451" || //NotEnoughCharisma = don't try -> next!
+                result_auth.code == "503") { //ServiceUnavailable = server moved?
+                //stop authenticating for this server
+                return
+            }
         }
     }
     //not sucessfull
@@ -218,6 +281,9 @@ async function authenticate(ns, port_information, hostname_self, darknet_hostnam
         data: darknet_hostname,
         pid: ns.pid,
     }))
+    //debug
+    ns.ui.openTail()
+    ns.exit()
 }
 
 
@@ -277,8 +343,9 @@ async function start_worker(ns, hostname) {
             log.error(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
                 .stringify(server_info))
             //give alert
+            /*
             ns.alert(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
-                .stringify(server_info))
+                .stringify(server_info))*/
         }
         //indicate success
         log.success(ns, ns.pid, "Launched worker on '" + hostname + "'")
@@ -287,7 +354,7 @@ async function start_worker(ns, hostname) {
 
 
 //activities that can be performed multiple times, but only by self
-async function perform_activities(ns, hostname_self) {
+async function perform_activities(ns, hostname_self, port_information) {
     //Spends time sending out phishing emails, attempting to find some non-technical middle manager to fall for the scam. 
     // Builds charisma. Often the attempt will fail, but success can be increased with crime success rate and charisma stats.
     //The amount of money lifted scales with the number of threads used, if successful. 
@@ -301,7 +368,7 @@ async function perform_activities(ns, hostname_self) {
     //for each cache file found
     for (const file_name of files_cache) {
         //get the extention
-        const file_extension = file_name.split('.').pop()
+        const file_extension = "." + file_name.split('.').pop()
         //depending on the extention
         switch (file_extension) {
             case CONSTANTS.FILE_EXTENSION.CACHE:
@@ -317,6 +384,8 @@ async function perform_activities(ns, hostname_self) {
                 const file_contents = await evaluate.exec(ns, "ns.read('" + file_name + "')")
                 //debug
                 log.success(ns, ns.pid, "Found file: '" + file_name + "' => '" + file_contents + "'", true)
+            case CONSTANTS.FILE_EXTENSION.CODING_CONTRACT:
+                /*
                 //send success message
                 await port_information.tryWrite(JSON.stringify({
                     hostname: hostname_self,
@@ -324,6 +393,7 @@ async function perform_activities(ns, hostname_self) {
                     data: file_contents,
                     file_name: file_name,
                 }))
+                    */
                 //remove the file
                 await evaluate.exec(ns, "ns.rm('" + file_name + "','" + hostname_self + "')")
                 //stop
@@ -332,6 +402,9 @@ async function perform_activities(ns, hostname_self) {
                 //what to do?
                 log.warning(ns, ns.pid, "Found executable '" + file_extension + "'")
                 //stop
+                break
+            case CONSTANTS.FILE_EXTENSION.SCRIPT:
+                //do nothing
                 break
             default:
                 log.error(ns, ns.pid, "Uncaught condition 'file_extension': '" + file_extension + "'")

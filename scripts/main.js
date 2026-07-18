@@ -30,7 +30,8 @@ export async function main(ns) {
     while (true) {
         //start darknet main loop on darkweb
         await darknet.deploy(ns)
-        
+        //return
+
         //check and add cloud servers
         //TODO
         //await cloud.manage_servers(ns)
@@ -69,10 +70,10 @@ async function init(ns) {
     const [x, y] = ns.ui.windowSize()
     const width = x / 2
     const height = y / 3
-    ns.ui.openTail()
+    /*ns.ui.openTail()
     ns.ui.resizeTail(width, height)
     ns.ui.moveTail(x - width - 5, y - height - 5)
-
+    */
     //callback
     ns.atExit(() => {
         //log exit

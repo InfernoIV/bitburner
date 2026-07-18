@@ -47,9 +47,9 @@ export function success(ns, prefix, message, print_in_terminal = false) {
 
 
 //function that logs warning messages
-export function warning(ns, prefix, message) {
+export function warning(ns, prefix, message, print_in_terminal = false) {
     //pass to execute script
-    print_message(ns, message, CONSTANTS.FORMAT.WARNING, prefix, true)
+    print_message(ns, message, CONSTANTS.FORMAT.WARNING, prefix, print_in_terminal)
 }
 
 

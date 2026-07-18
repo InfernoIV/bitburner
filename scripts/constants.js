@@ -69,7 +69,7 @@ export const RAM = {
         ORCHESTRATOR: 2.9, //1.6 + 1.3
         ORCHESTRATOR_EVAL: 5.6, //1.6 + 5? (what is max ram for function cost for the orchestrator?)
         WORKER: 4, //1.6 + 1.3 (exec) + 0.4 (dnet.authenticate) = 3.3
-        WORKER_EVAL: 3.6 //1.6 + 2
+        WORKER_EVAL: 3.6 //1.6 + 2 (3.6) -> +4 = 5.6
     },
     HACK: {
         WEAKEN: 1.75, //1.6 + 0.15 
@@ -122,6 +122,8 @@ export const FILE_EXTENSION = {
     CACHE: ".cache",
     TEXT: ".txt",
     LITERATURE: ".lit",
+    SCRIPT: ".js",
+    CODING_CONTRACT: ".cct",
 }
 
 //enum for message formatting

@@ -8,6 +8,11 @@ export async function main(ns) {
     //stop logging
     //ns.disableLog("ALL")
     ns.disableLog("sleep")
+    //clear ports
+    ns.getPortHandle(CONSTANTS.PORT.DARKNET.INFORMATION).clear()
+    ns.getPortHandle(CONSTANTS.PORT.DARKNET.PASSWORD).clear()
+
+
     //save our own hostname
     const hostname_self = ns.args[0]
     //get our max ram
@@ -100,6 +105,8 @@ async function communicate_with_workers(ns, servers_passwords, connected_servers
                 //information is provided from workers to orchestrator
             case CONSTANTS.MESSAGE.DARKNET.INFORMATION:
                 //data contains the hint and server information
+                //log
+                log.info(ns, "", "Received information: '" + JSON.stringify(message) + "'")
                 //solve passwords
                 await solve_passwords(ns, servers_passwords, message)
                 //stop
@@ -142,6 +149,9 @@ async function communicate_with_workers(ns, servers_passwords, connected_servers
                         message.data +
                         "' with information '" +
                         JSON.stringify(password_data) + "' => " + JSON.stringify(server_info))
+                    //TEMP
+                    ns.ui.openTail()
+                    ns.exit()
                 }
 
                 //if worker requests a password 
@@ -233,24 +243,70 @@ async function guess_password(ns, hostname_target, server_info, heartbleed) {
     const hint = server_info.passwordHint
     //get server details
     const server_details = await evaluate.exec(ns, "ns.getServer('" + hostname_target + "')")
-
+    //TODO: refactor
+    const common_passwords_numeric = ["2000",  "112233", "1234567",  "123123","696969",  "666666", "123321","1234567890","654321", "7777777", "121212", "0",]
+    const common_passwords_alphabetic = ["tigger", "sunshine", "iloveyou", "charlie", "robert", "thomas", "hockey", "ranger", "daniel", "starwars", "george", "computer", "michelle","dragon","baseball","football", "monkey", "letmein","shadow", "master","qwertyuiop", "mustang","mustang",  "michael", "superman",   "qazwsx",   "jordan", "jennifer", "zxcvbnm", "fido", "spot", "rover", "max",]
+    const common_passwords_alphanumeric = ["abc123","1qaz2wsx","123qwe","trustno1",]
+    
     //log information
     log.info(ns, "", "Guessing password for model '" + model + "': format: '" + format + "', length: '" + length +
         "', hint: '" + hint + "', data: '" + data + "'")
-
+    //password variable to fill
+    var passwords_guessed = []
     //try to solve by model
     switch (model) {
         case "ZeroLogon":
-            return [""]
+            passwords_guessed = [""]
+            //stop
+            break
+
         case "FreshInstall_1.0":
-            return get_default_password(format, length)
+            passwords_guessed = get_default_password(format, length)
+            //stop
+            break
+
         case "PHP 5.4":
-            return get_unsorted_password(data, length)
+            passwords_guessed =  get_unsorted_password(data, length)
+            //stop
+            break
+
         case "AccountsManager_4.2":
         case "Factori-Os":
-            return generate_numbers(length)
+        case "DeepGreen":
+        case "buster":
+        case "Pr0verFl0":
+        case "OpenWebAccessPoint":
         case "NIL":
+            passwords_guessed = generate_characters(ns, length, format)
+            //stop
+            break
+
+        case "BellaCuore":
+            passwords_guessed = convert_roman_numerals(ns, hint, length)
+            //stop
+            break
+
+        case "DeskMemo_3.1":
+            passwords_guessed = get_password(hint, length)
+            log.info(ns, "", "found password: '" + passwords_guessed + "'")
+            //stop
+            break
+
+        case "CloudBlare(tm)":
+            passwords_guessed = extract_numbers(data)
+            log.info(ns, "", "Extracted '" + passwords_guessed + "'")
+            //stop
+            break
+
+        case "OctantVoxel": //was roman? now base?
+            passwords_guessed = calculate_base(data)
+            //stop
+            break
+        
         case "Laika4":
+            //should be part of the common passwords?
+            break
+
         default:
             //log extra information
             log.warning(ns, "", "Unknown model '" + model + "': hostname: '" + hostname_target +
@@ -262,6 +318,31 @@ async function guess_password(ns, hostname_target, server_info, heartbleed) {
             ns.exit()
     }
 
+    //check what to return
+    //TODO: MAKE SMARTER => return common_passwords[format][length].concat(passwords_guessed)
+    //return common_passwords[format][length].concat(passwords_guessed)
+    switch (format) {
+        case "numeric":
+            //combine the arrays and return
+            return passwords_guessed.concat(common_passwords_numeric)
+
+        case "alphabetic":
+            //combine the arrays and return
+            return passwords_guessed.concat(common_passwords_alphabetic)
+
+        case "alphanumeric":
+            //combine the arrays and return
+            return passwords_guessed.concat(common_passwords_alphanumeric)
+
+        default:
+            log.error(ns,"","Uncaught format: '" + format + "'")
+            ns.exit()
+    }
+    //failsafe
+    return [""]
+
+
+    /*
     //are these function still needed? or can we map all to model?
     if (server_info.passwordLength == 0) {
         //no password
@@ -279,7 +360,7 @@ async function guess_password(ns, hostname_target, server_info, heartbleed) {
         return get_default_password(format, length)
     }
     if (server_info.passwordHint.includes("the password is the base")) {
-        return calculate_base(hint)
+        return calculate_base(data)
     }
 
 
@@ -358,6 +439,7 @@ async function guess_password(ns, hostname_target, server_info, heartbleed) {
     if (server_info.passwordHint.includes("name")) {
         return [server_info.modelId.substring(0, server_info.passwordLength - 1)]
     }
+
 */
     //nothing found
     return [""]
@@ -438,15 +520,15 @@ function get_unsorted_password(data, length) {
 function generate_numbers(length) {
     //just create numbers for the lenght of the password
     var number_start = 0
-    var number_end = parseInt("9".repeat(server_info.passwordLength))
+    var number_end = parseInt("9".repeat(length))
     //create a list
     var password_list = []
     //for loop
     for (let i = number_start; i < number_end; i++) {
         //cast to string
-        num = i.toString()
+        var num = i.toString()
         //while size is not yet reached
-        while (num.length < server_info.passwordLength) {
+        while (num.length < length) {
             //add a leading 0
             num = "0" + num
         }
@@ -462,7 +544,7 @@ function generate_numbers(length) {
 
 
 //Password hint: 'The password is the value of the number 'CIII'
-function convert_roman_numerals(hint) {
+function convert_roman_numerals(ns, hint, length) {
     //map to consult
     const roman_numeral = {
         I: 1,
@@ -479,7 +561,7 @@ function convert_roman_numerals(hint) {
     //get the last values
     var character_string = hint.split("'")[1]
     //debug
-    //log.info(ns, "", "Found numerals: '" + character_string + "'", true)
+    log.info(ns, "", "Found numerals: '" + character_string + "' in 'hint'")
     for (let i = 0; i < character_string.length; i++) {
         //get the character
         var character = character_string[i]
@@ -501,7 +583,7 @@ function convert_roman_numerals(hint) {
     //check if need to pad
     var num = total.toString()
     //while size is not yet reached (e.g. number is 9, should be 09?)
-    while (num.length < server_info.passwordLength) {
+    while (num.length < length) {
         //add a leading 0
         num = "0" + num
     }
@@ -517,14 +599,22 @@ function convert_roman_numerals(hint) {
 "passwordHint":"the password is the base 5 number 3031 in base 10",
 "passwordHint":"the password is the base 4 number 111 in base 10",
 "passwordHint":"the password is the base 8 number 505 in base 10", "passwordLength":3, "passwordFormat":"numeric"
+Guessing password for model 'OctantVoxel': format: 'numeric', length: '3', hint: 'the password is the base 9 number 430 in base 10', data: '9,430'
 */
-function calculate_base(hint) {
+function calculate_base(data) {
+    const split_data = data.split(",")
+    const radix = parseInt(split_data[0])
+    const number_string = split_data[1]
+    /*
     //regex for base
     const regex_base = /base \d{1,}/
     //regex for number
     const regex_number = /number \w{1,}/
     //get radix (get the first entry of the regex array, then split by spaces, then take the 2nd value)
     const radix_matches = hint.match(regex_base)
+    
+
+
     //check for matches
     if (radix_matches.length == null) {
         //log
@@ -546,6 +636,7 @@ function calculate_base(hint) {
     const number_string = number_string_matches[0].split(" ")[1]
     //debug
     //log.info(ns, "", "Found radix: '" + radix + "', number_string: '" + number_string + "'", true)
+    */
     //parse to base 10
     const number = parseInt(number_string, radix)
     //return (as string)
@@ -567,7 +658,106 @@ function extract_numbers(data) {
     return [pasword_entry]
 }
 
+function generate_characters(ns, length, format) {
+    //create set to fill and return
+    var set = create_character_set(format)
+    //check if we need to create more
+    if (length > 1) {
+        //extend the set
+        set = extend_character_set(ns, set, length, format)
+    }
+    //return the (extended) set
+    return set
+}
 
+
+//creates the base set
+function create_character_set(format) {
+    //set to fill
+    var set = []
+    //check format
+    if (format == "alphabetic" || format == "alphanumeric") {
+        //start and end
+        const start = 'a'.charCodeAt(0)
+        const end = 'z'.charCodeAt(0) + 1
+        //for the characters
+        for (let i = start; i < end; i++) {
+            //get the character of the index
+            const character = String.fromCharCode(i)
+            //add to new list
+            set.push(character)
+        }
+    }
+    if (format == "numeric" || format == "alphanumeric") {
+        //start and end
+        const start = '0'.charCodeAt(0)
+        const end = '9'.charCodeAt(0) + 1
+        //for the characters
+        for (let i = start; i < end; i++) {
+            //get the character of the index
+            const character = String.fromCharCode(i)
+            //add to new list
+            set.push(character)
+        }
+    }
+    //return the set
+    return set
+}
+
+
+//extends the provided set
+function extend_character_set(ns, set, length, format, depth = 2) {
+    //debug
+    //log.info(ns, "", "Extending character set '" + set + "' to lenght '" + depth + "'")
+    //create local set, as copy 
+    var local_set = []
+    //for each entry of the original set
+    for (const entry of set) {
+        //check format
+        if (format == "alphabetic" || format == "alphanumeric") {
+            //start and end
+            const start = 'a'.charCodeAt(0)
+            const end = 'z'.charCodeAt(0) + 1
+            //for the characters
+            for (let i = start; i < end; i++) {
+                //get the character of the index
+                const character = String.fromCharCode(i)
+                //debug
+                //log.info(ns, "", "Adding: '" + entry + character + "'")
+                //add to new list
+                local_set.push(entry + character)
+            }
+        }
+        if (format == "numeric" || format == "alphanumeric") {
+            //start and end
+            const start = '0'.charCodeAt(0)
+            const end = '9'.charCodeAt(0) + 1
+            //for the characters
+            for (let i = start; i < end; i++) {
+                //get the character of the index
+                const character = String.fromCharCode(i)
+                //debug
+                //log.info(ns, "", "Adding: '" + entry + character + "'")
+                //add to new list
+                local_set.push(entry + character)
+            }
+        }
+    }
+    //overwrite the total list
+    set = local_set
+    //check if we need to go deeper
+    if (depth < length) {
+        //go deeper
+        set = extend_character_set(ns, set, length, format, depth + 1)
+    }
+    //return the set
+    return set
+}
+
+function get_password(hint, lenght) {
+    //return the last characters of the hint
+    return [hint.substring(hint.length - lenght)]
+}
 /*
 //correct password
 async function correct_password(ns, servers_passwords, hostname) {
