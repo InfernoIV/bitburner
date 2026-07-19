@@ -42,6 +42,8 @@ export async function main(ns) {
         await communicate_with_workers(ns, servers_passwords, connected_servers)
         //move connected servers
         //await move_servers(ns, connected_servers)
+        //wait a little bit
+        await ns.sleep(CONSTANTS.TIME.WAIT)
     }
 }
 
@@ -54,7 +56,7 @@ export async function main(ns) {
 */
 async function communicate_with_workers(ns, servers_passwords, connected_servers) {
     //create port object
-    const port_information = ns.getPortHandle(CONSTANTS.PORT.DARKNET.INFORMATION)
+    const port_in = ns.getPortHandle(CONSTANTS.PORT.DARKNET.INFORMATION)
     //create port object
     const port_password = ns.getPortHandle(CONSTANTS.PORT.DARKNET.PASSWORD)
 
@@ -85,9 +87,9 @@ async function communicate_with_workers(ns, servers_passwords, connected_servers
     }
 
     //while there is data incoming
-    while (port_information.peek() != CONSTANTS.PORT.NO_DATA) {
+    while (port_in.peek() != CONSTANTS.PORT.NO_DATA) {
         //get the message
-        var message = JSON.parse(port_information.read())
+        var message = JSON.parse(port_in.read())
 
         //debuy
         //log.info(ns, "", "Received message: " + JSON.stringify(message), true)
@@ -175,7 +177,7 @@ async function communicate_with_workers(ns, servers_passwords, connected_servers
                 //uncaught
             default:
                 log.error(ns, "", "Uncaught condition on 'message.type': " + JSON.stringify(
-                        message.type) +
+                        message) +
                     "'")
         }
     }
@@ -242,12 +244,31 @@ async function guess_password(ns, hostname_target, server_info, heartbleed) {
     const data = server_info.data
     const hint = server_info.passwordHint
     //get server details
-    const server_details = await evaluate.exec(ns, "ns.getServer('" + hostname_target + "')")
-    //TODO: refactor
-    const common_passwords_numeric = ["2000",  "112233", "1234567",  "123123","696969",  "666666", "123321","1234567890","654321", "7777777", "121212", "0",]
-    const common_passwords_alphabetic = ["tigger", "sunshine", "iloveyou", "charlie", "robert", "thomas", "hockey", "ranger", "daniel", "starwars", "george", "computer", "michelle","dragon","baseball","football", "monkey", "letmein","shadow", "master","qwertyuiop", "mustang","mustang",  "michael", "superman",   "qazwsx",   "jordan", "jennifer", "zxcvbnm", "fido", "spot", "rover", "max",]
-    const common_passwords_alphanumeric = ["abc123","1qaz2wsx","123qwe","trustno1",]
-    
+    const server_details = await evaluate.exec(ns, "ns.getServer('" + hostname_target + "')")    
+    const common_passwords = {
+        "numeric": {
+            1: ["0"],
+            4: ["2000", "6969"],
+            6: ["112233", "123123", "696969", "666666", "123321", "654321", "121212", "777777","159753"],
+            7: ["1234567", "7777777"],
+            10: ["1234567890"],
+        },
+        "alphabetic": {
+            3: ["max"],
+            4: ["fido","spot","pass", "love"],
+            5: ["tigger", "rover"],
+            6: ["joshua", "cheese", "amanda", "summer", "ashley", "ginger", "aaaaaa", "robert", "thomas", "hockey","ranger","daniel","george","dragon","monkey","shadow","master","qazwsx","jordan","maggie"],
+            7: ["charlie","letmein","mustang", "michael","zxcvbnm","freedom"],
+            8: ["princess", "sunshine", "iloveyou","starwars","computer","michelle","baseball","superman","jennifer"],
+            10: ["qwertyuiop"],
+        },
+        "alphanumeric": {
+            6: ["abc123","123qwe"],
+            8: ["1qaz2wsx","trustno1"],
+        },
+    }
+    //159753, aaaaaa, ginger, princess, joshua, cheese, amanda, summer, love, ashley, 6969, nicole, chelsea, biteme, matthew
+
     //log information
     log.info(ns, "", "Guessing password for model '" + model + "': format: '" + format + "', length: '" + length +
         "', hint: '" + hint + "', data: '" + data + "'")
@@ -318,131 +339,19 @@ async function guess_password(ns, hostname_target, server_info, heartbleed) {
             ns.exit()
     }
 
-    //check what to return
-    //TODO: MAKE SMARTER => return common_passwords[format][length].concat(passwords_guessed)
-    //return common_passwords[format][length].concat(passwords_guessed)
-    switch (format) {
-        case "numeric":
-            //combine the arrays and return
-            return passwords_guessed.concat(common_passwords_numeric)
-
-        case "alphabetic":
-            //combine the arrays and return
-            return passwords_guessed.concat(common_passwords_alphabetic)
-
-        case "alphanumeric":
-            //combine the arrays and return
-            return passwords_guessed.concat(common_passwords_alphanumeric)
-
-        default:
-            log.error(ns,"","Uncaught format: '" + format + "'")
-            ns.exit()
+    //if this format exists
+    if (format in common_passwords) {
+        //and there are pre-defined passwords of this length
+        if (length in common_passwords[format]) {
+            //add the guessed passwords to the end of the list
+            return common_passwords[format][length].concat(passwords_guessed)
+        }
+    } else {
+        //should not happen
+        log.error(ns, "", "Uncaught format: '" + format + "'")
     }
     //failsafe
-    return [""]
-
-
-    /*
-    //are these function still needed? or can we map all to model?
-    if (server_info.passwordLength == 0) {
-        //no password
-        return [""]
-    }
-    //if we need to extract the password from the data (numeric)
-    if (server_info.passwordHint == "Type the numbers to prove you are human") {
-        return extract_numbers(data)
-    }
-    if (server_info.passwordHint.includes("The password is the value of the number")) {
-        return convert_roman_numerals(hint)
-    }
-    if (server_info.passwordHint.includes("default password") || server_details.staticPasswordHint.includes(
-            "default password")) {
-        return get_default_password(format, length)
-    }
-    if (server_info.passwordHint.includes("the password is the base")) {
-        return calculate_base(data)
-    }
-
-
-    //check if passwordExpected exists
-    if ("passwordExpected" in heartbleed) {
-        //return this
-        return [heartbleed.passwordExpected]
-    }
-    if ("message" in heartbleed) {
-        if (heartbleed.message.includes("The secret is")) {
-            return [heartbleed.message.substring(heartbleed.message.length - server_info.passwordLength)]
-        }
-        if (heartbleed.message.includes("symbols match")) {
-            //get a
-            const start = 'a'.charCodeAt(0)
-            const end = 'z'.charCodeAt(0)
-            var password_list = []
-            //TODO: make it dynamic? if so: how?
-            //1st character
-            for (let i1 = start; i1 < end; i1++) {
-                //2nd character
-                for (let i2 = start; i2 < end; i2++) {
-                    //3rd character
-                    for (let i3 = start; i3 < end; i3++) {
-                        //add the characters to the list
-                        password_list.push(String.fromCharCode(i1) + String.fromCharCode(i2) + String.fromCharCode(
-                            i3))
-                    }
-                }
-            }
-            //debug
-            log.info(ns, "", "symbols match: " + password_list, true)
-            //return the list
-            return password_list
-        }
-    }
-
-    //SET TO LAST
-    //if the password is part of the hint
-    if (server_info.passwordHint.includes("The password is") ||
-        server_info.passwordHint.includes("Remember to use") ||
-        server_info.passwordHint.includes("It's set to") ||
-        server_info.passwordHint.includes("The secret is") ||
-        server_info.passwordHint.includes("The key is") ||
-        //"passwordHint":"The PIN uses 678","data":"678","passwordLength":3,"passwordFormat":"numeric"
-        server_info.passwordHint.includes("The PIN uses") ||
-        //"passwordHint":"The PIN is 26","data":"","passwordLength":2,"passwordFormat":"numeric"
-        server_info.passwordHint.includes("The PIN is")
-    ) {
-        //password is the last characters of the hint
-        return [server_info.passwordHint.substring(server_info.passwordHint.length - server_info.passwordLength)]
-    }
-
-    //same for ?
-    if (server_details.staticPasswordHint.includes("The password is")) {
-        //password is the last characters of the hint
-        return [server_details.staticPasswordHint.substring(server_info.passwordHint.length - server_info
-            .passwordLength)]
-    }
-    //doesn't work?
-
-
-
-
-    //not correct
-    //"heartbleed":["{\"code\":401,\"message\":\"that wasn't right\",\"data\":\"yesn't,yesn't,yesn't,yesn't,yesn't\",\"passwordAttempted\":\"admin\"}"],
-    // "server_info":{"isOnline":true,"isConnectedToCurrentServer":true,"hasSession":false,"modelId":"NIL","passwordHint":"you are one who's'nt authorized","data":"","logTrafficInterval":20.683,"passwordLength":5,"passwordFormat":"numeric","blockedRam":1,"difficulty":4,"requiredCharismaSkill":179,"depth":1,"isStationary":false}}'
-    /*
-    if (server_info.passwordHint == "you are one who's'nt authorized") {
-        return ["admin"]
-    }
-    */
-    //doesn't work
-    //"modelId":"Laika4","passwordHint":"It's my dog's name","data":"","passwordLength":4,"passwordFormat":"alphabetic"
-    /*
-    if (server_info.passwordHint.includes("name")) {
-        return [server_info.modelId.substring(0, server_info.passwordLength - 1)]
-    }
-
-*/
-    //nothing found
-    return [""]
+    return passwords_guessed
 }
 
 
@@ -605,38 +514,6 @@ function calculate_base(data) {
     const split_data = data.split(",")
     const radix = parseInt(split_data[0])
     const number_string = split_data[1]
-    /*
-    //regex for base
-    const regex_base = /base \d{1,}/
-    //regex for number
-    const regex_number = /number \w{1,}/
-    //get radix (get the first entry of the regex array, then split by spaces, then take the 2nd value)
-    const radix_matches = hint.match(regex_base)
-    
-
-
-    //check for matches
-    if (radix_matches.length == null) {
-        //log
-        log.error(ns, "", "Could not find radix within '" + hint + '"'),
-            true
-        //stop
-        return [""]
-    }
-    const radix = parseInt(radix_matches[0].split(" ")[1])
-    //get the number (get the first entry of the regex array, then split by spaces, then take the 2nd value)
-    const number_string_matches = hint.match(regex_number)
-    //check for matches
-    if (number_string_matches == null) {
-        //log
-        log.error(ns, "", "Could not find number_string within '" + hint + '"', true)
-        //stop
-        return [""]
-    }
-    const number_string = number_string_matches[0].split(" ")[1]
-    //debug
-    //log.info(ns, "", "Found radix: '" + radix + "', number_string: '" + number_string + "'", true)
-    */
     //parse to base 10
     const number = parseInt(number_string, radix)
     //return (as string)
