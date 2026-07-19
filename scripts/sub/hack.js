@@ -15,7 +15,7 @@ export class hack_obj {
 
     //function that target hacks a single server
     /** @param {NS} ns */
-    async hack_server(ns, root_obj) {
+    async hack_server(ns, root_obj, cloud_obj) {
         //if the timing has not yet passed
         if (Date.now() < this.time_of_next_check) {
             //stop
@@ -30,8 +30,12 @@ export class hack_obj {
             //wait a bit before checking again
             this.time_of_next_check = Date.now() + CONSTANTS.TIME.SAFETY
         } else {
+            const root_servers = [...root_obj.servers_ram]
+            const cloud_servers = [...cloud_obj.servers_owned]
+            //debug
+            //log.info(ns, "Hack", "Found root: '" + JSON.stringify(root_servers) + "', and cloud: '" + JSON.stringify(cloud_servers) + "' servers", true)
             //get the executing servers
-            var execute_servers = root_obj.servers_ram
+            var execute_servers = [].concat(root_servers, cloud_servers)
             //re-set the wait time, to be set later
             var time_wait = 0
             //check the state

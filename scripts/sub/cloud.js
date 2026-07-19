@@ -6,80 +6,111 @@ import * as log from 'scripts/sub/log.js'
 
 
 //TODO: create object instead of using globals
-
-//variables that are set once
-var server_max_amount
-var server_max_ram
-//var server_cost_purchase
-
-//map of servers owned (key = hostname, value = ram)
-var servers_owned = new Map()
-
-//keep track of the lowest ram (to speed up scripts)
-var ram_lowest = 0
-
-
-//function that gets all information, which only is done once
-export async function init(ns) {
-    //get information, only done once
-    //get the max amount of servers that can be owned
-    server_max_amount = await evaluate.exec(ns, "ns.cloud.getServerLimit()")
-    //get the max ram of a server
-    server_max_ram = await evaluate.exec(ns, "ns.cloud.getRamLimit()")
-    //log information
-    log.info(ns, "Cloud", "Max of '" + server_max_amount + "' cloud servers, max of '" + server_max_ram + "' ram")
-
-    //empty the map of owned servers
-    servers_owned = new Map()
-    //check for existing servers
-    const servers = await evaluate.exec(ns, "ns.cloud.getServerNames()")
-    //check each server
-    for (const server of servers) {
-        //get the ram
-        const ram = await evaluate.exec(ns, "ns.getServerMaxRam('" + server + "')")
-        //add to map
-        servers_owned.set(server, ram)
-        //log information
-        log.info(ns, "Cloud", "Found cloud server '" + server + "' with '" + ram + "' ram")
+// Declaration
+export class cloud_obj {
+    constructor(ns) {
     }
-}
+    //
+    async init(ns) {
+        this.servers_owned = new Map()
+        //variables that are set once
+        this.server_max_amount = await evaluate.exec(ns, "ns.cloud.getServerLimit()")
+        this.server_max_ram = await evaluate.exec(ns, "ns.cloud.getRamLimit()")
+        //keep track of the lowest ram (to speed up scripts)
+        this.ram_lowest = this.server_max_ram
+        //log information
+        //log.info(ns, "Cloud", "Max of '" + this.server_max_amount + "' cloud servers, max of '" + this.server_max_ram + "' ram", true)
+        
+        //check for existing servers
+        const servers = await evaluate.exec(ns, "ns.cloud.getServerNames()")
+        //check each server
+        for (const server of servers) {
+            //get the ram
+            const ram = await evaluate.exec(ns, "ns.getServerMaxRam('" + server + "')")
+            //add to map
+            this.servers_owned.set(server, ram)
+            //update lowest ram
+            if (ram < this.ram_lowest) {
+                //update
+                this.ram_lowest = ram
+            }
+            //log information
+            //log.info(ns, "Cloud", "Found cloud server '" + server + "' with '" + ram + "' ram => '" + this.servers_owned.size + "'", true)
+        }
+    }
 
 
-//function that manages the cloud servers (buying and upgrading)
-export async function manage_servers(ns) {
-    //check if we need to upgrade at all
-    if (ram_lowest < server_max_ram) {
-        //try to upgrade the server
-        for (const [server, ram] in servers_owned) {
+    //buy and/or upgrade servers
+    async manage_servers(ns) {
+        //log information
+        //log.info(ns, "Cloud", "RAM lowest: '" + this.ram_lowest + "', max is '" + this.server_max_ram + "'", true)
+        //check if we need to upgrade at all
+        if (this.ram_lowest < this.server_max_ram) {
+            //debug
+            //log.info(ns, "Cloud", "Updating ram", true)
+            //upgrade ram
+            await this.upgrade_ram(ns)            
+        }
+        //if we can still buy servers
+        if (this.servers_owned.size < this.server_max_amount) {
+            //buy servers
+            await this.purchase_servers(ns)
+        }
+    }
+
+
+    //upgrade the ram of the server
+    async upgrade_ram(ns) {
+        //debug
+        //log.info(ns, "Cloud", "Owned servers: '" + JSON.stringify(this.servers_owned) + "'", true)
+    //try to upgrade the server
+        for (var [server, ram] of this.servers_owned) {
+            //debug
+            //log.info(ns, "Cloud", "Found server '" + server + "' with '" + ram + "' GB of '" + this.server_max_ram + "' GB", true)
             //check if we need to upgrade at all
-            if (ram < server_max_ram) {
+            while (ram < this.server_max_ram) {
                 //just try to upgrade
                 var upgraded = await evaluate.exec(ns, "ns.cloud.upgradeServer('" + server + "'," +  ram * 2 + ")")
                 //if successfull
                 if (upgraded) {
-                    //update thes map
-                    servers_owned.set(server, ram * 2)
+                    //update the ram variable
+                    ram = ram * 2
+                    //update the map
+                    this.servers_owned.set(server, ram)
                     //log
                     log.success(ns, "Cloud", "Upgraded '" + server + "' to '" + ram * 2 + "' ram")
+                    //toast
+                    ns.toast("Upgraded '" + server + "' to '" + ram * 2 + "' ram")
+                    //sort
+                    this.servers_owned = new Map([...this.servers_owned].sort((a, b) => a[0].localeCompare(b[0])))
+                    /*
                     //try to update the lowest ram
-                    var server_ram = servers_owned.values
+                    var server_ram = this.servers_owned.values
                     //sort on lowest first
                     server_ram.sort((a, b) => a.value - b.value)
+*/
                     //set the lowest ram to the first entry (which should be the lowest)
-                    ram_lowest = server_ram[0]
+                    this.ram_lowest = [...this.servers_owned][0]
                     //if ram has been maxxed (and all servers bought)
-                    if (ram_lowest == server_max_ram && servers_owned.size == server_max_amount) {
+                    if (this.ram_lowest == this.server_max_ram && this.servers_owned.size == this.server_max_amount) {
                         //log
                         log.success(ns, "Cloud", "Maximized ram of all cloud servers (" + Format.ram(server_max_ram) + ")", true)
+                        //toast
+                        ns.toast("Maximized ram of all cloud servers (" + Format.ram(server_max_ram) + ")")
                     }
+                } else {
+                    //stop
+                    break
                 }
             }
         }
     }
-    //if we can still buy servers
-    if (servers_owned.size < server_max_amount) {
+
+
+    //buy new servers
+    async purchase_servers(ns) {
         //hostname of servers
-        const hostname = "cloud-"
+        const hostname = "cloud"
         //base ram to start with, set to 2 since the Hack, grow, weaken scripts require 1.75 GB
         const base_ram = 2
         //try to buy new server
@@ -87,25 +118,22 @@ export async function manage_servers(ns) {
         //check if successfull
         if (name != "") {
             //add to the local list
-            servers_owned.set(name, base_ram)
+            this.servers_owned.set(name, base_ram)
             //log
             log.success(ns, "Cloud", "Bought '" + name + "' with '" + base_ram + "' ram")
+            //toast
+            ns.toast("Bought '" + name + "' with '" + base_ram + "' ram")
             //if all servers bought)
-            if (servers_owned.size == server_max_amount) {
+            if (this.servers_owned.size == this.server_max_amount) {
                 //log
-                log.success(ns, "Bought all cloud servers (" + server_max_amount + ")", true)
+                log.success(ns, "Bought all cloud servers (" + this.server_max_amount + ")", true)
+                //toast
+                ns.toast("Bought all cloud servers (" + this.server_max_amount + ")")
             }
             //update lowest ram
-            ram_lowest = base_ram            
+            this.ram_lowest = base_ram            
         }
     }
-}
-
-
-//function that returns the cloud servers
-export function get_servers(){
-    //return the server map
-    return servers_owned
 }
 
 

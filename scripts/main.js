@@ -4,6 +4,7 @@ import * as evaluate from "scripts/sub/evaluate.js"
 import { root_obj } from "scripts/sub/root.js"
 import { hack_obj } from "scripts/sub/hack.js"
 import { darknet_obj } from "scripts/sub/darknet.js"
+import { cloud_obj } from "scripts/sub/cloud.js"
 import { share_exec } from "scripts/sub/share.js"
 
 
@@ -17,14 +18,19 @@ export async function main(ns) {
     //init
     await root.init(ns)
     
+    //cloud
+    var cloud = new cloud_obj(ns)
+    //init
+    await cloud.init(ns)
+
     //hack
     var hack = new hack_obj()
+    
     //darknet
     var darknet = new darknet_obj()
 
     //start share
-    //TODO
-    //share_exec(ns)
+    await share_exec(ns)
 
     // @ignore-infinite
     while (true) {
@@ -33,8 +39,7 @@ export async function main(ns) {
         //return
 
         //check and add cloud servers
-        //TODO
-        //await cloud.manage_servers(ns)
+        await cloud.manage_servers(ns)
         
         //root servers
         await root.root_servers(ns)
@@ -42,7 +47,7 @@ export async function main(ns) {
         //create overview of servers
         //var ram_servers = cloud.get_servers()
         //hack servers
-        await hack.hack_server(ns, root)
+        await hack.hack_server(ns, root, cloud)
 
         //update ui
         //await ui.update(ns)

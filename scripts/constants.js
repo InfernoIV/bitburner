@@ -62,7 +62,7 @@ export const SCRIPT = {
 export const RAM = {
     MAIN: {
         ORCHESTRATOR: 2.9, //1.6 + 1.3 + TODO
-        EVAL: 8//33.6, //1.6 + 32
+        EVAL: 8.0//33.6, //1.6 + 32
     },
     EVAL_ORCHESTRATOR: 2.9, //1.6 + 1.3
     DARKNET: {
@@ -70,7 +70,7 @@ export const RAM = {
         ORCHESTRATOR: 2.9, //1.6 + 1.3
         ORCHESTRATOR_EVAL: 5.6, //1.6 + 5? (what is max ram for function cost for the orchestrator?)
         */
-        WORKER: 4, //1.6 + 1.3 (exec) + 0.4 (dnet.authenticate) = 3.3
+        WORKER: 4.0, //1.6 + 1.3 (exec) + 0.4 (dnet.authenticate) = 3.3
         WORKER_EVAL: 3.6 //1.6 + 2(3.6) -> +4 = 5.6
     },
     HACK: {

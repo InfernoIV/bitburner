@@ -101,28 +101,31 @@ async function authenticate_servers(ns, hostname_self) {
             //no need to do anything: next
             continue
         }
-        //guess password
-        var passwords = await guess_password(ns, server_details)
-        //check if we have a password
-        if (passwords != null || passwords.length > 0) {
-            //authenticate
-            await authenticate(ns, hostname_self, darknet_hostname, passwords)
-        }
+        //get common passwords
+        const passwords_common = get_common_passwords(ns, server_details) 
+        //authenticate
+        var return_code = await authenticate(ns, hostname_self, darknet_hostname, passwords_common)
+        //check if need to guess
+        if (return_code == 401) {
+            //guess password
+            const passwords_guessed = await guess_password(ns, server_details)
+            //authenticate again
+            return_code = await authenticate(ns, hostname_self, darknet_hostname, passwords_guessed)
+            //if still incorrect
+            if (return_code == 401) {
+                //perform heartbleed for more information
+                return_code = await evaluate.exec(ns, "ns.dnet.heartbleed('" + darknet_hostname + "')")
+                //print message
+                log.warning(ns, ns.pid, "Auth failed for '" + darknet_hostname + "' with passwords '" + passwords_guessed + "' and info '" + JSON.stringify(server_details) + "', heartbleed: '" + JSON.stringify(return_code) + "'", true)
+            }
+        }   
     }
 }
 
 
-//function that guesses password
-async function guess_password(ns, server_details) {
-    //debug
-    log.info(ns, ns.pid, "Solving for '" + JSON.stringify(server_details) + "'")
-    //for easy lookup
-    const model = server_details.modelId
-    const format = server_details.passwordFormat
-    const length = server_details.passwordLength
-    const data = server_details.data
-    const hint = server_details.passwordHint
-    //common passwords
+//function that returns common passwords to try first
+function get_common_passwords(ns, server_details) {
+//common passwords
     const common_passwords = {
         "numeric": {
             1: ["0"],
@@ -150,6 +153,36 @@ async function guess_password(ns, server_details) {
             8: ["1qaz2wsx", "trustno1"],
         },
     }
+    //get data
+    const format = server_details.passwordFormat
+    const length = server_details.passwordLength
+
+     //if this format exists
+    if (format in common_passwords) {
+        //and there are pre-defined passwords of this length
+        if (length in common_passwords[format]) {
+            //add the guessed passwords to the end of the list
+            return common_passwords[format][length]
+        }
+    } else {
+        //should not happen
+        log.error(ns, "", "Uncaught format: '" + format + "'")
+    }
+    //failsafe
+    return [""]
+
+}
+//function that guesses password
+async function guess_password(ns, server_details) {
+    //debug
+    log.info(ns, ns.pid, "Solving for '" + JSON.stringify(server_details) + "'")
+    //for easy lookup
+    const model = server_details.modelId
+    const format = server_details.passwordFormat
+    const length = server_details.passwordLength
+    const data = server_details.data
+    const hint = server_details.passwordHint
+    
     //log information
     log.info(ns, "", "Guessing password for model '" + model + "': format: '" + format + "', length: '" + length +
         "', hint: '" + hint + "', data: '" + data + "'")
@@ -176,12 +209,18 @@ async function guess_password(ns, server_details) {
         case "Factori-Os":
         case "DeepGreen":
         case "buster":
-        case "Pr0verFl0":
         case "OpenWebAccessPoint":
-        case "NIL":
+        case "NIL":            
             passwords_guessed = generate_characters(ns, length, format)
             //stop
             break
+
+        case "Pr0verFl0":
+            //length of 7 bytes, overflows the array...
+            //passwords_guessed = generate_characters(ns, length, format)
+            //what to do?
+            //removed the numbers from the name?
+            passwords_guessed = ["prverfl", "PrverFl"]
 
         case "BellaCuore":
             passwords_guessed = convert_roman_numerals(ns, hint, length)
@@ -220,17 +259,7 @@ async function guess_password(ns, server_details) {
             ns.exit()
     }
 
-    //if this format exists
-    if (format in common_passwords) {
-        //and there are pre-defined passwords of this length
-        if (length in common_passwords[format]) {
-            //add the guessed passwords to the end of the list
-            return common_passwords[format][length].concat(passwords_guessed)
-        }
-    } else {
-        //should not happen
-        log.error(ns, "", "Uncaught format: '" + format + "'")
-    }
+   
     //failsafe
     return passwords_guessed
 }
@@ -543,7 +572,7 @@ async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
                 //start worker
                 await start_worker(ns, darknet_hostname)
                 //exit function
-                return
+                return true
             }
             //debug
             log.warning(ns, ns.pid, "Auth failed: " + JSON.stringify(result_auth))
@@ -571,7 +600,7 @@ async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
                 result_auth.code == "451" || //NotEnoughCharisma = don't try -> next!
                 result_auth.code == "503") { //ServiceUnavailable = server moved?
                 //stop authenticating for this server
-                return
+                return false
             }
             //check if we need to open tail
             if (retry) {
@@ -581,9 +610,9 @@ async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
             await ns.sleep(CONSTANTS.TIME.WAIT)
         }
     }
-    //debug
-    ns.ui.openTail()
-    ns.exit()
+    
+    //indicate failure
+    return false
 }
 
 
@@ -624,16 +653,19 @@ async function start_worker(ns, hostname) {
     log.info(ns, ns.pid, "server '" + hostname + "' starting: " + JSON.stringify(server_details))
     //if still online / connected
     if (server_info.isOnline) { //} && server_details.isConnectedToCurrentServer) {
+        //kill scripts on target server
+        //await evaluate.exec(ns, "ns.killall('" + hostname + "')")
+        await ns.killall(hostname)
+
         //calc ram costs
         //darkweb server:
         //worker + eval + eval worker
         //the eval worker for the darknet worker needs to scale, therefore it is not counted
         const max_ram_eval_worker = server_info.maxRam - CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM
             .EVAL_ORCHESTRATOR
+        //debug
+        log.info(ns, ns.pid, "Target has " + server_info.maxRam + " GB, and requires " + CONSTANTS.RAM.DARKNET.WORKER + ", " + CONSTANTS.RAM.EVAL_ORCHESTRATOR + "=> resulting into '" + max_ram_eval_worker + "'")
 
-        //kill scripts on target server
-        //await evaluate.exec(ns, "ns.killall('" + hostname + "')")
-        await ns.killall(hostname)
 
         //launch worker
         result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, hostname, {
@@ -739,3 +771,26 @@ async function perform_activities(ns, hostname_self) {
         log.success(ns, ns.pid, "result_report: " + JSON.stringify(result_report), true)
     }
 }
+
+/*
+TODO
+
+RANGE ERROR
+RangeError: Invalid array length
+
+Stack: RangeError: Invalid array length
+    at Array.push (<anonymous>)
+    at extend_character_set (darkweb/​scripts/​exec/​darknet_worker.js:488:27)
+    at extend_character_set (darkweb/​scripts/​exec/​darknet_worker.js:511:15)
+    at extend_character_set (darkweb/​scripts/​exec/​darknet_worker.js:511:15)
+    at extend_character_set (darkweb/​scripts/​exec/​darknet_worker.js:511:15)
+    at extend_character_set (darkweb/​scripts/​exec/​darknet_worker.js:511:15)
+    at generate_characters (darkweb/​scripts/​exec/​darknet_worker.js:427:15)
+    at guess_password (darkweb/​scripts/​exec/​darknet_worker.js:182:33)
+    at authenticate_servers (darkweb/​scripts/​exec/​darknet_worker.js:105:31)
+    at async main (darkweb/​scripts/​exec/​darknet_worker.js:62:9)
+
+Script: scripts/exec/darknet_worker.js
+PID: 8541
+
+*/

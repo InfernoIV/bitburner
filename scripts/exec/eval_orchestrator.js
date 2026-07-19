@@ -6,7 +6,7 @@ import * as evaluate from "scripts/sub/evaluate.js"
 /** @param {NS} ns */
 export async function main(ns) {
     //log
-    //log.info(ns, "Eval_orch", "got arguments: " + JSON.stringify(ns.args))
+    log.info(ns, ns.pid, "got arguments: " + JSON.stringify(ns.args))
     //get PID from args
     const PID = Number(ns.args[0]) //1
     //hostname
@@ -43,9 +43,24 @@ export async function main(ns) {
                     //calculate threads
                     threads = Math.floor(max_ram / RAM)
                 }
+                //debug
+                log.info(ns, ns.pid, "Found max ram: '" + max_ram + "' and ram cost: '" + RAM + "', resulting into '" + threads + "' threads")
                 //run script to do this
-                ns.exec(CONSTANTS.SCRIPT.EVAL.WORKER, hostname, {threads: threads, ramOverride: RAM}, 
+                var result = ns.exec(CONSTANTS.SCRIPT.EVAL.WORKER, hostname, {threads: threads, ramOverride: RAM, preventDuplicates: true}, 
                   PID, RAM, input.data)
+                  //if failed
+                  if (result == false && threads > 1) {
+                    //try again with fewer threads
+                    result = ns.exec(CONSTANTS.SCRIPT.EVAL.WORKER, hostname, {threads: threads-1, ramOverride: RAM, preventDuplicates: true}, 
+                    PID, RAM, input.data)
+                //if STILL failed
+                  if (result == false) {
+                    //open tail
+                    ns.ui.openTail()
+                    //stop
+                    ns.exit()
+                  }
+                }
             }
         }
         //wait a little bit
