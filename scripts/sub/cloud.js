@@ -1,6 +1,6 @@
 //requires no SF?
 //https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.cloud.md
-
+import * as CONSTANTS from "scripts/constants.js"
 import * as evaluate from 'scripts/sub/evaluate.js'
 import * as log from 'scripts/sub/log.js'
 
@@ -102,6 +102,8 @@ export class cloud_obj {
                     //stop
                     break
                 }
+                //wait a bit
+                await ns.sleep(CONSTANTS.TIME.WAIT)
             }
         }
     }

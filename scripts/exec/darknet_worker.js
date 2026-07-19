@@ -615,6 +615,8 @@ async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
             }
             //check if we need to open tail
             if (retry) {
+                //wait a bit
+                await ns.sleep(CONSTANTS.TIME.WAIT)
                 ns.openTail()
             }
             //wait a little bit
@@ -769,6 +771,8 @@ async function perform_activities(ns, hostname_self) {
         var result_phishing = await evaluate.exec(ns, "ns.dnet.phishingAttack()")
         //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
         log.info(ns, ns.pid, "PhishingAttack: " + JSON.stringify(result_phishing))
+        //wait a bit
+        await ns.sleep(CONSTANTS.TIME.WAIT)
     }
 
 
