@@ -96,19 +96,23 @@ async function authenticate_servers(ns, hostname_self) {
         //if already scripts running
         if (ps.length > 0) {
             //log
-            log.info(ns, ns.pid, "Host '" + darknet_hostname +
-                "' is already running a worker!: " + JSON.stringify(server_details))
+            log.info(ns, ns.pid, "Host '" + darknet_hostname + "' is already running a worker!")//: " + JSON.stringify(server_details))
             //no need to do anything: next
             continue
         }
+
         //get common passwords
-        const passwords_common = get_common_passwords(ns, server_details) 
+        const passwords_common = get_common_passwords(ns, server_details)
+        //debug
+        log.info(ns, ns.pid, "Got common passwords: '" + JSON.stringify(passwords_common) + "'")
         //authenticate
         var return_code = await authenticate(ns, hostname_self, darknet_hostname, passwords_common)
         //check if need to guess
         if (return_code == 401) {
             //guess password
             const passwords_guessed = await guess_password(ns, server_details)
+            //debug
+            log.info(ns, ns.pid, "Got guessed passwords: '" + JSON.stringify(passwords_common) + "'")
             //authenticate again
             return_code = await authenticate(ns, hostname_self, darknet_hostname, passwords_guessed)
             //if still incorrect
@@ -116,16 +120,18 @@ async function authenticate_servers(ns, hostname_self) {
                 //perform heartbleed for more information
                 return_code = await evaluate.exec(ns, "ns.dnet.heartbleed('" + darknet_hostname + "')")
                 //print message
-                log.warning(ns, ns.pid, "Auth failed for '" + darknet_hostname + "' with passwords '" + passwords_guessed + "' and info '" + JSON.stringify(server_details) + "', heartbleed: '" + JSON.stringify(return_code) + "'", true)
+                log.warning(ns, ns.pid, "Auth failed for '" + darknet_hostname + "' with common '" + passwords_common + "', guessed: '" + 
+                    passwords_guessed + "', and info '" + JSON.stringify(server_details) + "', heartbleed: '" +
+                    JSON.stringify(return_code) + "'", true)
             }
-        }   
+        }
     }
 }
 
 
 //function that returns common passwords to try first
 function get_common_passwords(ns, server_details) {
-//common passwords
+    //common passwords
     const common_passwords = {
         "numeric": {
             1: ["0"],
@@ -157,7 +163,7 @@ function get_common_passwords(ns, server_details) {
     const format = server_details.passwordFormat
     const length = server_details.passwordLength
 
-     //if this format exists
+    //if this format exists
     if (format in common_passwords) {
         //and there are pre-defined passwords of this length
         if (length in common_passwords[format]) {
@@ -182,7 +188,7 @@ async function guess_password(ns, server_details) {
     const length = server_details.passwordLength
     const data = server_details.data
     const hint = server_details.passwordHint
-    
+
     //log information
     log.info(ns, "", "Guessing password for model '" + model + "': format: '" + format + "', length: '" + length +
         "', hint: '" + hint + "', data: '" + data + "'")
@@ -210,7 +216,7 @@ async function guess_password(ns, server_details) {
         case "DeepGreen":
         case "buster":
         case "OpenWebAccessPoint":
-        case "NIL":            
+        case "NIL":
             passwords_guessed = generate_characters(ns, length, format)
             //stop
             break
@@ -223,7 +229,12 @@ async function guess_password(ns, server_details) {
             passwords_guessed = ["prverfl", "PrverFl"]
 
         case "BellaCuore":
-            passwords_guessed = convert_roman_numerals(ns, hint, length)
+            //check what to do
+            if (hint.includes("Warning: password buffer is")) {
+                passwords_guessed = generate_characters(ns, length, format)
+            } else if (hint.includes("The password is the value of the number")) {
+                passwords_guessed = convert_roman_numerals(ns, hint, length)
+            }
             //stop
             break
 
@@ -259,7 +270,7 @@ async function guess_password(ns, server_details) {
             ns.exit()
     }
 
-   
+
     //failsafe
     return passwords_guessed
 }
@@ -380,7 +391,7 @@ function convert_roman_numerals(ns, hint, length) {
     //get the last values
     var character_string = hint.split("'")[1]
     //debug
-    log.info(ns, "", "Found numerals: '" + character_string + "' in 'hint'")
+    log.info(ns, "", "Found numerals: '" + character_string + "' in '" + hint + "'", true)
     for (let i = 0; i < character_string.length; i++) {
         //get the character
         var character = character_string[i]
@@ -561,21 +572,21 @@ async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
             //set retry to false, since the loop started
             retry = false
             //try to authenticate
-            var result_auth = await ns.dnet.authenticate(darknet_hostname, password)
+            var result_auth = await ns.dnet.authenticate(darknet_hostname, password) //cannot be eval, needs to be THIS script
             //if successfull
             if (result_auth.success) {
                 //debug
                 log.success(ns, ns.pid, "Authentication successfull with '" + darknet_hostname +
-                    "' using password '" + password + "'")
+                    "' using password '" + password + "' (" + JSON.stringify(result_auth) + ")")
                 //debug
-                ns.toast("Dnet authenticated '" + darknet_hostname + "' using '" + password + "'")
+                ns.toast("Dnet authenticated '" + darknet_hostname + "' using '" + password + "'")                        
                 //start worker
                 await start_worker(ns, darknet_hostname)
                 //exit function
-                return true
+                return 200
             }
             //debug
-            log.warning(ns, ns.pid, "Auth failed: " + JSON.stringify(result_auth))
+            log.warning(ns, ns.pid, "Auth failed: " + JSON.stringify(result_auth) + "'using '" + password + "'")
             /*
             Success: 200;
             DirectConnectionRequired: 351;
@@ -591,16 +602,16 @@ async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
             ServiceUnavailable: 503;
             */
             //check if we need to do anything
-            if (result_auth.code == "408") { //RequestTimeOut
+            if (result_auth.code == 408) { //RequestTimeOut
                 //debug
                 log.warning(ns, ns.pid, "Auth failed: '" + JSON.stringify(result_auth) + "', retrying")
                 retry = true
             }
-            if (result_auth.code == "351" || //DirectConnectionRequired = server moved
-                result_auth.code == "451" || //NotEnoughCharisma = don't try -> next!
-                result_auth.code == "503") { //ServiceUnavailable = server moved?
+            if (result_auth.code == 351 || //DirectConnectionRequired = server moved
+                result_auth.code == 451 || //NotEnoughCharisma = don't try -> next!
+                result_auth.code == 503) { //ServiceUnavailable = server moved?
                 //stop authenticating for this server
-                return false
+                return result_auth.code
             }
             //check if we need to open tail
             if (retry) {
@@ -610,9 +621,9 @@ async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
             await ns.sleep(CONSTANTS.TIME.WAIT)
         }
     }
-    
+
     //indicate failure
-    return false
+    return 401
 }
 
 
@@ -664,7 +675,9 @@ async function start_worker(ns, hostname) {
         const max_ram_eval_worker = server_info.maxRam - CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM
             .EVAL_ORCHESTRATOR
         //debug
-        log.info(ns, ns.pid, "Target has " + server_info.maxRam + " GB, and requires " + CONSTANTS.RAM.DARKNET.WORKER + ", " + CONSTANTS.RAM.EVAL_ORCHESTRATOR + "=> resulting into '" + max_ram_eval_worker + "'")
+        log.info(ns, ns.pid, "Target has " + server_info.maxRam + " GB, and requires " + CONSTANTS.RAM.DARKNET
+            .WORKER + ", " + CONSTANTS.RAM.EVAL_ORCHESTRATOR + "=> resulting into '" + max_ram_eval_worker + "'"
+        )
 
 
         //launch worker
@@ -676,6 +689,9 @@ async function start_worker(ns, hostname) {
             //debug
             log.error(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
                 .stringify(server_info))
+            //debug
+            ns.ui.openTail()
+            ns.exit()
             //give alert
             /*
             ns.alert(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
@@ -706,7 +722,7 @@ async function perform_activities(ns, hostname_self) {
                 //stop
                 break
 
-            //if type of txt or lit
+                //if type of txt or lit
             case CONSTANTS.FILE_EXTENSION.TEXT:
             case CONSTANTS.FILE_EXTENSION.LITERATURE:
                 //read file
@@ -742,11 +758,19 @@ async function perform_activities(ns, hostname_self) {
             default:
                 log.error(ns, ns.pid, "Uncaught condition 'file_extension': '" + file_extension + "'")
         }
+    }
+    //dummy
+    var result_phishing = {
+        success: true
+    }
+    //while we can attempt
+    while (result_phishing.success == true) {
         //Phishing attacks can only be run from scripts on darknet servers.
         var result_phishing = await evaluate.exec(ns, "ns.dnet.phishingAttack()")
         //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
         log.info(ns, ns.pid, "PhishingAttack: " + JSON.stringify(result_phishing))
     }
+
 
     //TODO: how to check which stock we own and how to communicate this?
     //var result_promote = await evaluate.exec(ns, "ns.dnet.promoteStock('" + sym + "')")
