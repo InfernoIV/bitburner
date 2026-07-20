@@ -1,5 +1,19 @@
 //If you are not in BitNode-10, then you must have Source-File 10 in order to use this API.
- 
+
+
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
+
+
+// Declaration
+export class sleeve_obj {
+    constructor() {
+    }
+    init(ns) {
+        
+    }
+}
 /*
 https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.sleeve.md
 

@@ -1,1 +1,0 @@
-//If you are not in BitNode-2, then you must have Source-File 2 in order to use this API.

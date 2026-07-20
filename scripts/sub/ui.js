@@ -1,5 +1,21 @@
-import * as evaluate from 'scripts/sub/evaluate.js'
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
 
+
+// Declaration
+export class ui_obj {
+    constructor() {
+
+    }
+
+
+    init(ns) {
+        
+    }
+}
+
+/*
 //list to keep track of elements to show
 var ui_elements_to_show = []
 //variable of the UI
@@ -65,6 +81,7 @@ export async function update(ns) {
     doc.getElementById('overview-extra-hook-1').innerText = values.join("\n")
 }
 
+*/
 
 /*
 ReactElement			A stand-in for the real React.ReactElement. Use React.createElement to make these. See creating an element without jsx from the official React documentation.

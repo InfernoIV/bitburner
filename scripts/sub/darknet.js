@@ -1,4 +1,8 @@
-//requires no SF (SF 15 unlocks more servers?)
+/*
+requires no SF (SF 15 unlocks more servers?)
+//https://github.com/bitburner-official/bitburner-src/blob/2e456f5a9c179fbb989b6bbc6b8990e259912fbe/src/Documentation/doc/en/programming/darknet.md
+//https://github.com/bitburner-official/bitburner-src/blob/2e456f5a9c179fbb989b6bbc6b8990e259912fbe/markdown/bitburner.darknet.md
+*/
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
 import * as evaluate from "scripts/sub/evaluate.js"

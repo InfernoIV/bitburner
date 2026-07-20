@@ -7,7 +7,7 @@ import * as log from 'scripts/sub/log.js'
 
 // Declaration
 export class cloud_obj {
-    constructor(ns) {
+    constructor() {
     }
     //
     async init(ns) {

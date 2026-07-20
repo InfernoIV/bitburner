@@ -5,6 +5,22 @@ https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.
 Singularity		Singularity API
 16/4/1 * 32 = 512/128/32 GB
 */
+//TODO: transform into class
+
+
+import * as CONSTANTS from "scripts/constants.js"
+import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
+
+
+export class singularity_obj {
+    constructor() {
+    }
+    init(ns) {
+        
+    }
+    
+}
 
 import * as evaluate from 'scripts/sub/eval.js'
 import * as log from 'scripts/sub/log.js'
@@ -225,7 +241,7 @@ async function determine_next_bitnode(ns) {
         ], //This Source-File lets you start any BitNodes with Neuroflux Governor equal to the level of this Source-File
     ]
 
-    //14: does go winning 2 times in a row changes converts rep to favor, eliminating the need for resets (installations of augments?)
+    //14: does go winning 2 times in a row changes converts rep to favor, eliminating the need for resets (only for installations of augments?)
     //which factions can do this?
     //can we get away without installing augments? e.g. grafting?
 

@@ -3,6 +3,7 @@ import * as log from "scripts/sub/log.js"
 import * as evaluate from "scripts/sub/evaluate.js"
 import { root_obj } from "scripts/sub/root.js"
 
+
 // Declaration
 export class hack_obj {
     constructor() {
