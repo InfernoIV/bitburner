@@ -6,6 +6,7 @@ import { hack_obj } from "scripts/sub/hack.js"
 import { darknet_obj } from "scripts/sub/darknet.js"
 import { cloud_obj } from "scripts/sub/cloud.js"
 import { share_exec } from "scripts/sub/share.js"
+import { go_obj } from "scripts/go/go.js"
 
 
 /** @param {NS} ns */
@@ -29,6 +30,11 @@ export async function main(ns) {
     //darknet
     var darknet = new darknet_obj()
 
+    //go
+    var go = new go_obj()
+    //init
+    await go.init(ns)
+
     //start share
     await share_exec(ns)
 
@@ -36,7 +42,6 @@ export async function main(ns) {
     while (true) {
         //start darknet main loop on darkweb
         await darknet.deploy(ns)
-        //return
 
         //check and add cloud servers
         await cloud.manage_servers(ns)
@@ -44,8 +49,9 @@ export async function main(ns) {
         //root servers
         await root.root_servers(ns)
 
-        //create overview of servers
-        //var ram_servers = cloud.get_servers()
+        //play go
+        await go.play(ns)
+        
         //hack servers
         await hack.hack_server(ns, root, cloud)
 

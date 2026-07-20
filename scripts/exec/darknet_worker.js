@@ -41,12 +41,6 @@ ns.dnet.setStasisLink()             12 GB
         influence stock
 */
 export async function main(ns) {
-    //callback
-    /*
-    ns.atExit(() => {
-        ns.ui.openTail()
-    })*/
-
     //stop logging
     //ns.disableLog("ALL")
     ns.disableLog("sleep")
@@ -68,11 +62,6 @@ export async function main(ns) {
 }
 
 
-/* mesage data is formatted like:
-    hostname = hostname of worker (either sent from or sent to, depending on the port)
-    type = type of request
-    data = data (depends on the request)
-*/
 //function that tries to authenticate adjacent servers, with information provided by the orchestrator
 async function authenticate_servers(ns, hostname_self) {
     //scan for darknet servers every time, since they might shift
@@ -81,7 +70,6 @@ async function authenticate_servers(ns, hostname_self) {
     for (const darknet_hostname of servers_darknet_hostnames) {
         //debug
         log.info(ns, ns.pid, "Trying to authenticate for '" + darknet_hostname + "'")
-        //get server information
         //get server information
         var server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + darknet_hostname + "')")
         //if no longer online
@@ -92,39 +80,261 @@ async function authenticate_servers(ns, hostname_self) {
         //get running scripts
         const ps = await evaluate.exec(ns, "ns.ps('" + darknet_hostname + "')")
         //if already running something
-        //if (server_details.ramUsed >= (CONSTANTS.RAM.DARKNET.WORKER + CONSTANTS.RAM.EVAL_ORCHESTRATOR)) {
-        //if already scripts running
         if (ps.length > 0) {
             //log
-            log.info(ns, ns.pid, "Host '" + darknet_hostname + "' is already running a worker!")//: " + JSON.stringify(server_details))
-            //no need to do anything: next
+            log.info(ns, ns.pid, "Host '" + darknet_hostname +
+                "' is already running a worker!") 
+            //next server
             continue
         }
-
         //get common passwords
         const passwords_common = get_common_passwords(ns, server_details)
         //debug
         log.info(ns, ns.pid, "Got common passwords: '" + JSON.stringify(passwords_common) + "'")
         //authenticate
         var return_code = await authenticate(ns, hostname_self, darknet_hostname, passwords_common)
-        //check if need to guess
-        if (return_code == 401) {
+        //check if common passwords failed
+        if (return_code == ns.enums.DarknetResponseCode.AuthFailure) {
             //guess password
             const passwords_guessed = await guess_password(ns, server_details)
             //debug
             log.info(ns, ns.pid, "Got guessed passwords: '" + JSON.stringify(passwords_common) + "'")
             //authenticate again
             return_code = await authenticate(ns, hostname_self, darknet_hostname, passwords_guessed)
-            //if still incorrect
-            if (return_code == 401) {
+            //if password is still incorrect
+            if (return_code == ns.enums.DarknetResponseCode.AuthFailure) {
                 //perform heartbleed for more information
                 return_code = await evaluate.exec(ns, "ns.dnet.heartbleed('" + darknet_hostname + "')")
                 //print message
-                log.warning(ns, ns.pid, "Auth failed for '" + darknet_hostname + "' with common '" + passwords_common + "', guessed: '" + 
+                log.warning(ns, ns.pid, "Auth failed for '" + darknet_hostname + "' with common '" +
+                    passwords_common + "', guessed: '" +
                     passwords_guessed + "', and info '" + JSON.stringify(server_details) + "', heartbleed: '" +
                     JSON.stringify(return_code) + "'", true)
             }
         }
+    }
+}
+
+
+//try to authenticate with this server
+async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
+    //for each password
+    for (const password of passwords) {
+        //set retry to initiate first loop
+        var retry = true
+        //retry system
+        while (retry) {
+            //set retry to false, since the loop started
+            retry = false
+            //try to authenticate
+            var result_auth = await ns.dnet.authenticate(darknet_hostname,
+                password) //cannot be eval, needs to be THIS script
+            //decide what to do
+            switch (result_auth.code) {
+                //authentication worked
+                case ns.enums.DarknetResponseCode.Success:
+                    //debug
+                    log.success(ns, ns.pid, "Authentication successfull with '" + darknet_hostname +
+                        "' using password '" + password + "' (" + JSON.stringify(result_auth) + ")")
+                    //debug
+                    ns.toast("Dnet authenticated '" + darknet_hostname + "' using '" + password + "'")
+                    //start worker
+                    await start_worker(ns, darknet_hostname)
+                    //stop
+                    return result_auth.code
+
+                //requested failed due to instability
+                case ns.enums.DarknetResponseCode.RequestTimeOut:                    
+                    //try again
+                    retry = true
+                    //debug
+                    log.warning(ns, ns.pid, "Request timed out: '" + JSON.stringify(result_auth) + "', retrying")
+                    //break
+                    break
+
+                //password failed
+                case ns.enums.DarknetResponseCode.AuthFailure:
+                    //debug
+                    log.warning(ns, ns.pid, "Auth failed: " + JSON.stringify(result_auth) + "'using '" + password + "'")
+                    //wrong password, try next password
+                    continue
+                    
+                //server moved / online / not usable
+                case ns.enums.DarknetResponseCode.Forbidden:
+                case ns.enums.DarknetResponseCode.ServiceUnavailable:
+                case ns.enums.DarknetResponseCode.DirectConnectionRequired:
+                case ns.enums.DarknetResponseCode.NotFound:
+                case ns.enums.DarknetResponseCode.NotEnoughCharisma:
+                    //debug
+                    log.warning(ns, ns.pid, "Auth failed for '" + darknet_hostname + "': " + JSON.stringify(result_auth) + "'using '" + password + "'")
+                    //stop
+                    return result_auth.code 
+
+                //should not happen here
+                case ns.enums.DarknetResponseCode.StasisLinkLimitReached:                    
+                case ns.enums.DarknetResponseCode.NoBlockRAM:
+                case ns.enums.DarknetResponseCode.PhishingFailed:                    
+                default:
+                    //should not happen, all cases should be covered
+                    log.warning(ns, ns.pid, "Auth uncaught 'result_auth.code': '" + result_auth.code + "'", true)
+            }
+            //wait a little bit
+            await ns.sleep(CONSTANTS.TIME.WAIT)
+        }
+    }
+    //indicate authentication failure
+    return ns.enums.DarknetResponseCode.AuthFailure
+}
+
+
+//function that starts worker on server
+async function start_worker(ns, hostname) {
+    //get server details
+    const server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + hostname + "')")
+    //get blocked ram
+    var ram_blocked = await evaluate.exec(ns, "ns.dnet.getBlockedRam('" + hostname + "')")
+    //variable for results
+    var result = null
+    //while still ram blocked
+    while (ram_blocked > 0) {
+        //free ram
+        result = await evaluate.exec(ns, "ns.dnet.memoryReallocation('" + hostname + "')")
+        //if not successfull
+        if (!result.success) {
+            //stop
+            return
+        }
+        //update blocked ram
+        ram_blocked = await evaluate.exec(ns, "ns.dnet.getBlockedRam('" + hostname + "')")
+        //wait a little bit
+        await ns.sleep(CONSTANTS.TIME.WAIT)
+    }
+    //copy scripts
+    result = await ns.scp(CONSTANTS.SCRIPT.DARKNET.TO_COPY, hostname)
+    //if failed
+    if (!result) {
+        //log warning
+        log.warning(ns, "", "Failed to copy '" + script + "' to '" + hostname + "'")
+        //stop
+        return
+    }
+
+    //kill scripts on target server -> still needed?
+    //await ns.killall(hostname)
+
+    //get server information
+    const server_info = await evaluate.exec(ns, "ns.getServer('" + hostname + "')")
+    //calc ram costs: the eval worker for the darknet worker needs to scale, therefore it is not counted
+    const max_ram_eval_worker = server_info.maxRam - CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM.EVAL_ORCHESTRATOR
+    //launch worker
+    result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, hostname, {
+        preventDuplicates: true
+    }, hostname, max_ram_eval_worker)
+    //check if ok
+    if (result == false) {
+        //debug
+        log.error(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
+            .stringify(server_info))
+        //stop
+        return
+    }
+    //indicate success
+    log.success(ns, ns.pid, "Launched worker on '" + hostname + "'")
+}
+
+
+//activities that can be performed multiple times, but only by self
+async function perform_activities(ns, hostname_self) {
+    //get files on current server
+    const files_cache = await evaluate.exec(ns, "ns.ls('" + hostname_self + "')") //, '.cache')")
+    //for each cache file found
+    for (const file_name of files_cache) {
+        //get the extention
+        const file_extension = "." + file_name.split('.').pop()
+        //depending on the extention
+        switch (file_extension) {
+            //if type of cache
+            case CONSTANTS.FILE_EXTENSION.CACHE:
+                //collect cache
+                const reward = await evaluate.exec(ns, "ns.dnet.openCache('" + file_name + "')")
+                //debug
+                log.success(ns, ns.pid, "Opened cache: '" + JSON.stringify(reward) + "'")
+                //stop
+                break
+
+                //if type of txt or lit
+            case CONSTANTS.FILE_EXTENSION.TEXT:
+            case CONSTANTS.FILE_EXTENSION.LITERATURE:
+                //read file
+                const file_contents = await evaluate.exec(ns, "ns.read('" + file_name + "')")
+                //debug
+                log.success(ns, ns.pid, "Found file: '" + file_name + "' => '" + file_contents + "'", true)
+
+            case CONSTANTS.FILE_EXTENSION.CODING_CONTRACT:
+                //TODO
+                //remove the file
+                await evaluate.exec(ns, "ns.rm('" + file_name + "','" + hostname_self + "')")
+                //stop
+                break
+
+            case CONSTANTS.FILE_EXTENSION.EXECUTABLE:
+                //check if storm seed
+                if (file_name == "STORM_SEED.exe") {
+                    //unlseach storm seed
+                    const storm_result = await evaluate.exec(ns, "ns.dnet.unleashStormSeed()")
+                    //debug
+                    log.warning(ns, ns.pid, "Launched STORM_SEED: '" + JSON.stringify(storm_result) + "'", true)
+                } else {
+                    //debug
+                    log.warning(ns, ns.pid, "Found executable '" + file_name + "'", true)
+                }
+                //stop
+                break
+
+            case CONSTANTS.FILE_EXTENSION.SCRIPT:
+                //do nothing
+                break
+
+            default:
+                log.error(ns, ns.pid, "Uncaught condition 'file_extension': '" + file_extension + "'")
+        }
+    }
+    //dummy
+    var result_phishing = {
+        success: true
+    }
+    //while we can attempt
+    while (result_phishing.success == true) {
+        //Phishing attacks can only be run from scripts on darknet servers.
+        var result_phishing = await evaluate.exec(ns, "ns.dnet.phishingAttack()")
+        //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
+        log.info(ns, ns.pid, "PhishingAttack: " + JSON.stringify(result_phishing))
+        //wait a bit
+        await ns.sleep(CONSTANTS.TIME.WAIT)
+    }
+
+
+    //TODO: how to check which stock we own and how to communicate this?
+    //var result_promote = await evaluate.exec(ns, "ns.dnet.promoteStock('" + sym + "')")
+    //Spends some time spreading propaganda about a stock to increase its volatility. 
+    // This does not actually change the stock's forecasts, but a savvy investor can take advantage of the chaos. 
+    // The effect scales with charisma and the number of threads used, but degrades over time if left alone.
+    //This function requires TIX API access. You can use purchaseTixApi to purchase it.
+
+    //TODO: investigate
+    //There is more than meets the eye.
+    var result_radar = await ns.dnet.labradar()
+    //if success
+    if (result_radar.success) {
+        //debug
+        log.success(ns, ns.pid, "result_radar: " + JSON.stringify(result_radar), true)
+    }
+
+    //Not all who wander are lost.
+    var result_report = await ns.dnet.labreport()
+    if (result_report.success) {
+        //debug
+        log.success(ns, ns.pid, "result_report: " + JSON.stringify(result_report), true)
     }
 }
 
@@ -558,247 +768,6 @@ function get_password(hint, lenght) {
 }
 
 
-
-
-
-//try to authenticate with this server
-async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
-    //for each password
-    for (const password of passwords) {
-        //set retry to initiate first loop
-        var retry = true
-        //retry system
-        while (retry) {
-            //set retry to false, since the loop started
-            retry = false
-            //try to authenticate
-            var result_auth = await ns.dnet.authenticate(darknet_hostname, password) //cannot be eval, needs to be THIS script
-            //if successfull
-            if (result_auth.success) {
-                //debug
-                log.success(ns, ns.pid, "Authentication successfull with '" + darknet_hostname +
-                    "' using password '" + password + "' (" + JSON.stringify(result_auth) + ")")
-                //debug
-                ns.toast("Dnet authenticated '" + darknet_hostname + "' using '" + password + "'")                        
-                //start worker
-                await start_worker(ns, darknet_hostname)
-                //exit function
-                return 200
-            }
-            //debug
-            log.warning(ns, ns.pid, "Auth failed: " + JSON.stringify(result_auth) + "'using '" + password + "'")
-            /*
-            Success: 200;
-            DirectConnectionRequired: 351;
-            AuthFailure: 401;
-            Forbidden: 403;
-            NotFound: 404;
-            RequestTimeOut: 408;
-            NotEnoughCharisma: 451;
-
-            StasisLinkLimitReached: 453;
-            NoBlockRAM: 454;
-            PhishingFailed: 455;
-            ServiceUnavailable: 503;
-            */
-            //check if we need to do anything
-            if (result_auth.code == 408) { //RequestTimeOut
-                //debug
-                log.warning(ns, ns.pid, "Auth failed: '" + JSON.stringify(result_auth) + "', retrying")
-                retry = true
-            }
-            if (result_auth.code == 351 || //DirectConnectionRequired = server moved
-                result_auth.code == 451 || //NotEnoughCharisma = don't try -> next!
-                result_auth.code == 503) { //ServiceUnavailable = server moved?
-                //stop authenticating for this server
-                return result_auth.code
-            }
-            //check if we need to open tail
-            if (retry) {
-                //wait a bit
-                await ns.sleep(CONSTANTS.TIME.WAIT)
-                ns.openTail()
-            }
-            //wait a little bit
-            await ns.sleep(CONSTANTS.TIME.WAIT)
-        }
-    }
-
-    //indicate failure
-    return 401
-}
-
-
-//function that starts worker on server
-async function start_worker(ns, hostname) {
-    //get server details
-    const server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + hostname + "')")
-    //get blocked ram
-    var ram_blocked = await evaluate.exec(ns, "ns.dnet.getBlockedRam('" + hostname + "')")
-
-    //variable for results
-    var result = null
-    //while still ram blocked
-    while (ram_blocked > 0) {
-        //free ram
-        result = await evaluate.exec(ns, "ns.dnet.memoryReallocation('" + hostname + "')")
-        //update blocked ram
-        ram_blocked = await evaluate.exec(ns, "ns.dnet.getBlockedRam('" + hostname + "')")
-        //wait a little bit
-        await ns.sleep(CONSTANTS.TIME.WAIT)
-    }
-    //copy scripts
-    for (const script of CONSTANTS.SCRIPT.DARKNET.TO_COPY) {
-        //copy scripts
-        result = await ns.scp(script, hostname)
-        //result = await evaluate.exec(ns, "ns.scp('" + script + "','" +  hostname + "')")
-
-        //if failed
-        if (!result) {
-            //log warning
-            log.warning(ns, "", "Failed to copy '" + script + "' to '" + hostname + "'")
-        }
-    }
-    //calc ram
-    //get server information
-    const server_info = await evaluate.exec(ns, "ns.getServer('" + hostname + "')")
-    //debug
-    log.info(ns, ns.pid, "server '" + hostname + "' starting: " + JSON.stringify(server_details))
-    //if still online / connected
-    if (server_info.isOnline) { //} && server_details.isConnectedToCurrentServer) {
-        //kill scripts on target server
-        //await evaluate.exec(ns, "ns.killall('" + hostname + "')")
-        await ns.killall(hostname)
-
-        //calc ram costs
-        //darkweb server:
-        //worker + eval + eval worker
-        //the eval worker for the darknet worker needs to scale, therefore it is not counted
-        const max_ram_eval_worker = server_info.maxRam - CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM
-            .EVAL_ORCHESTRATOR
-        //debug
-        log.info(ns, ns.pid, "Target has " + server_info.maxRam + " GB, and requires " + CONSTANTS.RAM.DARKNET
-            .WORKER + ", " + CONSTANTS.RAM.EVAL_ORCHESTRATOR + "=> resulting into '" + max_ram_eval_worker + "'"
-        )
-
-
-        //launch worker
-        result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, hostname, {
-            preventDuplicates: true
-        }, hostname, max_ram_eval_worker)
-        //check if ok
-        if (result == false) {
-            //debug
-            log.error(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
-                .stringify(server_info))
-            //debug
-            ns.ui.openTail()
-            ns.exit()
-            //give alert
-            /*
-            ns.alert(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
-                .stringify(server_details))*/
-        }
-        //indicate success
-        log.success(ns, ns.pid, "Launched worker on '" + hostname + "'")
-    }
-}
-
-
-//activities that can be performed multiple times, but only by self
-async function perform_activities(ns, hostname_self) {
-    //get files on current server
-    const files_cache = await evaluate.exec(ns, "ns.ls('" + hostname_self + "')") //, '.cache')")
-    //for each cache file found
-    for (const file_name of files_cache) {
-        //get the extention
-        const file_extension = "." + file_name.split('.').pop()
-        //depending on the extention
-        switch (file_extension) {
-            //if type of cache
-            case CONSTANTS.FILE_EXTENSION.CACHE:
-                //collect cache
-                const reward = await evaluate.exec(ns, "ns.dnet.openCache('" + file_name + "')")
-                //debug
-                log.success(ns, ns.pid, "Opened cache: '" + JSON.stringify(reward) + "'")
-                //stop
-                break
-
-                //if type of txt or lit
-            case CONSTANTS.FILE_EXTENSION.TEXT:
-            case CONSTANTS.FILE_EXTENSION.LITERATURE:
-                //read file
-                const file_contents = await evaluate.exec(ns, "ns.read('" + file_name + "')")
-                //debug
-                log.success(ns, ns.pid, "Found file: '" + file_name + "' => '" + file_contents + "'", true)
-
-            case CONSTANTS.FILE_EXTENSION.CODING_CONTRACT:
-                //TODO
-                //remove the file
-                await evaluate.exec(ns, "ns.rm('" + file_name + "','" + hostname_self + "')")
-                //stop
-                break
-
-            case CONSTANTS.FILE_EXTENSION.EXECUTABLE:
-                //check if storm seed
-                if (file_name == "STORM_SEED.exe") {
-                    //unlseach storm seed
-                    const storm_result = await evaluate.exec(ns, "ns.dnet.unleashStormSeed()")
-                    //debug
-                    log.warning(ns, ns.pid, "Launched STORM_SEED: '" + JSON.stringify(storm_result) + "'", true)
-                } else {
-                    //debug
-                    log.warning(ns, ns.pid, "Found executable '" + file_name + "'", true)
-                }
-                //stop
-                break
-
-            case CONSTANTS.FILE_EXTENSION.SCRIPT:
-                //do nothing
-                break
-
-            default:
-                log.error(ns, ns.pid, "Uncaught condition 'file_extension': '" + file_extension + "'")
-        }
-    }
-    //dummy
-    var result_phishing = {
-        success: true
-    }
-    //while we can attempt
-    while (result_phishing.success == true) {
-        //Phishing attacks can only be run from scripts on darknet servers.
-        var result_phishing = await evaluate.exec(ns, "ns.dnet.phishingAttack()")
-        //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
-        log.info(ns, ns.pid, "PhishingAttack: " + JSON.stringify(result_phishing))
-        //wait a bit
-        await ns.sleep(CONSTANTS.TIME.WAIT)
-    }
-
-
-    //TODO: how to check which stock we own and how to communicate this?
-    //var result_promote = await evaluate.exec(ns, "ns.dnet.promoteStock('" + sym + "')")
-    //Spends some time spreading propaganda about a stock to increase its volatility. 
-    // This does not actually change the stock's forecasts, but a savvy investor can take advantage of the chaos. 
-    // The effect scales with charisma and the number of threads used, but degrades over time if left alone.
-    //This function requires TIX API access. You can use purchaseTixApi to purchase it.
-
-    //TODO: investigate
-    //There is more than meets the eye.
-    var result_radar = await ns.dnet.labradar()
-    //if success
-    if (result_radar.success) {
-        //debug
-        log.success(ns, ns.pid, "result_radar: " + JSON.stringify(result_radar), true)
-    }
-
-    //Not all who wander are lost.
-    var result_report = await ns.dnet.labreport()
-    if (result_report.success) {
-        //debug
-        log.success(ns, ns.pid, "result_report: " + JSON.stringify(result_report), true)
-    }
-}
 
 /*
 TODO

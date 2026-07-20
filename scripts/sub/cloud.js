@@ -5,7 +5,6 @@ import * as evaluate from 'scripts/sub/evaluate.js'
 import * as log from 'scripts/sub/log.js'
 
 
-//TODO: create object instead of using globals
 // Declaration
 export class cloud_obj {
     constructor(ns) {
