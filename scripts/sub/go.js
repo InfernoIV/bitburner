@@ -54,20 +54,26 @@ export class go_obj {
         //if game is over
         if (current_player == "None") {
             //start a new game
-            await start_new_game(ns)
+            await this.start_new_game(ns)
             //it should be our turn, so make a move		
         }
         //make a move
-        await make_move(ns)
+        await this.make_move(ns)
     }
 
 
     //start a new game: select an opponent and a board size
     async start_new_game(ns) {
         //in order of difficulty
-        const opponent_list = ["Netburners", "Slum Snakes", "The Black Hand", "Tetrads", "Daedalus", "Illuminati",
-            "????????????"
-        ] //| "No AI"
+        const opponent_list = [
+			"Netburners", 		//increased hacknet production
+			 "Slum Snakes", 	//crime success rate
+			 "The Black Hand", 	//hacking money
+			 "Tetrads", 		//strength, defense, dexterity, and agility levels
+			 "Daedalus", 		//reputation gain
+			 "Illuminati",		//faster hack(), grow(), and weaken()
+		] //| "No AI"
+
         //Returns the name of the opponent faction in the current subnet.
         const opponent_current = await evaluate.exec(ns, "ns.go.getOpponent()")
         //default to same opponent
@@ -194,7 +200,7 @@ export class go_obj {
             return
         }
         //gather information
-        var information = await gather_information(ns)
+        var information = await this.gather_information(ns)
         //add current information
         information.previous_moves = previous_moves
         information.state_game = state_game
@@ -205,7 +211,7 @@ export class go_obj {
         switch (opponent) {
             default:
                 //not defined: brute force it
-                await brute_force(ns, information)
+                await this.brute_force(ns, information)
         }
     }
 

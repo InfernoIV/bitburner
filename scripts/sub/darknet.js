@@ -37,8 +37,8 @@ export class darknet_obj {
             //get server information
             const server_info =  await evaluate.exec(ns, "ns.getServer('" + CONSTANTS.SERVER.DARKWEB + "')")
 			//calc ram costs
-			const max_ram_eval_worker = server_info.maxRam - CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM.EVAL_ORCHESTRATOR 
-			//copy scripts
+			const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET.WORKER)
+            //copy scripts
             for (const script of CONSTANTS.SCRIPT.DARKNET.TO_COPY) {
             //copy scripts
             var results = await evaluate.exec(ns, "ns.scp('" + script + "','" +
@@ -47,8 +47,8 @@ export class darknet_obj {
             //start worker
             var result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, CONSTANTS.SERVER.DARKWEB, {
                 preventDuplicates: true,
-                ramOverride: CONSTANTS.RAM.DARKNET.WORKER,
-            }, CONSTANTS.SERVER.DARKWEB, max_ram_eval_worker)
+                threads: threads,
+            }, CONSTANTS.SERVER.DARKWEB)
             //check if ok
             if (result == false) {
                 //debug

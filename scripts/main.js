@@ -102,8 +102,11 @@ export async function main(ns) {
     while (true) {
         //start darknet main loop on darkweb
         await darknet.deploy(ns)
+        
+        return
+        
         //play go
-        //await go.play(ns)
+        await go.play(ns)
 
         //root servers
         await root.root_servers(ns)

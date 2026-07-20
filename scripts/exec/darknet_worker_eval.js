@@ -1,23 +1,25 @@
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
+import * as evaluate from "scripts/sub/evaluate.js"
 
 /*
-1.6 + 0.2 + 0.4 + 2 + 2 + 0.1 + 0 + 0 = 6.3 + 0.5 = 6.9 + 2 = 8.9
 base                                1.6
 ns.dnet.probe()                     0.2 GB
+ns.dnet.heartbleed()                0.6 GB
 ns.dnet.authenticate()              0.4 GB
-ns.dnet.phishingAttack()            2 GB 
+
+ns.dnet.phishingAttack()            2 GB + 1.6 (base) + 0.4 (authenticate) = 4
 ns.dnet.openCache()                 2 GB
+ns.dnet.promoteStock()              2 GB
+
 ns.dnet.unleashStormSeed            0.1 GB
+
+???
 ns.dnet.labradar()                  0 GB
 ns.dnet.labreport()                 0 GB
-ns.dnet.heartbleed()                0.6 GB
-
-ns.getServer()                      2 GB
 
 
 needed?
-ns.dnet.promoteStock()              2 GB
 ns.dnet.induceServerMigration()     4 GB
 ns.dnet.setStasisLink()             12 GB
 */
@@ -44,6 +46,10 @@ export async function main(ns) {
     ns.disableLog("sleep")
     //get hostname
     const hostname_self = ns.args[0]
+    //get max ram usage
+    const max_ram = ns.args[1]
+    //init eval
+    evaluate.init(ns, hostname_self, CONSTANTS.RAM.DARKNET.WORKER_EVAL, true, max_ram)
     //endless work
     while (true) {
         //authenticate servers
@@ -61,13 +67,13 @@ async function authenticate_servers(ns, hostname_self) {
     //value to fill
     var darknet_servers = []
     //scan for darknet servers every time, since they might shift
-    const servers_darknet_hostnames = ns.dnet.probe()
+    const servers_darknet_hostnames = await evaluate.exec(ns, "ns.dnet.probe()")
     //for each server found by scan
     for (const darknet_hostname of servers_darknet_hostnames) {
         //debug
         log.info(ns, ns.pid, "Trying to authenticate for '" + darknet_hostname + "'")
         //get server information
-        var server_details = ns.dnet.getServerDetails(darknet_hostname)
+        var server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + darknet_hostname + "')")
         //add data to list
         darknet_servers.push({hostname: darknet_hostname, lenght: server_details.passwordLength, details: server_details})
     }
@@ -84,7 +90,7 @@ async function authenticate_servers(ns, hostname_self) {
             continue
         }
         //get running scripts
-        const ps = ns.ps(darknet_hostname)
+        const ps = await evaluate.exec(ns, "ns.ps('" + darknet_hostname + "')")
         //if already running something
         if (ps.length > 0) {
             //log
@@ -102,7 +108,7 @@ async function authenticate_servers(ns, hostname_self) {
         //check if common passwords failed
         if (return_code == ns.enums.DarknetResponseCode.AuthFailure) {
             //guess password
-            const passwords_guessed = guess_password(ns, server_details)
+            const passwords_guessed = await guess_password(ns, server_details)
             //debug
             log.info(ns, ns.pid, "Got guessed passwords: '" + JSON.stringify(passwords_common) + "'")
             //authenticate again
@@ -110,7 +116,7 @@ async function authenticate_servers(ns, hostname_self) {
             //if password is still incorrect
             if (return_code == ns.enums.DarknetResponseCode.AuthFailure) {
                 //perform heartbleed for more information
-                return_code = await ns.dnet.heartbleed(darknet_hostname)
+                return_code = await evaluate.exec(ns, "ns.dnet.heartbleed('" + darknet_hostname + "')")
                 //print message
                 log.warning(ns, ns.pid, "Auth failed for '" + darknet_hostname + "' with common '" +
                     passwords_common + "', guessed: '" +
@@ -196,27 +202,27 @@ async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
 //function that starts worker on server
 async function start_worker(ns, hostname) {
     //get server details
-    const server_details = ns.dnet.getServerDetails(hostname)
+    const server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + hostname + "')")
     //get blocked ram
-    var ram_blocked = ns.dnet.getBlockedRam(hostname)
+    var ram_blocked = await evaluate.exec(ns, "ns.dnet.getBlockedRam('" + hostname + "')")
     //variable for results
     var result = null
     //while still ram blocked
     while (ram_blocked > 0) {
         //free ram
-        result = await ns.dnet.memoryReallocation(hostname)
+        result = await evaluate.exec(ns, "ns.dnet.memoryReallocation('" + hostname + "')")
         //if not successfull
         if (!result.success) {
             //stop
             return
         }
         //update blocked ram
-        ram_blocked = ns.dnet.getBlockedRam(hostname)
+        ram_blocked = await evaluate.exec(ns, "ns.dnet.getBlockedRam('" + hostname + "')")
         //wait a little bit
         await ns.sleep(CONSTANTS.TIME.WAIT)
     }
     //copy scripts
-    result = ns.scp(CONSTANTS.SCRIPT.DARKNET.TO_COPY, hostname)
+    result = await ns.scp(CONSTANTS.SCRIPT.DARKNET.TO_COPY, hostname)
     //if failed
     if (!result) {
         //log warning
@@ -229,14 +235,14 @@ async function start_worker(ns, hostname) {
     //await ns.killall(hostname)
 
     //get server information
-    const server_info = ns.getServer(hostname)
+    const server_info = await evaluate.exec(ns, "ns.getServer('" + hostname + "')")
     //calc ram costs: the eval worker for the darknet worker needs to scale, therefore it is not counted
-    const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET.WORKER)
+    const max_ram_eval_worker = server_info.maxRam - CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM.EVAL_ORCHESTRATOR
     //launch worker
     result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, hostname, {
         preventDuplicates: true,
-        threads: threads,
-    }, hostname)
+        ramOverride: CONSTANTS.RAM.DARKNET.WORKER,
+    }, hostname, max_ram_eval_worker)
     //check if ok
     if (result == false) {
         //debug
@@ -254,7 +260,7 @@ async function start_worker(ns, hostname) {
 //activities that can be performed multiple times, but only by self
 async function perform_activities(ns, hostname_self) {
     //get files on current server
-    const files_cache = ns.ls(hostname_self)
+    const files_cache = await evaluate.exec(ns, "ns.ls('" + hostname_self + "')") //, '.cache')")
     //for each cache file found
     for (const file_name of files_cache) {
         //get the extention
@@ -264,7 +270,7 @@ async function perform_activities(ns, hostname_self) {
             //if type of cache
             case CONSTANTS.FILE_EXTENSION.CACHE:
                 //collect cache
-                const reward = ns.dnet.openCache(file_name)
+                const reward = await evaluate.exec(ns, "ns.dnet.openCache('" + file_name + "')")
                 //debug
                 log.success(ns, ns.pid, "Opened cache: '" + JSON.stringify(reward) + "'")
                 //stop
@@ -274,14 +280,14 @@ async function perform_activities(ns, hostname_self) {
             case CONSTANTS.FILE_EXTENSION.TEXT:
             case CONSTANTS.FILE_EXTENSION.LITERATURE:
                 //read file
-                const file_contents = ns.read(file_name)
+                const file_contents = await evaluate.exec(ns, "ns.read('" + file_name + "')")
                 //debug
                 log.success(ns, ns.pid, "Found file: '" + file_name + "' => '" + file_contents + "'", true)
 
             case CONSTANTS.FILE_EXTENSION.CODING_CONTRACT:
                 //TODO
                 //remove the file
-                ns.rm(file_name, hostname_self)
+                await evaluate.exec(ns, "ns.rm('" + file_name + "','" + hostname_self + "')")
                 //stop
                 break
 
@@ -289,7 +295,7 @@ async function perform_activities(ns, hostname_self) {
                 //check if storm seed
                 if (file_name == "STORM_SEED.exe") {
                     //unlseach storm seed
-                    const storm_result = ns.dnet.unleashStormSeed()
+                    const storm_result = await evaluate.exec(ns, "ns.dnet.unleashStormSeed()")
                     //debug
                     log.warning(ns, ns.pid, "Launched STORM_SEED: '" + JSON.stringify(storm_result) + "'", true)
                 } else {
@@ -314,7 +320,7 @@ async function perform_activities(ns, hostname_self) {
     //while we can attempt
     while (result_phishing.success == true) {
         //Phishing attacks can only be run from scripts on darknet servers.
-        var result_phishing = await ns.dnet.phishingAttack()
+        var result_phishing = await evaluate.exec(ns, "ns.dnet.phishingAttack()")
         //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
         log.info(ns, ns.pid, "PhishingAttack: " + JSON.stringify(result_phishing))
         //wait a bit
@@ -323,7 +329,7 @@ async function perform_activities(ns, hostname_self) {
 
 
     //TODO: how to check which stock we own and how to communicate this?
-    //var result_promote = await ns.dnet.promoteStock('" + sym + "')")
+    //var result_promote = await evaluate.exec(ns, "ns.dnet.promoteStock('" + sym + "')")
     //Spends some time spreading propaganda about a stock to increase its volatility. 
     // This does not actually change the stock's forecasts, but a savvy investor can take advantage of the chaos. 
     // The effect scales with charisma and the number of threads used, but degrades over time if left alone.
@@ -397,7 +403,7 @@ function get_common_passwords(ns, server_details) {
 
 }
 //function that guesses password
-function guess_password(ns, server_details) {
+async function guess_password(ns, server_details) {
     //debug
     log.info(ns, ns.pid, "Solving for '" + JSON.stringify(server_details) + "'")
     //for easy lookup
@@ -487,6 +493,8 @@ function guess_password(ns, server_details) {
             //stop for now
             ns.exit()
     }
+
+
     //failsafe
     return passwords_guessed
 }
