@@ -80,7 +80,7 @@ export class bladeburner_obj {
 
 
     //determines action for player
-    determine_action(ns) {
+    async determine_action(ns) {
         //upgrade skills first, this increases the chances
         await upgrade_skills(ns)
 
@@ -93,7 +93,7 @@ export class bladeburner_obj {
 };*/
 
         //Get Bladeburner stamina.
-        const stamina = ns.bladeburner.getStamina()
+        const stamina = await evaluate.exec(ns, "ns.bladeburner.getStamina()")
 
         //black op > op > contract > basic
 
@@ -106,7 +106,7 @@ export class bladeburner_obj {
             //if we have enough rank
             if (rank >= next_black_op.rank) {
                 //Set team size to max?
-                ns.bladeburner.setTeamSize(type, name, size)
+                //await evaluate.exec(ns, "ns.bladeburner.setTeamSize('" + type + "','"  + name + "'," + size + "')" )
                 //Get estimate success chance of an action.
                 const chance = await evaluate.exec(ns, "ns.bladeburner.getActionEstimatedSuccessChance('" + blade_burner_action_type.black_op + "','" + BladeburnerBlackOpName + "')")
                 //if enough chance
@@ -169,7 +169,7 @@ export class bladeburner_obj {
     //determines actions for sleeves
     async determine_actions_sleeves(ns, amount_of_sleeves) {
         //Get estimate success chance of an action.
-        ns.bladeburner.getActionEstimatedSuccessChance(type, name, sleeveNumber)
+        //await evaluate.exec(ns, "ns.bladeburner.getActionEstimatedSuccessChance(type, name, sleeveNumber)")
 
         //return blank
         return [{}]
@@ -195,9 +195,9 @@ export class bladeburner_obj {
             //if we have enough rank
             if (rank >= next_black_op.rank) {
                 //Set team size.
-                ns.bladeburner.setTeamSize(type, next_black_op.name, size)
+                //ns.bladeburner.setTeamSize(type, next_black_op.name, size)
                 //Get estimate success chance of an action.
-                const chance = ns.bladeburner.getActionEstimatedSuccessChance(type, BladeburnerBlackOpName)
+                const chance = await evaluate.exec(ns, "ns.bladeburner.getActionEstimatedSuccessChance('" + type + "','" + BladeburnerBlackOpName + "')")
                 //if enough chance
                 if (chance >= 1) {
                     //perform black op
@@ -212,20 +212,21 @@ export class bladeburner_obj {
     //change city
     //TODO: when to change city?
     async change_city(ns) {
+        var city = ""
         //Get current city.
-        ns.bladeburner.getCity()
+        await evaluate.exec(ns, "ns.bladeburner.getCity()")
 
         //Get chaos of a city.
-        ns.bladeburner.getCityChaos(city)
+        await evaluate.exec(ns, "ns.bladeburner.getCityChaos('" + city + "')")
 
         //Get number of communities in a city.
-        ns.bladeburner.getCityCommunities(city)
+        await evaluate.exec(ns, "ns.bladeburner.getCityCommunities('" + city + "')")
 
         //Get estimated population in city.
-        ns.bladeburner.getCityEstimatedPopulation(city)
+        await evaluate.exec(ns, "ns.bladeburner.getCityEstimatedPopulation('" + city + "')")
 
         //Travel to another city in Bladeburner.
-        ns.bladeburner.switchCity(city)
+        await evaluate.exec(ns, "ns.bladeburner.switchCity('" + city + "')")
     }
 
 
@@ -236,19 +237,19 @@ export class bladeburner_obj {
         //for each skill
         for (const skill in this.skills) {
             //Get skill level.
-            ns.bladeburner.getSkillLevel(skillName)
+            await evaluate.exec(ns, "ns.bladeburner.getSkillLevel('" + skill + "')")
 
 
 
 
             //Get bladeburner skill points.
-            ns.bladeburner.getSkillPoints()
+            await evaluate.exec(ns, "ns.bladeburner.getSkillPoints()")
 
             //Get cost to upgrade skill.
-            ns.bladeburner.getSkillUpgradeCost(skillName, count)
+            await evaluate.exec(ns, "ns.bladeburner.getSkillUpgradeCost('" + skillName + "',1)")
 
             //Upgrade skill.
-            ns.bladeburner.upgradeSkill(skillName, count)
+            await evaluate.exec(ns, "ns.bladeburner.upgradeSkill('" + skill + "', 1)")
         }
     }
 
@@ -274,7 +275,7 @@ export class bladeburner_obj {
     //starts actions for player
     async start_action(type, name) {
         //Start an action.
-        ns.bladeburner.startAction(type, name)
+        await evaluate.exec(ns, "ns.bladeburner.startAction('" + type + "','" + name + "')")
     }
 
 

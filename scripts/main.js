@@ -58,34 +58,36 @@ export async function main(ns) {
     var hacknet = new hacknet_obj()
 
     //get reset info
-    const reset_information = await evaluate.exec(ns, "ns.getRestInfo()")
+    const reset_information = await evaluate.exec(ns, "ns.getResetInfo()")
     //get source files
     const owned_source_files = reset_information.ownedSF
+    //debug
+    log.info(ns, "Main", "owned_source_files: " + JSON.stringify(owned_source_files), true)
 
 
     //init where needed
-    if (owned_source_files.has(13)) {
+    if (owned_source_files.hasOwnProperty(13)) {
         await stanek.init(ns)
     }
-    if (owned_source_files.has(2)) {
+    if (owned_source_files.hasOwnProperty(2)) {
         await gang.init(ns)
     }
     //corporation
-    if (owned_source_files.has(3)) {
+    if (owned_source_files.hasOwnProperty(3)) {
         await corporation.init(ns)
     }
     //singularity
-    if (owned_source_files.has(4)) {
+    if (owned_source_files.hasOwnProperty(4)) {
         await singularity.init(ns)
     }
     //bladeburner
-    if (owned_source_files.has(6) || owned_source_files.has(7)) {
+    if (owned_source_files.hasOwnProperty(6) || owned_source_files.hasOwnProperty(7)) {
         await bladeburner.init(ns)
     }
-    if (owned_source_files.has(9)) {
+    if (owned_source_files.hasOwnProperty(9)) {
         await hacknet.init()
     }
-    if (owned_source_files.has(10)) {
+    if (owned_source_files.hasOwnProperty(10)) {
         await sleeve.init(ns)
         await grafting.init(ns)
     }
@@ -101,7 +103,7 @@ export async function main(ns) {
         //start darknet main loop on darkweb
         await darknet.deploy(ns)
         //play go
-        await go.play(ns)
+        //await go.play(ns)
 
         //root servers
         await root.root_servers(ns)
@@ -111,31 +113,31 @@ export async function main(ns) {
         await hack.hack_server(ns, root, cloud)
 
         //SF specific unlocks
-        if (owned_source_files.has(4)) {
+        if (owned_source_files.hasOwnProperty(4)) {
             //do stuff
             //await singularity.
-            if (owned_source_files.has(10)) {
+            if (owned_source_files.hasOwnProperty(10)) {
                 //do stuff
                 //await sleeve //and grafting
             }
-            if (owned_source_files.has(6) || owned_source_files.has(7)) {
+            if (owned_source_files.hasOwnProperty(6) || owned_source_files.hasOwnProperty(7)) {
             //do stuff
             //await bladeburner.
             }
         }        
-        if (owned_source_files.has(2)) {
+        if (owned_source_files.hasOwnProperty(2)) {
             //do stuff
             //await gang.manage()
         }
-        if (owned_source_files.has(3)) {
+        if (owned_source_files.hasOwnProperty(3)) {
             //do stuff
             //await corporation.
         }
-        if (owned_source_files.has(9)) {
+        if (owned_source_files.hasOwnProperty(9)) {
             //do stuff
             //await hacknet.
         }
-        if (owned_source_files.has(13)) {
+        if (owned_source_files.hasOwnProperty(13)) {
             //do stuff
             //await stanek.
         }

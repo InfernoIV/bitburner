@@ -121,7 +121,7 @@ export class gang_obj {
         //for every recruit available         
         for (let i = 0; i < recruits_available; i++) {
             //Recruit a new gang member.
-            ns.gang.recruitMember("thug-" + this.members_amount)
+            await evaluate.exec(ns, "ns.gang.recruitMember('thug-" + this.members_amount + "')")
             //up the count
             this.members_amount += 1
         }

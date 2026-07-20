@@ -8,7 +8,7 @@ ns.dnet.probe()                     0.2 GB
 ns.dnet.heartbleed()                0.6 GB
 ns.dnet.authenticate()              0.4 GB
 
-ns.dnet.phishingAttack()            2 GB + 1.6 = 3.6
+ns.dnet.phishingAttack()            2 GB + 1.6 (base) + 0.4 (authenticate) = 4
 ns.dnet.openCache()                 2 GB
 ns.dnet.promoteStock()              2 GB
 
@@ -64,6 +64,8 @@ export async function main(ns) {
 
 //function that tries to authenticate adjacent servers, with information provided by the orchestrator
 async function authenticate_servers(ns, hostname_self) {
+    //value to fill
+    var darknet_servers = []
     //scan for darknet servers every time, since they might shift
     const servers_darknet_hostnames = await evaluate.exec(ns, "ns.dnet.probe()")
     //for each server found by scan
@@ -72,6 +74,16 @@ async function authenticate_servers(ns, hostname_self) {
         log.info(ns, ns.pid, "Trying to authenticate for '" + darknet_hostname + "'")
         //get server information
         var server_details = await evaluate.exec(ns, "ns.dnet.getServerDetails('" + darknet_hostname + "')")
+        //add data to list
+        darknet_servers.push({hostname: darknet_hostname, lenght: server_details.passwordLength, details: server_details})
+    }
+    //sort the servers: smallest password first
+    darknet_servers.sort((firstItem, secondItem) => firstItem.lenght - secondItem.lenght)
+    //loop over the servers
+    for (const server of darknet_servers) {
+        //get details
+        const server_details = server.details
+        const darknet_hostname = server.hostname
         //if no longer online
         if (!server_details.isOnline) {
             //go to next
@@ -228,13 +240,15 @@ async function start_worker(ns, hostname) {
     const max_ram_eval_worker = server_info.maxRam - CONSTANTS.RAM.DARKNET.WORKER - CONSTANTS.RAM.EVAL_ORCHESTRATOR
     //launch worker
     result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, hostname, {
-        preventDuplicates: true
+        preventDuplicates: true,
+        ramOverride: CONSTANTS.RAM.DARKNET.WORKER,
     }, hostname, max_ram_eval_worker)
     //check if ok
     if (result == false) {
         //debug
         log.error(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
             .stringify(server_info))
+            //ns.ui.openTail()
         //stop
         return
     }

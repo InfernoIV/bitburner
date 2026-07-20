@@ -46,12 +46,14 @@ export class darknet_obj {
             }
             //start worker
             var result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, CONSTANTS.SERVER.DARKWEB, {
-                preventDuplicates: true
+                preventDuplicates: true,
+                ramOverride: CONSTANTS.RAM.DARKNET.WORKER,
             }, CONSTANTS.SERVER.DARKWEB, max_ram_eval_worker)
             //check if ok
             if (result == false) {
                 //debug
                 log.error(ns, "Darknet", "Failed to start worker!")
+                ns.ui.openTail()                
                 //stop
                 ns.exit()
             }
