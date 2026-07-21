@@ -25,6 +25,11 @@ export class go_obj {
 
     //getting the game to a steady state
     init(ns) {
+        //disable logging
+        ns.disableLog("go.makeMove")
+        ns.disableLog("go.passTurn")
+        ns.disableLog("go.resetBoardState")
+
         //Returns the color of the current player ("White" | "Black"), or 'None' if the game is over.
         const current_player = ns.go.getCurrentPlayer()
         //if not our turn
@@ -35,12 +40,18 @@ export class go_obj {
 		This can also be used if you pick up the game in a state where the opponent needs to play next. 
 		For example: if BitBurner was closed while waiting for the opponent to make a move, you may need to call passTurn() to get them to play their move on game start.
 		*/
-            await ns.go.passTurn()
+            ns.go.passTurn()
         }
-        //get game state
-        const state_game = ns.go.getGameState()
+        //get board state
+        const board_state = ns.go.getBoardState()
         //save board size
-        this.board_size = state_game.length
+        this.board_size = board_state.length
+        //save wins
+        this.wins = 0
+        //reset stats to easily see if we have won 2x
+        ns.go.analysis.resetStats(true)
+        //log
+        log.info(ns, "Go", "Init complete", true)
     }
 
 
@@ -66,15 +77,17 @@ export class go_obj {
 
     //start a new game: select an opponent and a board size
     start_new_game(ns) {
+        //debug
+        //log.info(ns, "Go", "Starting new game")
         //in order of difficulty
         const opponent_list = [
-			"Netburners", 		//increased hacknet production
-			 "Slum Snakes", 	//crime success rate
-			 "The Black Hand", 	//hacking money
-			 "Tetrads", 		//strength, defense, dexterity, and agility levels
-			 "Daedalus", 		//reputation gain
-			 "Illuminati",		//faster hack(), grow(), and weaken()
-		] //| "No AI"
+            "Netburners", //increased hacknet production
+            "Slum Snakes", //crime success rate
+            "The Black Hand", //hacking money
+            "Tetrads", //strength, defense, dexterity, and agility levels
+            "Daedalus", //reputation gain
+            "Illuminati", //faster hack(), grow(), and weaken()
+        ] //| "No AI"
 
         //Returns the name of the opponent faction in the current subnet.
         const opponent_current = ns.go.getOpponent()
@@ -90,10 +103,17 @@ export class go_obj {
         winStreak			number	Current winstreak
         */
         const stats = ns.go.analysis.getStats()
+        //if we won a match
+        if (stats[opponent_current].wins > this.wins) {
+            //save the win
+            this.wins = stats[opponent_current].wins
+            //log message
+            log.success(ns, "Go", "Won a match vs " + opponent_current, true)
+        }
         //if we have gotten a winstreak of 2, resulting in rep to favor conversion
         if (stats[opponent_current].winStreak >= 2) {
             //determine the next index
-            opponent_index = opponent_list.indexOf(opponent_current) + 1
+            var opponent_index = opponent_list.indexOf(opponent_current) + 1
             //check if out of bounds
             //TODO: integrate strategies for each opponent
             if (opponent_index >= 0) { //opponent_list.length) {
@@ -105,6 +125,11 @@ export class go_obj {
             //debug
             log.success(ns, "Go", "Won 2x against '" + opponent_current + "', next opponent: '" + opponent_next +
                 "'", true)
+            //reset stats to easily see if we have won 2x
+            ns.go.analysis.resetStats(true)
+            //set wins back to 0
+            this.wins = 0
+
         }
 
         //default size
@@ -141,9 +166,8 @@ export class go_obj {
         This will reset your win streak if the current game is not complete and you have already made moves.
         Note that some factions will have a few routers already on the subnet after a reset.
         */
-        ns.go.resetBoardState(opponent_next,board_size)
-        //reset stats to easily see if we have won 2x
-        ns.go.analysis.resetStats(true)
+        ns.go.resetBoardState(opponent_next, board_size)
+        
         //save the board size
         this.board_size = board_size
     }
@@ -183,7 +207,8 @@ export class go_obj {
         Shows the current player, current score, and the previous move coordinates. 
         Previous move will be null for a pass, or if there are no prior moves.
         */
-        const state_game = ns.go.getGameState()
+        const state_game = ns.go
+        .getGameState() //{"currentPlayer":"Black","whiteScore":1.5,"blackScore":0,"previousMove":null,"komi":1.5,"bonusCycles":0}
         /*
         Returns all the prior moves in the current game, as an array of simple board states.	
         For example, a single 5x5 prior move board might look like this:
@@ -194,10 +219,13 @@ export class go_obj {
         	".XO.#",	]
         */
         const previous_moves = ns.go.getMoveHistory()
+
         //if there have been moves and the previous move is a pass
-        if (previous_moves != null && state_game == null) {
+        if (previous_moves.length > 0 && state_game.previousMove == null) {
             //pass to finish the game
             ns.go.passTurn()
+            //debug
+            //log.info(ns, "Go", "Passing to finish the game")
             //stop
             return
         }
@@ -219,7 +247,7 @@ export class go_obj {
 
 
     //just play the 1st move available
-    async brute_force(ns, information) {
+    brute_force(ns, information) {
         //start from 1 from corner first?
         //This idea can also be improved to focus on a specific area or corner first, rather than spread across the whole board right away.
         //from left to right 
@@ -234,7 +262,27 @@ export class go_obj {
                 if (valid_move && isNotReservedSpace) {
                     /*Make a move on the IPvGO subnet game board, and await the opponent's response. 
                     x:0 y:0 represents the bottom-left corner of the board in the UI.*/
-                    ns.go.makeMove(x,y)
+                    ns.go.makeMove(x, y)
+                    //debug
+                    //log.info(ns, "Go", "Made a move on " + x + "," + y)
+                    //stop
+                    return
+                }
+            }
+        }
+        //we need to play in reserved space
+        for (var x = 0; x < this.board_size; x++) {
+            //from top to bottom
+            for (var y = 0; y < this.board_size; y++) {
+                //if a valid move
+                const valid_move = information.moves_valid[x][y]
+                //if a valid move and not reserved
+                if (valid_move) {
+                    /*Make a move on the IPvGO subnet game board, and await the opponent's response. 
+                        x:0 y:0 represents the bottom-left corner of the board in the UI.*/
+                    ns.go.makeMove(x, y)
+                    //debug
+                    //log.info(ns, "Go", "Made a move on " + x + "," + y)
                     //stop
                     return
                 }
@@ -244,8 +292,8 @@ export class go_obj {
 
 
     //TODO: play aggressively
-    async play_aggressive(ns, information) {
-        
+    play_aggressive(ns, information) {
+
         //TODO
         var x = 0
         var y = 0
@@ -292,7 +340,7 @@ export class go_obj {
 
 
     //gather all information, to be used to determine actions
-    async gather_information(ns) {
+    gather_information(ns) {
         //variable to fill
         var information = {}
         /*Retrieves a simplified version of the board state. "X" represents black pieces, "O" white, and "." empty points. 

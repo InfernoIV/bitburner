@@ -428,7 +428,7 @@ export const GANG_EQUIPMENT = [
     //weapons
     {
         name: "Baseball Bat",
-        upgType: UpgradeType.Weapon,
+        upgType: "Weapon",
         cost: 1e6,
         mults: {
             str: 1.04,
@@ -436,7 +436,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Katana",
-        upgType: UpgradeType.Weapon,
+        upgType: "Weapon",
         cost: 12e6,
         mults: {
             str: 1.08,
@@ -445,7 +445,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Malorian-3516",
-        upgType: UpgradeType.Weapon,
+        upgType: "Weapon",
         cost: 25e6,
         mults: {
             str: 1.1,
@@ -455,7 +455,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Hansen-HA7",
-        upgType: UpgradeType.Weapon,
+        upgType: "Weapon",
         cost: 50e6,
         mults: {
             str: 1.12,
@@ -464,7 +464,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Arasaka-HJSH18",
-        upgType: UpgradeType.Weapon,
+        upgType: "Weapon",
         cost: 60e6,
         mults: {
             str: 1.2,
@@ -472,7 +472,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Militech-M251s",
-        upgType: UpgradeType.Weapon,
+        upgType: "Weapon",
         cost: 100e6,
         mults: {
             str: 1.25,
@@ -480,7 +480,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Nokota-D5",
-        upgType: UpgradeType.Weapon,
+        upgType: "Weapon",
         cost: 150e6,
         mults: {
             str: 1.3,
@@ -488,7 +488,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Techtronika-SPT32",
-        upgType: UpgradeType.Weapon,
+        upgType: "Weapon",
         cost: 225e6,
         mults: {
             str: 1.3,
@@ -500,21 +500,21 @@ export const GANG_EQUIPMENT = [
     //armor
     {
         name: "Bulletproof Vest",
-        upgType: UpgradeType.Armor,
+        upgType: "Armor",
         cost: 2e6,
         mults: {
             def: 1.04
         },
     }, {
         name: "Full Body Armor",
-        upgType: UpgradeType.Armor,
+        upgType: "Armor",
         cost: 5e6,
         mults: {
             def: 1.08
         },
     }, {
         name: "Liquid Body Armor",
-        upgType: UpgradeType.Armor,
+        upgType: "Armor",
         cost: 25e6,
         mults: {
             def: 1.15,
@@ -522,7 +522,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Graphene Plating Armor",
-        upgType: UpgradeType.Armor,
+        upgType: "Armor",
         cost: 40e6,
         mults: {
             def: 1.2
@@ -532,7 +532,7 @@ export const GANG_EQUIPMENT = [
     //vehicles
     {
         name: "Herrera Outlaw GTS",
-        upgType: UpgradeType.Vehicle,
+        upgType: "Vehicle",
         cost: 3e6,
         mults: {
             agi: 1.04,
@@ -540,7 +540,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Yaiba ASM-R250 Muramasa",
-        upgType: UpgradeType.Vehicle,
+        upgType: "Vehicle",
         cost: 9e6,
         mults: {
             agi: 1.08,
@@ -548,7 +548,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Rayfield Caliburn",
-        upgType: UpgradeType.Vehicle,
+        upgType: "Vehicle",
         cost: 18e6,
         mults: {
             agi: 1.12,
@@ -556,7 +556,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Quadra Sport R-7",
-        upgType: UpgradeType.Vehicle,
+        upgType: "Vehicle",
         cost: 30e6,
         mults: {
             agi: 1.16,
@@ -567,35 +567,35 @@ export const GANG_EQUIPMENT = [
     //rootkits
     {
         name: "NUKE Rootkit",
-        upgType: UpgradeType.Rootkit,
+        upgType: "Rootkit",
         cost: 5e6,
         mults: {
             hack: 1.05
         },
     }, {
         name: "Soulstealer Rootkit",
-        upgType: UpgradeType.Rootkit,
+        upgType: "Rootkit",
         cost: 25e6,
         mults: {
             hack: 1.1
         },
     }, {
         name: "Demon Rootkit",
-        upgType: UpgradeType.Rootkit,
+        upgType: "Rootkit",
         cost: 75e6,
         mults: {
             hack: 1.15
         },
     }, {
         name: "Hmap Node",
-        upgType: UpgradeType.Rootkit,
+        upgType: "Rootkit",
         cost: 40e6,
         mults: {
             hack: 1.12
         },
     }, {
         name: "Jack the Ripper",
-        upgType: UpgradeType.Rootkit,
+        upgType: "Rootkit",
         cost: 75e6,
         mults: {
             hack: 1.15
@@ -605,7 +605,7 @@ export const GANG_EQUIPMENT = [
     //augmentations
     {
         name: "Bionic Arms",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 10e9,
         mults: {
             str: 1.3,
@@ -613,14 +613,14 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Bionic Legs",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 10e9,
         mults: {
             agi: 1.6
         },
     }, {
         name: "Bionic Spine",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 15e9,
         mults: {
             str: 1.15,
@@ -630,7 +630,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "BrachiBlades",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 20e9,
         mults: {
             str: 1.4,
@@ -638,7 +638,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Nanofiber Weave",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 12e9,
         mults: {
             str: 1.2,
@@ -646,7 +646,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Synthetic Heart",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 25e9,
         mults: {
             str: 1.5,
@@ -654,7 +654,7 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "Synfibril Muscle",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 15e9,
         mults: {
             str: 1.3,
@@ -662,28 +662,28 @@ export const GANG_EQUIPMENT = [
         },
     }, {
         name: "BitWire",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 5e9,
         mults: {
             hack: 1.05
         },
     }, {
         name: "Neuralstimulator",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 10e9,
         mults: {
             hack: 1.15
         },
     }, {
         name: "DataJack",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 7.5e9,
         mults: {
             hack: 1.1
         },
     }, {
         name: "Graphene Bone Lacings",
-        upgType: UpgradeType.Augmentation,
+        upgType: "Augmentation",
         cost: 50e9,
         mults: {
             str: 1.7,

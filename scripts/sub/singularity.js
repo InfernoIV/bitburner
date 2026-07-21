@@ -20,11 +20,15 @@ export class singularity_obj {
 
 
     init(ns) {
-        
+        //disable logging
+        ns.disableLog("singularity.installBackdoor")
+        //debug
+        log.info(ns, "Singularity", "Init complete", true)
     }
 
     
     manage(ns, sleeve, bladeburner, grafting) {
+
     }
 
     //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec

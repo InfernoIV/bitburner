@@ -15,6 +15,11 @@ export class darknet_obj {
         this.darknet_started = false
     }
 
+    init(ns) {
+        //log
+        log.info(ns, "Darknet", "Init complete", true)
+    }
+ 
 
     manage(ns) {
         //if darkweb started

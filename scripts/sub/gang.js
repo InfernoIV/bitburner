@@ -17,7 +17,7 @@ import {
     GANG_FOCUS,
     GANG_FACTION,
     GANG_ASCENSION_MIN_MULT,
-    GANG_EQUIPMENT_MIN,
+    GANG_EQUIPMENT_MIN_PERCENTAGE,
 } from "scripts/data/gang.js"
 
 

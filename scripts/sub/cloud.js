@@ -13,11 +13,11 @@ export class cloud_obj {
 
 
     //
-    init(ns) {
-        /*
-        ns.disableLog("upgradeServer")
-        ns.disableLog("purchaseServer")
-        */
+    init(ns, currentNodeMults = {CloudServerLimit: 1, CloudServerMaxRam: 1}) {
+        
+        ns.disableLog("cloud.upgradeServer")
+        ns.disableLog("cloud.purchaseServer")
+        
         //map of servers owned
         this.servers_owned = new Map()
         //variables that are set once
@@ -44,6 +44,8 @@ export class cloud_obj {
             //log information
             //log.info(ns, "Cloud", "Found cloud server '" + server + "' with '" + ram + "' ram => '" + this.servers_owned.size + "'", true)
         }
+        //log
+        log.info(ns, "Cloud", "Init complete", true)
     }
 
 

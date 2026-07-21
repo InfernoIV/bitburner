@@ -67,13 +67,15 @@ import {
 export async function main(ns) {
     //keep track of ram
     var ram_in_use = CONSTANTS.RAM.MAIN + CONSTANTS.RAM.ROOT + CONSTANTS.RAM.CLOUD + CONSTANTS.RAM.HACK + CONSTANTS
-        .RAM.DARKNET
+        .RAM.DARKNET + CONSTANTS.RAM.GO
+    //set to 2 decimals
+    ram_in_use = Math.round(ram_in_use * 100) / 100
     //set ram
     ns.ramOverride(ram_in_use)
     //open tail
     ns.ui.openTail()
     //log
-    log.info(ns, "Main", "Starting with " + ram_in_use + "GB RAM in use", true)
+    log.info(ns, "Main", "Starting with " + ram_in_use.toFixed(2) + "GB RAM in use", true)
     //initialize main
     await init(ns)
     //ram to start
@@ -132,11 +134,10 @@ export async function main(ns) {
     const owned_source_files = reset_information.ownedSF
     //init where needed
     //automation
-    /*
-    if (owned_source_files.hasOwnProperty(4) && (ram_in_use + CONSTANTS.RAM.SINGULARITY) < max_ram) {
+    if ((owned_source_files.hasOwnProperty(4) || true) && (ram_in_use + CONSTANTS.RAM.SINGULARITY) < max_ram) {
         //log
         log.success(ns, "Main", "Imported Singularity, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.SINGULARITY + " = " + (
-            ram_in_use + CONSTANTS.RAM.SINGULARITY) + " < " + max_ram)
+            ram_in_use + CONSTANTS.RAM.SINGULARITY) + " < " + max_ram, true)
         //set the object
         singularity = new singularity_obj()
         //up the ram    
@@ -145,7 +146,7 @@ export async function main(ns) {
     if(owned_source_files.hasOwnProperty(5) && (ram_in_use + CONSTANTS.RAM.SINGULARITY) < max_ram) {
          //log
         log.success(ns, "Main", "Imported Intelligence, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.INTELLIGENCE + " = " + (
-            ram_in_use + CONSTANTS.RAM.INTELLIGENCE) + " < " + max_ram)
+            ram_in_use + CONSTANTS.RAM.INTELLIGENCE) + " < " + max_ram, true)
         //get the bitnode multipliers
         bitnode_multipliers = eval("ns.getBitNodeMultipliers()")
         //up the ram    
@@ -154,53 +155,77 @@ export async function main(ns) {
     if (owned_source_files.hasOwnProperty(10) && (ram_in_use + CONSTANTS.RAM.SLEEVE) < max_ram) {
          //log
         log.success(ns, "Main", "Imported Sleeve, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.SLEEVE + " = " + (
-            ram_in_use + CONSTANTS.RAM.SLEEVE) + " < " + max_ram)
+            ram_in_use + CONSTANTS.RAM.SLEEVE) + " < " + max_ram, true)
         //set the object
         sleeve = new sleeve_obj()
         //up the ram
         ram_in_use += CONSTANTS.RAM.SLEEVE
     }
-    if ((owned_source_files.hasOwnProperty(6) || owned_source_files.hasOwnProperty(7)) && ram_in_use < max_ram) {
+    if ((owned_source_files.hasOwnProperty(6) || owned_source_files.hasOwnProperty(7)) && (ram_in_use + CONSTANTS.RAM.BLADEBURNER) < max_ram) {
+        //log
+        log.success(ns, "Main", "Imported Bladeburner, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.BLADEBURNER + " = " + (
+            ram_in_use + CONSTANTS.RAM.BLADEBURNER) + " < " + max_ram, true)
         bladeburner = new bladeburner_obj()
+        //up the ram
         ram_in_use += CONSTANTS.RAM.BLADEBURNER
     }
     //boost
-    if (owned_source_files.hasOwnProperty(13) && ram_in_use < max_ram) {
+    if (owned_source_files.hasOwnProperty(13) && (ram_in_use + CONSTANTS.RAM.STANEK) < max_ram) {
         //log
         log.success(ns, "Main", "Imported Stanek, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.STANEK + " = " + (
-            ram_in_use + CONSTANTS.RAM.STANEK) + " < " + max_ram)
+            ram_in_use + CONSTANTS.RAM.STANEK) + " < " + max_ram, true)
         //set the object
         stanek = new stanek_obj()
         //up the ram    
         ram_in_use += CONSTANTS.RAM.STANEK
     }
-    if (owned_source_files.hasOwnProperty(2) && ram_in_use < max_ram) {
+    if (owned_source_files.hasOwnProperty(2) && (ram_in_use + CONSTANTS.RAM.GANG) < max_ram) {
+        //log
+        log.success(ns, "Main", "Imported Gang, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GANG + " = " + (
+            ram_in_use + CONSTANTS.RAM.GANG) + " < " + max_ram, true)
+        //set the object
         gang = new gang_obj()
+        //up the ram
         ram_in_use += CONSTANTS.RAM.GANG
 
-    }
-    
-    
-    if (owned_source_files.hasOwnProperty(9) && ram_in_use < max_ram) {
+    }    
+    if (owned_source_files.hasOwnProperty(9) && (ram_in_use + CONSTANTS.RAM.HACKNET) < max_ram) {
+        //log
+        log.success(ns, "Main", "Imported Hacknet, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.HACKNET + " = " + (
+            ram_in_use + CONSTANTS.RAM.HACKNET) + " < " + max_ram, true)
+        //set the object
         hacknet = new hacknet_obj()
+        //up the ram
         ram_in_use += CONSTANTS.RAM.HACKNET
     }
-    if (owned_source_files.hasOwnProperty(10) && ram_in_use < max_ram) {
-        ram_in_use += CONSTANTS.RAM.GRAFTING
+    if (owned_source_files.hasOwnProperty(10) && (ram_in_use + CONSTANTS.RAM.GRAFTING) < max_ram) {
+        //log
+        log.success(ns, "Main", "Imported Grafting, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GRAFTING + " = " + (
+            ram_in_use + CONSTANTS.RAM.GRAFTING) + " < " + max_ram, true)
+        //set the object
         grafting = new grafting_obj()
+        //set the object
+        ram_in_use += CONSTANTS.RAM.GRAFTING
     }
-    if (owned_source_files.hasOwnProperty(3) && ram_in_use < max_ram) {
+    if (owned_source_files.hasOwnProperty(3) && (ram_in_use + CONSTANTS.RAM.CORPORATION) < max_ram) {
+        //log
+        log.success(ns, "Main", "Imported Corporation, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.CORPORATION + " = " + (
+            ram_in_use + CONSTANTS.RAM.CORPORATION) + " < " + max_ram, true)
+        //set the object
+        corporation = new corporation_obj()
+        //up the ram
         ram_in_use += CONSTANTS.RAM.CORPORATION
-        corporation = dummy_object //new corporation_obj()
-        await corporation.init(ns)
-    }*/
+    }
 
     //adjust ram
     ns.ramOverride(ram_in_use)
     
     //init functions
+    darknet.init(ns)
     await cloud.init(ns)
     await root.init(ns, singularity.available)    //singularity.available to indicate backdoor is possible
+    hack.init(ns)
+    //needs to be unlocked?
     go.init(ns) 
     
     //automation
@@ -229,7 +254,7 @@ export async function main(ns) {
         darknet.manage(ns)
 
         //play go
-        //await go.manage(ns)
+        await go.manage(ns)
 
         //check and add cloud servers
         cloud.manage(ns)

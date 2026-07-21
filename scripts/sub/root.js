@@ -1,6 +1,5 @@
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
-import * as evaluate from "scripts/sub/evaluate.js"
 
 
 // Declaration
@@ -11,6 +10,12 @@ export class root_obj {
 
 
     init(ns, singularity_available) {
+        //disable logging
+        ns.disableLog("brutessh")
+        ns.disableLog("nuke")
+        ns.disableLog("relaysmtp")
+        ns.disableLog("ftpcrack")
+        ns.disableLog("scan")
         //save if singularity is available
         this.singularity_available = singularity_available
         //check if available
@@ -36,7 +41,7 @@ export class root_obj {
             //log.info(ns, "Root", "Found server '" + hostname + "' with '" + JSON.stringify(server) + "'")
         }
         //debug
-        log.info(ns, "Root", "Init fomplete, found '" + this.servers_found.size + "' servers", true)
+        log.info(ns, "Root", "Init complete, found '" + this.servers_found.size + "' servers", true)
     }
 
 
@@ -56,7 +61,7 @@ export class root_obj {
         //get neighbours
         const neighbours = ns.scan(server_name)
         //debug
-        log.info(ns, "Root", "Found neighbours: '" + neighbours + "'")
+        //log.info(ns, "Root", "Found neighbours: '" + neighbours + "'")
         //for each neighbour found
         for (const neighbour of neighbours) {
             //if server is not yet found
@@ -125,40 +130,13 @@ export class root_obj {
                 if (flag_rooted) {
                     //copy scripts
                     ns.scp(CONSTANTS.SCRIPT.HACK.TO_COPY, hostname)
-                    //if backdoor not installed
-                    if (this.singularity_available && !server.backdoorInstalled) {
-                        //variable to save the target neighbour to
-                        var target_neighbour = ""
-                        //determine the neighbour of the server
-                        var neighbours = ns.scan(hostname)
-                        //for each neighbour found
-                        for (const neighbour in neighbours) {
-                            //if not in the todo list (and therefore rooted)
-                            if (!servers.keys().includes(neighbour)) {
-                                //set the target neighbour
-                                target_neighbour = neighbour
-                                //stop looking
-                                break
-                            }
-                        }
-                        //if a target neighbout is found
-                        if (target_neighbour != "") {
-                            //connect to the neighbour //needed?
-                            eval("ns.singularity.connect('" + target_neighbour + "')")
-                            //connect to target
-                            eval("ns.singularity.connect('" + hostname + "')")
-                            //backdoor server
-                            var backdoored = await eval("ns.singularity.installBackdoor()")
-                            //cannot back home
-                            eval("ns.singularity.connect('" + CONSTANTS.SERVER.HOME + "')")
-                            //if successfully backdoored
-                            if (backdoored) {
-                                //log success
-                                log.success(ns, "Root", "Backdoored '" + hostname + "'")
-                            }
-                        }
+                    //if backdoor not installed and is not home
+                    if (this.singularity_available && !server.backdoorInstalled && hostname != CONSTANTS.SERVER.HOME) {
+                        //debug
+                        log.info(ns, "Root", "'" + hostname + "' vs '" + CONSTANTS.SERVER.HOME + "'")
+                        //backdoor the server
+                        await this.backdoor_server(ns, hostname)                                        
                     }
-
                     //check if there is money
                     if (server.moneyMax > 0 || server.moneyMax != "0") {
                         //only save money
@@ -192,5 +170,42 @@ export class root_obj {
         }
         //return the counter
         return hacking_tools_owned
+    }
+
+
+    async backdoor_server(ns, server) {
+        //create a list to hold the route
+        let route = []
+        //create a variable to save current server, and set it to current hostname
+        let step = server
+        //while not found home
+        while (step != CONSTANTS.SERVER.HOME) {
+            //save the first scan result
+            let nextStep = ns.scan(step)[0]
+            //add current to the start of the list
+            route.unshift(step)
+            //update target for next scan
+            step = nextStep
+        }
+        
+        //for every jump of the route    
+        for (let jump of route) {
+            //connect to the step
+            eval("ns.singularity.connect('" + jump + "')")
+        }
+        
+        //try-catch to ensure script not crashing
+        try {
+            //install backdoor
+            await eval("ns.singularity.installBackdoor()")
+            //log information
+            log.success(ns, "Root", "Backdoored server '" + server + "'")
+            //catch error
+        } catch (err) {
+            //log error
+            log.error(ns, "Root", "Failed to backdoor server '" + server + "': " + err, true)
+        }
+        //connect to home
+        eval("ns.singularity.connect('" + CONSTANTS.SERVER.HOME + "')")
     }
 }

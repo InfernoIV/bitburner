@@ -14,6 +14,8 @@ export const TIME = {
 
 //enum for script names
 export const SCRIPT = {
+    MAIN: "scripts/main.js",
+    JUMP: "scripts/jump.js",
     HACK: {
         GROW: "scripts/exec/grow.js",
         WEAKEN: "scripts/exec/weaken.js",
@@ -44,29 +46,39 @@ export const RAM = {
     MAIN: 4.6,
     
     /*
-    ns.getServer        done by main
-    ns.scan
-    ns.getHackingLevel  0.05
-    ns.sqlinject
-    ns.httpworm
-    ns.relaysmtp
-    ns.ftpcrack
-    ns.brutessh
-    ns.scp
-    ns.nuke
-    ns.ls
+    getServer (fn)	2.00GB  -> already covered in main
+    baseCost (misc)	1.60GB  -> already covered in main
+    scp (fn)	0.60GB
+    scan (fn)	0.20GB
+    ls (fn)	0.20GB
+    getHackingLevel (fn)	0.05GB
+    sqlinject (fn)	0.05GB
+    httpworm (fn)	0.05GB
+    relaysmtp (fn)	0.05GB
+    ftpcrack (fn)	0.05GB
+    brutessh (fn)	0.05GB
+    nuke (fn)	0.05GB
     */
-    ROOT: 0.0,
+    ROOT: 1.35,
+
+    /*
+    getServer (fn)	2.00GB  -> already covered in main
+    baseCost (misc)	1.60GB -> already covered in main
+    exec (fn)	1.30GB
+    hackAnalyzeChance (fn)	1.00GB
+    scp (fn)	0.60GB    -> already covered in root
+    getHackTime (fn)	0.05GB
+    getWeakenTime (fn)	0.05GB
+    getGrowTime (fn)	0.05GB
+    getHackingLevel (fn)	0.05GB  -> already covered in root
+    ns.formulas         0
+    */
+    HACK: 2.45,
 
     /*
     ns.getBitNodeMultipliers()
     */
     INTELLIGENCE: 4.0,
-    /*
-    ns.exec             1.3
-    ns.formulas         0
-    */
-    HACK: 0.0,
 
     /*
     ns.exec             done by hack
@@ -92,7 +104,7 @@ export const RAM = {
     ns.go.resetBoardState                   0
     ns.go.getGameState                      0
     ns.go.getMoveHistory                    0
-    ns.go.makeMove                          0
+    ns.go.makeMove                          4
     ns.go.analysis.getStats                 0
     ns.go.analysis.resetStats               0
     ns.go.getBoardState                     4
@@ -106,16 +118,16 @@ export const RAM = {
     ns.go.cheat.repairOfflineNode           8
     ns.go.cheat.playTwoMoves                8
     */
-   GO: 12.0,
+   GO: 16.0,
 
 
     //Bitnode dependent scripts
     //automation
     /*
-    ns.singularity.connect  16/4/1  (but implemented in root)
-    ns.singularity.installBackdoor  (but implemented in root)
+    ns.singularity.connect  16/4/1      1   (but implemented in root)
+    ns.singularity.installBackdoor      2   (but implemented in root)
     */
-    SINGULARITY: 0.0,
+    SINGULARITY: 3.0,
 
     /*
 
@@ -169,7 +181,8 @@ export const RAM = {
     */
     DARKNET_WORKER: 12.9, 
     
-    HACK: {
+    WORKER: {
+        HACK: {
         /*
         base        1.6
         ns.weaken   1.15
@@ -187,6 +200,7 @@ export const RAM = {
         ns.hack 0.1    
         */
         HACK: 1.7
+        },
     },
     
 }
