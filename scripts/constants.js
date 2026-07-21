@@ -14,58 +14,181 @@ export const TIME = {
 
 //enum for script names
 export const SCRIPT = {
-    /*
-    LIBRARY: {
-        LOG: "scripts/sub/log.js",
-        CONSTANTS: "scripts/constants.js",
-        EVALUATE: "scripts/sub/evaluate.js",
-    },
-    SUB: {
-        ROOT: "scripts/sub/root.js",
-        DARKNET: "scripts/sub/darknet.js",
-        HACK: "scripts/sub/hack.js",
-        SHARE: "scripts/sub/share.js",
-    },|*/
     HACK: {
         GROW: "scripts/exec/grow.js",
         WEAKEN: "scripts/exec/weaken.js",
         HACK: "scripts/exec/hack.js",
         TO_COPY: ["scripts/exec/grow.js", "scripts/exec/weaken.js", "scripts/exec/hack.js"]
     },
-    EVAL: {
-        ORCHESTRATOR: "scripts/exec/eval_orchestrator.js",
-        WORKER: "scripts/exec/eval_worker.js",
-    },
     DARKNET: {
-        //ORCHESTRATOR: "scripts/exec/darknet_orchestrator.js",
         WORKER: "scripts/exec/darknet_worker.js",
-        TO_COPY: ["scripts/sub/log.js", "scripts/constants.js", //"scripts/sub/evaluate.js",    
-            "scripts/exec/darknet_worker.js",//, "scripts/exec/eval_orchestrator.js", "scripts/exec/eval_worker.js",            
-        ]
+        TO_COPY: [ "scripts/sub/log.js", "scripts/constants.js", "scripts/exec/darknet_worker.js", ]
     },
     SHARE_WORKER: "scripts/exec/share.js",
 }
 
 
 //enum for script ram
-//if ending with EVAL, this is the RAM needed for a single EVAL script of that type
-//cost for EVAL is Base cost (1.6) + max ram of a function
 export const RAM = {
-    MAIN: {
-        ORCHESTRATOR: 2.9, //1.6 + 1.3
-        EVAL: 33.6, //1.6 + 32
-    },
-    EVAL_ORCHESTRATOR: 2.9, //1.6 + 1.3
-    DARKNET: {
-        WORKER: 12.9, //4.0, //1.6 + 1.3 (exec) + 0.4 (dnet.authenticate) = 3.3
-        WORKER_EVAL: 3.6 //1.6 + 2(3.6) -> +4 = 5.6
-    },
+    //main scripts
+    /*
+    base                1.6
+    ns.getServer        2
+    ns.getResetInfo     1
+    ns.ramOverride      0
+    ns.ui.openTail      0
+    ns.sleep            0
+    ns.disableLog       0
+    ns.atExit           0
+    */
+    MAIN: 4.6,
+    
+    /*
+    ns.getServer        done by main
+    ns.scan
+    ns.getHackingLevel  0.05
+    ns.sqlinject
+    ns.httpworm
+    ns.relaysmtp
+    ns.ftpcrack
+    ns.brutessh
+    ns.scp
+    ns.nuke
+    ns.ls
+    */
+    ROOT: 0.0,
+
+    /*
+    ns.getBitNodeMultipliers()
+    */
+    INTELLIGENCE: 4.0,
+    /*
+    ns.exec             1.3
+    ns.formulas         0
+    */
+    HACK: 0.0,
+
+    /*
+    ns.exec             done by hack
+    ns.ls               done by root
+    ns.getServer        done by main
+    ns.scp              done by root
+    ns.dnet.probe       0.2
+    */
+    DARKNET: 0.2,   
+
+    /*
+    ns.getPlayer    0.5
+    getServerNames  1.05    
+    purchaseServer  2.25    
+    upgradeServer   0.25    
+    */
+    CLOUD: 4.05,
+
+    /*
+    ns.go.getCurrentPlayer                  0
+    ns.go.passTurn                          0
+    ns.go.getOpponent                       0
+    ns.go.resetBoardState                   0
+    ns.go.getGameState                      0
+    ns.go.getMoveHistory                    0
+    ns.go.makeMove                          0
+    ns.go.analysis.getStats                 0
+    ns.go.analysis.resetStats               0
+    ns.go.getBoardState                     4
+    ns.go.analysis.getValidMoves            8
+
+    ns.go.analysis.getControlledEmptyNodes  16
+    ns.go.analysis.getChains                16
+    ns.go.analysis.getLiberties             16
+    ns.go.cheat.destroyNode                 8
+    ns.go.cheat.removeRouter                8    
+    ns.go.cheat.repairOfflineNode           8
+    ns.go.cheat.playTwoMoves                8
+    */
+   GO: 12.0,
+
+
+    //Bitnode dependent scripts
+    //automation
+    /*
+    ns.singularity.connect  16/4/1  (but implemented in root)
+    ns.singularity.installBackdoor  (but implemented in root)
+    */
+    SINGULARITY: 0.0,
+
+    /*
+
+    */
+    SLEEVE: 0.0,
+
+    /*
+
+    */
+    BLADEBURNER: 0.0,
+
+    //boost
+    /*
+
+    */
+    STANEK: 0.0,
+
+    /*
+
+    */
+    GANG: 25.0,     
+
+    /*
+
+    */
+    CORPORATION: 0.0,
+
+    /*
+
+    */
+    HACKNET: 0.0,
+
+    /*
+
+    */
+    GRAFTING: 0.0,
+
+    
+    
+    //worker scripts
+    /*
+    base    1.6
+    share   2.4
+    */
+    SHARE: 4.0,
+
+    /*
+    base                1.6
+    exec                1.3
+    dnet.authenticate   0.4
+    */
+    DARKNET_WORKER: 12.9, 
+    
     HACK: {
-        WEAKEN: 1.75, //1.6 + 0.15 
-        GROW: 1.75, //1.6 + 0.15
-        HACK: 1.7 //1.6 + 0.1
+        /*
+        base        1.6
+        ns.weaken   1.15
+        */
+        WEAKEN: 1.75,
+
+        /*
+        base    1.6
+        ns.grow 0.16
+        */
+        GROW: 1.75,
+
+        /*
+        base    1.6
+        ns.hack 0.1    
+        */
+        HACK: 1.7
     },
-    SHARE: 4, //1.6 + 2.4 GB
+    
 }
 
 

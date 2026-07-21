@@ -16,6 +16,11 @@ export class stanek_obj {
     init(ns) {
         
     }
+
+    
+    manage(ns) {
+
+    }
 }
 
 

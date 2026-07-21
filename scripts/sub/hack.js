@@ -10,12 +10,13 @@ export class hack_obj {
         this.hack_level_previous = -1
         this.hack_target = ""
         this.time_of_next_check = Date.now()
+        this.available = true
     }
 
 
     //function that target hacks a single server
     /** @param {NS} ns */
-    async hack_server(ns, root_obj, cloud_obj) {
+    async manage(ns, root_obj, cloud_obj) {
         //if the timing has not yet passed
         if (Date.now() < this.time_of_next_check) {
             //stop

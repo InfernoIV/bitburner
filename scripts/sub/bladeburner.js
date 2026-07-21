@@ -23,6 +23,7 @@ export class bladeburner_obj {
     constructor() {
         //flag to indicate if we can start
         this.can_start = false
+        this.available = true
     }
 
 

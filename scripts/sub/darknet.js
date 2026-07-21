@@ -16,7 +16,7 @@ export class darknet_obj {
     }
 
 
-    deploy(ns) {
+    manage(ns) {
         //if darkweb started
         if (this.darknet_started) {
             //stop
@@ -37,7 +37,7 @@ export class darknet_obj {
             //get server information
             const server_info = ns.getServer(CONSTANTS.SERVER.DARKWEB)
 			//calc ram costs
-			const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET.WORKER)
+			const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET_WORKER)
             //copy scripts
             var results = ns.scp(CONSTANTS.SCRIPT.DARKNET.TO_COPY, CONSTANTS.SERVER.DARKWEB)
             //start worker

@@ -3,153 +3,254 @@ import * as log from "scripts/sub/log.js"
 
 
 //object imports
-import { root_obj } from "scripts/sub/root.js"
-import { hack_obj } from "scripts/sub/hack.js"
-import { darknet_obj } from "scripts/sub/darknet.js"
-import { cloud_obj } from "scripts/sub/cloud.js"
-import { go_obj } from "scripts/sub/go.js"
-import { coding_contract_obj } from "scripts/sub/coding_contract.js"
-import { stock_obj } from "scripts/sub/stock.js"
-import { ui_obj } from "scripts/sub/ui.js"
-import { share_exec } from "scripts/sub/share.js"
+import {
+    root_obj
+} from "scripts/sub/root.js"
+import {
+    hack_obj
+} from "scripts/sub/hack.js"
+import {
+    darknet_obj
+} from "scripts/sub/darknet.js"
+import {
+    cloud_obj
+} from "scripts/sub/cloud.js"
+import {
+    go_obj
+} from "scripts/sub/go.js"
+import {
+    coding_contract_obj
+} from "scripts/sub/coding_contract.js"
+import {
+    stock_obj
+} from "scripts/sub/stock.js"
+import {
+    ui_obj
+} from "scripts/sub/ui.js"
+import {
+    share_exec
+} from "scripts/sub/share.js"
 
 
 //object imports: SF specific
-import { singularity_obj } from "scripts/sub/singularity.js"
-import { gang_obj } from "scripts/sub/gang.js"
-import { stanek_obj } from "scripts/sub/stanek.js"
-import { corporation_obj } from "scripts/sub/corporation.js"
-import { bladeburner_obj } from "scripts/sub/bladeburner.js"
-import { sleeve_obj } from "scripts/sub/sleeve.js"
-import { hacknet_obj } from "scripts/sub/hacknet.js"
-import { grafting_obj } from "scripts/sub/grafting.js"
-import { infiltration_obj } from "scripts/sub/infiltration.js"
+import {
+    singularity_obj
+} from "scripts/sub/singularity.js"
+import {
+    gang_obj
+} from "scripts/sub/gang.js"
+import {
+    stanek_obj
+} from "scripts/sub/stanek.js"
+import {
+    corporation_obj
+} from "scripts/sub/corporation.js"
+import {
+    bladeburner_obj
+} from "scripts/sub/bladeburner.js"
+import {
+    sleeve_obj
+} from "scripts/sub/sleeve.js"
+import {
+    hacknet_obj
+} from "scripts/sub/hacknet.js"
+import {
+    grafting_obj
+} from "scripts/sub/grafting.js"
+import {
+    infiltration_obj
+} from "scripts/sub/infiltration.js"
+
 
 
 /** @param {NS} ns */
 export async function main(ns) {
+    //keep track of ram
+    var ram_in_use = CONSTANTS.RAM.MAIN + CONSTANTS.RAM.ROOT + CONSTANTS.RAM.CLOUD + CONSTANTS.RAM.HACK + CONSTANTS
+        .RAM.DARKNET
+    //set ram
+    ns.ramOverride(ram_in_use)
+    //open tail
     ns.ui.openTail()
-
+    //log
+    log.info(ns, "Main", "Starting with " + ram_in_use + "GB RAM in use", true)
     //initialize main
     await init(ns)
+    //ram to start
+    const max_ram = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
+    //log
 
     //create objects
     var root = new root_obj()
     var cloud = new cloud_obj()
     var hack = new hack_obj()
     var darknet = new darknet_obj()
+    //TODO
     var go = new go_obj()
     var coding_contract = new coding_contract_obj()
     var stock = new stock_obj()
     var infiltration = new infiltration_obj()
 
-    //init objects, where needed
-    await cloud.init(ns)
-    await root.init(ns)
-    //await go.init(ns) 
-
+    //create dummy objet
+    const dummy_object = {
+        available: false,
+        init: function () {},
+        manage: function () {},
+    }
     //create SF dependant objects
-    /*
-    var gang = new gang_obj()
-    var stanek = new stanek_obj()
-    var corporation = new corporation_obj()
-    var bladeburner = new bladeburner_obj()
-    var sleeve = new sleeve_obj()
-    var grafting = new grafting_obj()
-    var singularity = new singularity_obj()
-    var hacknet = new hacknet_obj()
-    */
+    //automation
+    var singularity = dummy_object 
+    var sleeve = dummy_object 
+    var bladeburner = dummy_object 
+    //boost
+    var stanek = dummy_object 
+    var gang = dummy_object 
+    var corporation = dummy_object
+    var grafting = dummy_object
+    var hacknet = dummy_object
+    //create a dummy bitnode multipliers object
+    const bitnode_multipliers = {
+        //1: cloud
+        CloudServerLimit: 1,
+        CloudServerMaxRam: 1,
+        //2: gang
+        //3: corporation
+        //4: singularity
+        //5: intelligence
+        //6&7: bladeburner
+        //8: stock
+        //9: hacknet
+        //10: sleeve / grafting
+        //13: stanek
+        //14: go
+        //15: darknet
+    }
 
     //get reset info
     const reset_information = ns.getResetInfo()
     //get source files
     const owned_source_files = reset_information.ownedSF
-    //debug
-    log.info(ns, "Main", "owned_source_files: " + JSON.stringify(owned_source_files), true)
-
-/*
     //init where needed
-    if (owned_source_files.hasOwnProperty(13)) {
-        await stanek.init(ns)
+    //automation
+    /*
+    if (owned_source_files.hasOwnProperty(4) && (ram_in_use + CONSTANTS.RAM.SINGULARITY) < max_ram) {
+        //log
+        log.success(ns, "Main", "Imported Singularity, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.SINGULARITY + " = " + (
+            ram_in_use + CONSTANTS.RAM.SINGULARITY) + " < " + max_ram)
+        //set the object
+        singularity = new singularity_obj()
+        //up the ram    
+        ram_in_use += CONSTANTS.RAM.SINGULARITY
     }
-    if (owned_source_files.hasOwnProperty(2)) {
-        await gang.init(ns)
+    if(owned_source_files.hasOwnProperty(5) && (ram_in_use + CONSTANTS.RAM.SINGULARITY) < max_ram) {
+         //log
+        log.success(ns, "Main", "Imported Intelligence, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.INTELLIGENCE + " = " + (
+            ram_in_use + CONSTANTS.RAM.INTELLIGENCE) + " < " + max_ram)
+        //get the bitnode multipliers
+        bitnode_multipliers = eval("ns.getBitNodeMultipliers()")
+        //up the ram    
+        ram_in_use += CONSTANTS.RAM.SINGULARITY
     }
-    //corporation
-    if (owned_source_files.hasOwnProperty(3)) {
+    if (owned_source_files.hasOwnProperty(10) && (ram_in_use + CONSTANTS.RAM.SLEEVE) < max_ram) {
+         //log
+        log.success(ns, "Main", "Imported Sleeve, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.SLEEVE + " = " + (
+            ram_in_use + CONSTANTS.RAM.SLEEVE) + " < " + max_ram)
+        //set the object
+        sleeve = new sleeve_obj()
+        //up the ram
+        ram_in_use += CONSTANTS.RAM.SLEEVE
+    }
+    if ((owned_source_files.hasOwnProperty(6) || owned_source_files.hasOwnProperty(7)) && ram_in_use < max_ram) {
+        bladeburner = new bladeburner_obj()
+        ram_in_use += CONSTANTS.RAM.BLADEBURNER
+    }
+    //boost
+    if (owned_source_files.hasOwnProperty(13) && ram_in_use < max_ram) {
+        //log
+        log.success(ns, "Main", "Imported Stanek, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.STANEK + " = " + (
+            ram_in_use + CONSTANTS.RAM.STANEK) + " < " + max_ram)
+        //set the object
+        stanek = new stanek_obj()
+        //up the ram    
+        ram_in_use += CONSTANTS.RAM.STANEK
+    }
+    if (owned_source_files.hasOwnProperty(2) && ram_in_use < max_ram) {
+        gang = new gang_obj()
+        ram_in_use += CONSTANTS.RAM.GANG
+
+    }
+    
+    
+    if (owned_source_files.hasOwnProperty(9) && ram_in_use < max_ram) {
+        hacknet = new hacknet_obj()
+        ram_in_use += CONSTANTS.RAM.HACKNET
+    }
+    if (owned_source_files.hasOwnProperty(10) && ram_in_use < max_ram) {
+        ram_in_use += CONSTANTS.RAM.GRAFTING
+        grafting = new grafting_obj()
+    }
+    if (owned_source_files.hasOwnProperty(3) && ram_in_use < max_ram) {
+        ram_in_use += CONSTANTS.RAM.CORPORATION
+        corporation = dummy_object //new corporation_obj()
         await corporation.init(ns)
-    }
-    //singularity
-    if (owned_source_files.hasOwnProperty(4)) {
-        await singularity.init(ns)
-    }
-    //bladeburner
-    if (owned_source_files.hasOwnProperty(6) || owned_source_files.hasOwnProperty(7)) {
-        await bladeburner.init(ns)
-    }
-    if (owned_source_files.hasOwnProperty(9)) {
-        await hacknet.init()
-    }
-    if (owned_source_files.hasOwnProperty(10)) {
-        await sleeve.init(ns)
-        await grafting.init(ns)
     }*/
 
+    //adjust ram
+    ns.ramOverride(ram_in_use)
+    
+    //init functions
+    await cloud.init(ns)
+    await root.init(ns, singularity.available)    //singularity.available to indicate backdoor is possible
+    go.init(ns) 
+    
+    //automation
+    singularity.init(ns)
+    sleeve.init(ns)
+    
+    bladeburner.init(ns)
+    
+    stanek.init(ns)
+    gang.init(ns)
+    hacknet.init(ns)
+    
+    grafting.init(ns)
+    corporation.init(ns)
+
+
     //start share
-    //await share_exec(ns)
- 
+    //await share_exec(ns, ram)
+
     //log
     log.info(ns, "Main", "Starting main loop", true)
 
     // @ignore-infinite
     while (true) {
         //start darknet main loop on darkweb
-        darknet.deploy(ns)
-        
+        darknet.manage(ns)
+
         //play go
-        //await go.play(ns)
+        //await go.manage(ns)
 
         //check and add cloud servers
-        await cloud.manage_servers(ns)
+        cloud.manage(ns)
         //root servers
-        await root.root_servers(ns)
+        await root.manage(ns)
         //hack servers
-        hack.hack_server(ns, root, cloud)
+        await hack.manage(ns, root, cloud)
 
-        /*
-        //SF specific unlocks
-        if (owned_source_files.hasOwnProperty(4)) {
-            //do stuff
-            //await singularity.
-            if (owned_source_files.hasOwnProperty(10)) {
-                //do stuff
-                //await sleeve //and grafting
-            }
-            if (owned_source_files.hasOwnProperty(6) || owned_source_files.hasOwnProperty(7)) {
-            //do stuff
-            //await bladeburner.
-            }
-        }        
-        if (owned_source_files.hasOwnProperty(2)) {
-            //do stuff
-            //await gang.manage()
-        }
-        if (owned_source_files.hasOwnProperty(3)) {
-            //do stuff
-            //await corporation.
-        }
-        if (owned_source_files.hasOwnProperty(9)) {
-            //do stuff
-            //await hacknet.
-        }
-        if (owned_source_files.hasOwnProperty(13)) {
-            //do stuff
-            //await stanek.
-        }
+        //do stuff
+        singularity.manage(ns, sleeve, bladeburner, grafting)
+        //manage gang
+        await gang.manage(ns)
+        //manage corporation
+        corporation.manage(ns)
+        //manage hacknet
+        hacknet.manage(ns)
+        //manage stanke
+        stanek.manage(ns)
 
         //update ui
         //await ui.update(ns)
-        */
 
         //wait a bit (what is the lowest time we can pick?)
         await ns.sleep(CONSTANTS.TIME.WAIT)
@@ -185,7 +286,21 @@ async function init(ns) {
         //ns.ui.closeTail()
     })
     //kill all other scripts 
-    ns.killall(CONSTANTS.SERVER.HOME, true)
+    //ns.killall(CONSTANTS.SERVER.HOME, true)
     //signal start of program
     log.success(ns, "Main", "Init complete!")
 }
+
+
+/*
+base                1.6
+ns.getResetInfo()
+ns.killall          
+ns.ui.openTail      0
+ns.ui.resizeTail    0
+ns.ui.moveTail      0
+ns.disableLog       0
+ns.ui.windowSize    0
+ns.atExit           0
+ns.ramOverride      0
+*/

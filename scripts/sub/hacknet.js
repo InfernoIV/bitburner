@@ -10,10 +10,16 @@ import * as evaluate from "scripts/sub/evaluate.js"
 // Declaration
 export class hacknet_obj {
     constructor() {
+        this.available = true
     }
 
 
     init(ns) {
 
+    }
+
+
+    manage(ns) {
+        
     }
 }

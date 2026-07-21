@@ -5,10 +5,15 @@ import * as evaluate from "scripts/sub/evaluate.js"
 
 // Declaration
 export class root_obj {
-    constructor() {}
+    constructor() {
+        this.available = true
+    }
 
 
-    async init(ns) {
+    init(ns, singularity_available) {
+        //save if singularity is available
+        this.singularity_available = singularity_available
+        //check if available
         //maps of servers
         this.servers_ram = new Map()
         this.servers_money = new Map()
@@ -23,7 +28,7 @@ export class root_obj {
                 continue
             }
             //kill all scripts on that server
-            ns.killall(hostname)
+            //ns.killall(hostname)
             //get number of ports to open
             const server = ns.getServer(hostname)
             //add to the map (value is required hacking tools)
@@ -65,7 +70,7 @@ export class root_obj {
     }
 
     /** @param {NS} ns */
-    async root_servers(ns) {
+    async manage(ns) {
         //copy of list of servers found
         const servers = this.servers_found
         //get number of hacking tools
@@ -118,9 +123,10 @@ export class root_obj {
                 }
                 //if rooted
                 if (flag_rooted) {
+                    //copy scripts
                     ns.scp(CONSTANTS.SCRIPT.HACK.TO_COPY, hostname)
                     //if backdoor not installed
-                    if (false) { //!server.backdoorInstalled) {
+                    if (this.singularity_available && !server.backdoorInstalled) {
                         //variable to save the target neighbour to
                         var target_neighbour = ""
                         //determine the neighbour of the server
@@ -137,18 +143,21 @@ export class root_obj {
                         }
                         //if a target neighbout is found
                         if (target_neighbour != "") {
+                            //connect to the neighbour //needed?
+                            eval("ns.singularity.connect('" + target_neighbour + "')")
+                            //connect to target
+                            eval("ns.singularity.connect('" + hostname + "')")
                             //backdoor server
-                            //var backdoored = await singularity.backdoor_server(ns, target_neighbour, hostname)
+                            var backdoored = await eval("ns.singularity.installBackdoor()")
+                            //cannot back home
+                            eval("ns.singularity.connect('" + CONSTANTS.SERVER.HOME + "')")
                             //if successfully backdoored
-                            if (true) { //backdoored) {
-                                //signal this server can be removed
-                                flag_finished = true
+                            if (backdoored) {
                                 //log success
                                 log.success(ns, "Root", "Backdoored '" + hostname + "'")
                             }
                         }
                     }
-
 
                     //check if there is money
                     if (server.moneyMax > 0 || server.moneyMax != "0") {
@@ -160,15 +169,13 @@ export class root_obj {
                         //only save ram 
                         this.servers_ram.set(hostname, server.maxRam)
                     }
-                    //if backdoored
-                    //if (flag_finished) {
                     //remove from original list to prevent future checks
                     this.servers_found.delete(hostname)
-                    //}
                 }
             }
         }
     }
+
 
     get_number_of_hacking_tools_owned(ns) {
         //counter for hacking tools

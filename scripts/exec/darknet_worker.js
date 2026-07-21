@@ -232,7 +232,7 @@ async function start_worker(ns, hostname) {
         return
     }    
     //calc ram costs: the eval worker for the darknet worker needs to scale, therefore it is not counted
-    const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET.WORKER)
+    const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET_WORKER)
     //launch worker
     result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, hostname, {
         preventDuplicates: true,

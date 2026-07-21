@@ -18,13 +18,15 @@ import * as log from 'scripts/sub/log.js'
 
 // Declaration
 export class go_obj {
-    constructor() {}
+    constructor() {
+        this.available = true
+    }
 
 
     //getting the game to a steady state
-    async init(ns) {
+    init(ns) {
         //Returns the color of the current player ("White" | "Black"), or 'None' if the game is over.
-        const current_player = await evaluate.exec(ns, "ns.go.getCurrentPlayer()")
+        const current_player = ns.go.getCurrentPlayer()
         //if not our turn
         if (current_player == "White") {
             /*
@@ -33,19 +35,19 @@ export class go_obj {
 		This can also be used if you pick up the game in a state where the opponent needs to play next. 
 		For example: if BitBurner was closed while waiting for the opponent to make a move, you may need to call passTurn() to get them to play their move on game start.
 		*/
-            await evaluate.exec(ns, "ns.go.passTurn()")
+            await ns.go.passTurn()
         }
         //get game state
-        const state_game = await evaluate.exec(ns, "ns.go.getGameState()")
+        const state_game = ns.go.getGameState()
         //save board size
         this.board_size = state_game.length
     }
 
 
     //play the game
-    async play(ns) {
+    manage(ns) {
         //Returns the color of the current player ("White" | "Black"), or 'None' if the game is over.
-        const current_player = await evaluate.exec(ns, "ns.go.getCurrentPlayer()")
+        const current_player = ns.go.getCurrentPlayer()
         //if not our turn
         if (current_player == "White") {
             //stop
@@ -54,16 +56,16 @@ export class go_obj {
         //if game is over
         if (current_player == "None") {
             //start a new game
-            await this.start_new_game(ns)
+            this.start_new_game(ns)
             //it should be our turn, so make a move		
         }
         //make a move
-        await this.make_move(ns)
+        this.make_move(ns)
     }
 
 
     //start a new game: select an opponent and a board size
-    async start_new_game(ns) {
+    start_new_game(ns) {
         //in order of difficulty
         const opponent_list = [
 			"Netburners", 		//increased hacknet production
@@ -75,7 +77,7 @@ export class go_obj {
 		] //| "No AI"
 
         //Returns the name of the opponent faction in the current subnet.
-        const opponent_current = await evaluate.exec(ns, "ns.go.getOpponent()")
+        const opponent_current = ns.go.getOpponent()
         //default to same opponent
         var opponent_next = opponent_current
         /*
@@ -87,7 +89,7 @@ export class go_obj {
         wins				number	Number of wins since last reset
         winStreak			number	Current winstreak
         */
-        const stats = await evaluate.exec(ns, "ns.go.analysis.getStats()")
+        const stats = ns.go.analysis.getStats()
         //if we have gotten a winstreak of 2, resulting in rep to favor conversion
         if (stats[opponent_current].winStreak >= 2) {
             //determine the next index
@@ -139,16 +141,16 @@ export class go_obj {
         This will reset your win streak if the current game is not complete and you have already made moves.
         Note that some factions will have a few routers already on the subnet after a reset.
         */
-        await evaluate.exec(ns, "ns.go.resetBoardState('" + opponent_next + "','" + board_size + "')")
+        ns.go.resetBoardState(opponent_next,board_size)
         //reset stats to easily see if we have won 2x
-        await evaluate.exec(ns, "ns.go.analysis.resetStats(true)")
+        ns.go.analysis.resetStats(true)
         //save the board size
         this.board_size = board_size
     }
 
 
     //make a move
-    async make_move(ns) {
+    make_move(ns) {
         /* Shows if each point on the board is a valid move for the player. By default, analyzes the current board state. Takes an optional boardState (and an optional prior-move boardState, if desired) to analyze a custom board.
         The true/false validity of each move can be retrieved via the X and Y coordinates of the move.
         const validMoves = ns.go.analysis.getValidMoves();
@@ -156,7 +158,7 @@ export class go_obj {
         Note that the [0][0] point is shown on the bottom-left on the visual board (as is traditional), and each string represents a vertical column on the board. In other words, the printed example above can be understood to be rotated 90 degrees clockwise compared to the board UI as shown in the IPvGO subnet tab.
         Also note that, when given a custom board state, only one prior move can be analyzed. This means that the superko rules (no duplicate board states in the full game history) is not supported; you will have to implement your own analysis for that.
         The current valid moves for white can also be seen by simply calling ns.go.analysis.getValidMoves(true). */
-        const moves_valid = await evaluate.exec(ns, "ns.go.analysis.getValidMoves()")
+        const moves_valid = ns.go.analysis.getValidMoves()
         //flag if we can play a move
         var flag_valid_move = false
         //for each row
@@ -172,7 +174,7 @@ export class go_obj {
         //if there are no valid moves
         if (flag_valid_move == false) {
             //pass to finish the game
-            await evaluate.exec(ns, "ns.go.passTurn()")
+            ns.go.passTurn()
             //stop
             return
         }
@@ -181,7 +183,7 @@ export class go_obj {
         Shows the current player, current score, and the previous move coordinates. 
         Previous move will be null for a pass, or if there are no prior moves.
         */
-        const state_game = await evaluate.exec(ns, "ns.go.getGameState()")
+        const state_game = ns.go.getGameState()
         /*
         Returns all the prior moves in the current game, as an array of simple board states.	
         For example, a single 5x5 prior move board might look like this:
@@ -191,27 +193,27 @@ export class go_obj {
         	"XXO.#",
         	".XO.#",	]
         */
-        const previous_moves = await evaluate.exec(ns, "ns.go.getMoveHistory()")
+        const previous_moves = ns.go.getMoveHistory()
         //if there have been moves and the previous move is a pass
         if (previous_moves != null && state_game == null) {
             //pass to finish the game
-            await evaluate.exec(ns, "ns.go.passTurn()")
+            ns.go.passTurn()
             //stop
             return
         }
         //gather information
-        var information = await this.gather_information(ns)
+        var information = this.gather_information(ns)
         //add current information
         information.previous_moves = previous_moves
         information.state_game = state_game
         information.moves_valid = moves_valid
         //Returns the name of the opponent faction in the current subnet.
-        const opponent = await evaluate.exec(ns, "ns.go.getOpponent()")
+        const opponent = ns.go.getOpponent()
         //play depending on the opponent
         switch (opponent) {
             default:
                 //not defined: brute force it
-                await this.brute_force(ns, information)
+                this.brute_force(ns, information)
         }
     }
 
@@ -232,7 +234,7 @@ export class go_obj {
                 if (valid_move && isNotReservedSpace) {
                     /*Make a move on the IPvGO subnet game board, and await the opponent's response. 
                     x:0 y:0 represents the bottom-left corner of the board in the UI.*/
-                    await evaluate.exec(ns, "ns.go.makeMove(" + x + "," + y + ")")
+                    ns.go.makeMove(x,y)
                     //stop
                     return
                 }
@@ -243,6 +245,7 @@ export class go_obj {
 
     //TODO: play aggressively
     async play_aggressive(ns, information) {
+        
         //TODO
         var x = 0
         var y = 0
@@ -254,19 +257,19 @@ export class go_obj {
             Success chance can be seen via ns.go.cheat.getCheatSuccessChance()
             Warning: if you fail to play a cheat move, your turn will be skipped. 
             After your first cheat attempt, if you fail, there is a small (~10%) chance you will instantly be ejected from the subnet. */
-            await evaluate.exec(ns, "ns.go.cheat.destroyNode(" + x + "," + y + ")")
+            //ns.go.cheat.destroyNode(x,y)
 
             /*Attempts to remove an existing router, leaving an empty node behind.	
             Success chance can be seen via ns.go.cheat.getCheatSuccessChance()
             Warning: if you fail to play a cheat move, your turn will be skipped. 
             After your first cheat attempt, if you fail, there is a small (~10%) chance you will instantly be ejected from the subnet.*/
-            await evaluate.exec(ns, "removeRouter(" + x + "," + y + ")")
+            //ns.go.cheat.removeRouter(x,y)
 
             /*Attempts to repair an offline node, leaving an empty playable node behind.
             Success chance can be seen via ns.go.cheat.getCheatSuccessChance()
             Warning: if you fail to play a cheat move, your turn will be skipped. 
             After your first cheat attempt, if you fail, there is a small (~10%) chance you will instantly be ejected from the subnet.*/
-            await evaluate.exec(ns, "repairOfflineNode(" + x + "," + y + ")")
+            //ns.go.cheat.repairOfflineNode(x,y)
 
             var x1 = x
             var x2 = x
@@ -277,12 +280,11 @@ export class go_obj {
             Success chance can be seen via ns.go.cheat.getCheatSuccessChance()
             Warning: if you fail to play a cheat move, your turn will be skipped. 
             After your first cheat attempt, if you fail, there is a small (~10%) chance you will instantly be ejected from the subnet.*/
-            await evaluate.exec(ns, "playTwoMoves(" + x1 + "," + y1 + "," + x2 + "," + y2)
-
+            //ns.go.cheat.playTwoMoves(x1, y1, x2, y2)
         } else {
             /*Make a move on the IPvGO subnet game board, and await the opponent's response. 
             x:0 y:0 represents the bottom-left corner of the board in the UI.*/
-            await evaluate.exec(ns, "ns.go.makeMove(" + x + "," + y + ")")
+            //await evaluate.exec(ns, "ns.go.makeMove(" + x + "," + y + ")")
             //stop
             return
         }
@@ -305,7 +307,7 @@ export class go_obj {
         Traditional notation for Go is e.g. "B,1" referring to second ("B") column, first rank. This is the equivalent of index [1][0].
         Note that the [0][0] point is shown on the bottom-left on the visual board (as is traditional), and each string represents a vertical column on the board. 
         In other words, the printed example above can be understood to be rotated 90 degrees clockwise compared to the board UI as shown in the IPvGO subnet tab.*/
-        information.state_board = await evaluate.exec(ns, "ns.go.getBoardState()")
+        information.state_board = ns.go.getBoardState()
         /*Returns 'X' for black, 'O' for white, or '?' for each empty point to indicate which player controls that empty point. 
         If no single player fully encircles the empty space, it is shown as contested with '?'. "#" are dead nodes that are not part of the subnet.
         Takes an optional boardState argument; by default uses the current board state.	
@@ -316,7 +318,7 @@ export class go_obj {
         	"O.?.X",
         	".?.XX",
         	"?..X#",	]*/
-        information.nodes_controlled_empty = await evaluate.exec(ns, "ns.go.analysis.getControlledEmptyNodes()")
+        //information.nodes_controlled_empty = ns.go.analysis.getControlledEmptyNodes()
         /*Returns an ID for each point. All points that share an ID are part of the same network (or "chain"). Empty points are also given chain IDs to represent continuous empty space. Dead nodes are given the value null.
         Takes an optional boardState argument; by default uses the current board state.
         The data from getChains() can be used with the data from getBoardState() to see which player (or empty) each chain is
@@ -326,7 +328,7 @@ export class go_obj {
         	[   1,1,0,0,0],
         	[null,1,0,2,2],
         	[null,1,0,2,5],	]*/
-        information.chains = await evaluate.exec(ns, "ns.go.analysis.getChains()")
+        //information.chains = ns.go.analysis.getChains()
 
         /*Returns a number for each point, representing how many open nodes its network/chain is connected to. Empty nodes and dead nodes are shown as -1 liberties.
         Takes an optional boardState argument; by default uses the current board state.
@@ -336,7 +338,7 @@ export class go_obj {
         	[-1,-1, 4,-1,-1],
         	[ 3,-1,-1, 3, 1],
         	[ 3,-1,-1, 3, 1],	]*/
-        information.liberties = await evaluate.exec(ns, "ns.go.analysis.getLiberties()")
+        //information.liberties = ns.go.analysis.getLiberties()
 
         //temp until we have SF 14.2
         information.cheat_chance = 0

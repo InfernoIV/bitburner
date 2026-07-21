@@ -15,10 +15,19 @@ import * as evaluate from "scripts/sub/evaluate.js"
 
 export class singularity_obj {
     constructor() {
+        this.available = true
     }
+
+
     init(ns) {
         
     }
+
+    
+    manage(ns, sleeve, bladeburner, grafting) {
+    }
+
+    //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
     
 }
 /*

@@ -13,6 +13,11 @@ export class corporation_obj {
     init(ns) {
         
     }
+
+    
+    manage(ns){
+
+    }
 }
 
 

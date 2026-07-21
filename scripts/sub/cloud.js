@@ -7,12 +7,13 @@ import * as log from 'scripts/sub/log.js'
 
 // Declaration
 export class cloud_obj {
-    constructor() {}
+    constructor() {
+        this.available = true
+    }
+
+
     //
-    async init(ns, currentNodeMults = {
-        CloudServerLimit: 1,
-        CloudServerMaxRam: 1
-    }) {
+    init(ns) {
         /*
         ns.disableLog("upgradeServer")
         ns.disableLog("purchaseServer")
@@ -47,7 +48,7 @@ export class cloud_obj {
 
 
     //buy and/or upgrade servers
-    async manage_servers(ns) {
+    manage(ns) {
         //min money to upgrade
         const money_min = 55000000 //55m
         //get player
@@ -61,7 +62,7 @@ export class cloud_obj {
                 //debug
                 //log.info(ns, "Cloud", "Updating ram", true)
                 //upgrade ram
-                await this.upgrade_ram(ns)
+                this.upgrade_ram(ns)
             }
             //if we can still buy servers
             if (this.servers_owned.size < this.server_max_amount) {
@@ -74,7 +75,7 @@ export class cloud_obj {
 
 
     //upgrade the ram of the server
-    async upgrade_ram(ns) {
+    upgrade_ram(ns) {
         //debug
         //log.info(ns, "Cloud", "Owned servers: '" + JSON.stringify(this.servers_owned) + "'", true)
         //try to upgrade the server
@@ -118,8 +119,6 @@ export class cloud_obj {
                     //stop
                     break
                 }
-                //wait a bit
-                await ns.sleep(CONSTANTS.TIME.WAIT)
             }
         }
     }
@@ -156,6 +155,7 @@ export class cloud_obj {
 
 
 /*
+ns.getPlayer()
 getServerNames(returnOpts)          1.05    Returns an array with the hostnames or IP addresses of all of the cloud servers you have purchased. Returns hostnames by default.
 purchaseServer(hostname, ram)       2.25    Purchase a cloud server.
 upgradeServer(host, ram)            0.25    Upgrade a cloud server's RAM.
