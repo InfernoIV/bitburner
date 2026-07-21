@@ -1,6 +1,5 @@
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
-import * as evaluate from "scripts/sub/evaluate.js"
 
 
 //object imports
@@ -29,6 +28,8 @@ import { infiltration_obj } from "scripts/sub/infiltration.js"
 
 /** @param {NS} ns */
 export async function main(ns) {
+    ns.ui.openTail()
+
     //initialize main
     await init(ns)
 
@@ -43,11 +44,12 @@ export async function main(ns) {
     var infiltration = new infiltration_obj()
 
     //init objects, where needed
-    await root.init(ns)
     await cloud.init(ns)
-    await go.init(ns) 
+    await root.init(ns)
+    //await go.init(ns) 
 
     //create SF dependant objects
+    /*
     var gang = new gang_obj()
     var stanek = new stanek_obj()
     var corporation = new corporation_obj()
@@ -56,15 +58,16 @@ export async function main(ns) {
     var grafting = new grafting_obj()
     var singularity = new singularity_obj()
     var hacknet = new hacknet_obj()
+    */
 
     //get reset info
-    const reset_information = await evaluate.exec(ns, "ns.getResetInfo()")
+    const reset_information = ns.getResetInfo()
     //get source files
     const owned_source_files = reset_information.ownedSF
     //debug
     log.info(ns, "Main", "owned_source_files: " + JSON.stringify(owned_source_files), true)
 
-
+/*
     //init where needed
     if (owned_source_files.hasOwnProperty(13)) {
         await stanek.init(ns)
@@ -90,10 +93,10 @@ export async function main(ns) {
     if (owned_source_files.hasOwnProperty(10)) {
         await sleeve.init(ns)
         await grafting.init(ns)
-    }
+    }*/
 
     //start share
-    await share_exec(ns)
+    //await share_exec(ns)
  
     //log
     log.info(ns, "Main", "Starting main loop", true)
@@ -101,20 +104,19 @@ export async function main(ns) {
     // @ignore-infinite
     while (true) {
         //start darknet main loop on darkweb
-        await darknet.deploy(ns)
-        
-        return
+        darknet.deploy(ns)
         
         //play go
-        await go.play(ns)
+        //await go.play(ns)
 
-        //root servers
-        await root.root_servers(ns)
         //check and add cloud servers
         await cloud.manage_servers(ns)
+        //root servers
+        await root.root_servers(ns)
         //hack servers
-        await hack.hack_server(ns, root, cloud)
+        hack.hack_server(ns, root, cloud)
 
+        /*
         //SF specific unlocks
         if (owned_source_files.hasOwnProperty(4)) {
             //do stuff
@@ -147,7 +149,8 @@ export async function main(ns) {
 
         //update ui
         //await ui.update(ns)
-        
+        */
+
         //wait a bit (what is the lowest time we can pick?)
         await ns.sleep(CONSTANTS.TIME.WAIT)
     }
@@ -162,30 +165,27 @@ async function init(ns) {
     ns.disableLog("disableLog")
     ns.disableLog("sleep")
     ns.disableLog("killall")
+    ns.disableLog("dnet.probe")
+    ns.disableLog("getServerMaxRam")
+    ns.disableLog("scp")
+    ns.disableLog("getHackingLevel")
     //ns.disableLog("exec")
     //ns.disableLog("ALL")
     //open tail
     const [x, y] = ns.ui.windowSize()
     const width = x / 2
     const height = y / 3
-    /*ns.ui.openTail()
+    ns.ui.openTail()
     ns.ui.resizeTail(width, height)
     ns.ui.moveTail(x - width - 5, y - height - 5)
-    */
     //callback
     ns.atExit(() => {
         //log exit
         log.info(ns, "Main", "Exiting script")
-        ns.ui.closeTail()
+        //ns.ui.closeTail()
     })
-    //init logging, set to true if log to file is desired
-    log.init(ns, false)
     //kill all other scripts 
     ns.killall(CONSTANTS.SERVER.HOME, true)
-    //init eval
-    evaluate.init(ns, CONSTANTS.SERVER.HOME, CONSTANTS.RAM.MAIN.EVAL)
-    //wait a little bit
-    await ns.sleep(CONSTANTS.TIME.WAIT)
     //signal start of program
     log.success(ns, "Main", "Init complete!")
 }

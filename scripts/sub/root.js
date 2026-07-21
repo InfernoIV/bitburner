@@ -5,8 +5,7 @@ import * as evaluate from "scripts/sub/evaluate.js"
 
 // Declaration
 export class root_obj {
-    constructor() {
-    }
+    constructor() {}
 
 
     async init(ns) {
@@ -15,11 +14,7 @@ export class root_obj {
         this.servers_money = new Map()
         this.servers_found = new Map()
         //get the servers    
-        var scan_results = await this.scan_servers(ns)
-
-        //debug
-        //log.info(ns, "Root", "Scan results: '" + scan_results + "'", true)
-        
+        var scan_results = this.scan_servers(ns)
         //for each server
         for (const hostname of scan_results) {
             //if home server
@@ -30,9 +25,7 @@ export class root_obj {
             //kill all scripts on that server
             ns.killall(hostname)
             //get number of ports to open
-            const server = await evaluate.exec(ns, "ns.getServer('" + hostname + "')")
-            //debug
-            //log.info(ns, "Root", "Found '" + hostname + "' server: " + JSON.stringify(server))
+            const server = ns.getServer(hostname)
             //add to the map (value is required hacking tools)
             this.servers_found.set(hostname, server)
             //log.info(ns, "Root", "Found server '" + hostname + "' with '" + JSON.stringify(server) + "'")
@@ -43,20 +36,22 @@ export class root_obj {
 
 
     //function that provides a list of servers
-    async scan_servers(ns) {
+    scan_servers(ns) {
         //create a list of servers
         var servers_found = [CONSTANTS.SERVER.HOME]
         //start scanning from home
-        await this.scan_server(ns, servers_found, CONSTANTS.SERVER.HOME)
+        this.scan_server(ns, servers_found, CONSTANTS.SERVER.HOME)
         //return
         return servers_found
     }
 
 
     //function that scans for servers
-    async scan_server(ns, servers_found, server_name) {
+    scan_server(ns, servers_found, server_name) {
         //get neighbours
-        const neighbours = await evaluate.exec(ns, "ns.scan('" + server_name + "')")
+        const neighbours = ns.scan(server_name)
+        //debug
+        log.info(ns, "Root", "Found neighbours: '" + neighbours + "'")
         //for each neighbour found
         for (const neighbour of neighbours) {
             //if server is not yet found
@@ -64,7 +59,7 @@ export class root_obj {
                 //add server to list
                 servers_found.push(neighbour)
                 //start scanning from this server
-                await this.scan_server(ns, servers_found, neighbour)
+                this.scan_server(ns, servers_found, neighbour)
             }
         }
     }
@@ -74,14 +69,15 @@ export class root_obj {
         //copy of list of servers found
         const servers = this.servers_found
         //get number of hacking tools
-        const hacking_tools_owned = await this.get_number_of_hacking_tools_owned(ns)
+        const hacking_tools_owned = this.get_number_of_hacking_tools_owned(ns)
         //get hacking level
-        const level_hacking = await evaluate.exec(ns, "ns.getHackingLevel()")
+        const level_hacking = ns.getHackingLevel()
         //for each server found
         for (const [hostname, server] of servers) {
             //log.info(ns, "Root", "Checking '" + hostname + "': '" + server.requiredHackingSkill + "', '" + server.numOpenPortsRequired + "'")
             //check if we can hack it (according to hacking level)
-            if (level_hacking >= server.requiredHackingSkill && hacking_tools_owned >= server.numOpenPortsRequired) {
+            if (level_hacking >= server.requiredHackingSkill && hacking_tools_owned >= server
+                .numOpenPortsRequired) {
                 //flag to check to remove or not
                 var flag_rooted = false
                 //flag to check if backdoored
@@ -91,15 +87,15 @@ export class root_obj {
                     //check on what actions to perform
                     switch (server.numOpenPortsRequired) {
                         case 5:
-                            await evaluate.exec(ns, "ns.sqlinject('" + hostname + "')") //5th toool: hacking 750
+                            ns.sqlinject(hostname) //5th toool: hacking 750
                         case 4:
-                            await evaluate.exec(ns, "ns.httpworm('" + hostname + "')") //4th toool: hacking 500
+                            ns.httpworm(hostname) //4th toool: hacking 500
                         case 3:
-                            await evaluate.exec(ns, "ns.relaysmtp('" + hostname + "')") //3rd tool: hacking 250
+                            ns.relaysmtp(hostname) //3rd tool: hacking 250
                         case 2:
-                            await evaluate.exec(ns, "ns.ftpcrack('" + hostname + "')") //2nd tool: hacking 100
+                            ns.ftpcrack(hostname) //2nd tool: hacking 100
                         case 1:
-                            await evaluate.exec(ns, "ns.brutessh('" + hostname + "')") //1st tool: hacking 50
+                            ns.brutessh(hostname) //1st tool: hacking 50
                         case 0:
                             break //no action needed
                         default:
@@ -108,7 +104,7 @@ export class root_obj {
                             break
                     }
                     //nuke to get root access
-                    if (await evaluate.exec(ns, "ns.nuke('" + hostname + "')")) {
+                    if (ns.nuke(hostname)) {
                         //set flag
                         flag_rooted = true
                         //log success
@@ -118,22 +114,17 @@ export class root_obj {
                     //set flag
                     flag_rooted = true
                     //log success
-                    log.success(ns, "Root", "Already rooted '" + hostname + "'")                    
+                    log.success(ns, "Root", "Already rooted '" + hostname + "'")
                 }
                 //if rooted
                 if (flag_rooted) {
-                    //copy scripts to server
-                    for (const script of CONSTANTS.SCRIPT.HACK.TO_COPY) {
-                        //copy script to server
-                        await evaluate.exec(ns, "ns.scp('" + script + "', '" + hostname + "')")
-                    }
-
+                    ns.scp(CONSTANTS.SCRIPT.HACK.TO_COPY, hostname)
                     //if backdoor not installed
                     if (false) { //!server.backdoorInstalled) {
                         //variable to save the target neighbour to
                         var target_neighbour = ""
                         //determine the neighbour of the server
-                        var neighbours = await evaluate.exec(ns, "ns.scan('" + hostname + "')")
+                        var neighbours = ns.scan(hostname)
                         //for each neighbour found
                         for (const neighbour in neighbours) {
                             //if not in the todo list (and therefore rooted)
@@ -158,12 +149,12 @@ export class root_obj {
                         }
                     }
 
-                    
+
                     //check if there is money
                     if (server.moneyMax > 0 || server.moneyMax != "0") {
                         //only save money
                         this.servers_money.set(hostname, server.moneyMax)
-                        }
+                    }
                     //check ram
                     if (server.maxRam > 0) {
                         //only save ram 
@@ -173,18 +164,17 @@ export class root_obj {
                     //if (flag_finished) {
                     //remove from original list to prevent future checks
                     this.servers_found.delete(hostname)
-                    //log.info(ns, "Root", "Removed '" + hostname + "' from list of servers to root")
                     //}
                 }
             }
         }
     }
 
-    async get_number_of_hacking_tools_owned(ns) {
+    get_number_of_hacking_tools_owned(ns) {
         //counter for hacking tools
         var hacking_tools_owned = 0
         //get the available executables on home
-        var executables = await evaluate.exec(ns, "ns.ls('" + CONSTANTS.SERVER.HOME + "', '" + CONSTANTS.FILE_EXTENSION.EXECUTABLE + "')")
+        var executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
         //for each tool
         for (const tool of CONSTANTS.TOOLS.HACKING.LIST) {
             //if the list is found
@@ -197,4 +187,3 @@ export class root_obj {
         return hacking_tools_owned
     }
 }
-

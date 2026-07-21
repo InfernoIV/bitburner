@@ -1,6 +1,5 @@
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
-import * as evaluate from "scripts/sub/evaluate.js"
 import { root_obj } from "scripts/sub/root.js"
 
 
@@ -23,7 +22,7 @@ export class hack_obj {
             return
         }
         //update the target, if needed (global variable)
-        await this.find_target(ns, root_obj)
+        this.find_target(ns, root_obj)
         //check if we HAVE a target
         if (this.hack_target == "") {
             //debug
@@ -40,11 +39,11 @@ export class hack_obj {
             //re-set the wait time, to be set later
             var time_wait = 0
             //check the state
-            const state = await this.check_target(ns)
+            const state = this.check_target(ns)
             //get the timings
-            const time_hack = await evaluate.exec(ns, "ns.getHackTime('" + this.hack_target + "')")
-            const time_weaken = await evaluate.exec(ns, "ns.getWeakenTime('" + this.hack_target + "')")
-            const time_grow = await evaluate.exec(ns, "ns.getGrowTime('" + this.hack_target + "')")
+            const time_hack = ns.getHackTime(this.hack_target)
+            const time_weaken = ns.getWeakenTime(this.hack_target)
+            const time_grow = ns.getGrowTime(this.hack_target)
             //calc timings
             const delay_grow_1 = time_weaken - time_grow - CONSTANTS.TIME.SAFETY
             const delay_weaken = 0
@@ -71,7 +70,7 @@ export class hack_obj {
                         //if possible to run
                         if (threads > 0) {
                             //copy the script
-                            if (!await evaluate.exec(ns, "ns.scp('" + CONSTANTS.SCRIPT.HACK.WEAKEN + "','" + server + "')")) {
+                            if (!ns.scp(CONSTANTS.SCRIPT.HACK.WEAKEN, server)) {
                                 //debug
                                 log.warning(ns, "Hack", "error copying '" + CONSTANTS.SCRIPT.HACK.WEAKEN + "' to " + server)
                             }
@@ -161,9 +160,9 @@ export class hack_obj {
 
 
     //function that finds a target
-    async find_target(ns, root_obj) {
+    find_target(ns, root_obj) {
         //get current hacking level
-        var hacking_level_current = await evaluate.exec(ns, "ns.getHackingLevel()")
+        var hacking_level_current = ns.getHackingLevel()
         //get list of servers with money
         const servers_target = root_obj.servers_money
         //if change in situation
@@ -180,9 +179,9 @@ export class hack_obj {
             for (const [server, money_max] of servers_target) {
                 //or use hackAnalyze(host)? -> requires mock server (and thus formula's)
                 //get the time to hack            
-                const time = await evaluate.exec(ns, "ns.getHackTime('" + server + "')")
+                const time = ns.getHackTime(server)
                 //get the chance for the hack
-                const chance = await evaluate.exec(ns, "ns.hackAnalyzeChance('" + server + "')")
+                const chance = ns.hackAnalyzeChance(server)
                 //calculate the new value
                 const new_value = money_max / time * chance
                 //if better than what we have            
@@ -200,9 +199,9 @@ export class hack_obj {
 
 
     //function that checks the state of the target
-    async check_target(ns) {
+    check_target(ns) {
         //get server data
-        const server = await evaluate.exec(ns, "ns.getServer('" + this.hack_target + "')")
+        const server = ns.getServer(this.hack_target)
         //debug
         log.info(ns, "Hack", "hack_target: '" + this.hack_target +
             "', security: " + Math.ceil((server.hackDifficulty / server.minDifficulty) * 100) + "%" +

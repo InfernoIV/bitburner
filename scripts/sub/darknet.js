@@ -16,7 +16,7 @@ export class darknet_obj {
     }
 
 
-    async deploy(ns) {
+    deploy(ns) {
         //if darkweb started
         if (this.darknet_started) {
             //stop
@@ -24,26 +24,22 @@ export class darknet_obj {
         }
         //check if we have the tool
         //get server information
-        const tools =  await evaluate.exec(ns, "ns.ls('" + CONSTANTS.SERVER.HOME + "','" + CONSTANTS.FILE_EXTENSION.EXECUTABLE + "')")
+        const tools = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
         //if we have don't have the tool
         if (!tools.includes(CONSTANTS.TOOLS.DARKNET)) {
             //stop
             return
         }
         //scan from home
-        const servers_darknet = await evaluate.exec(ns, "ns.dnet.probe() ")
+        const servers_darknet = ns.dnet.probe()
         //if darkweb server is available
         if (servers_darknet.includes(CONSTANTS.SERVER.DARKWEB)) {
             //get server information
-            const server_info =  await evaluate.exec(ns, "ns.getServer('" + CONSTANTS.SERVER.DARKWEB + "')")
+            const server_info = ns.getServer(CONSTANTS.SERVER.DARKWEB)
 			//calc ram costs
 			const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET.WORKER)
             //copy scripts
-            for (const script of CONSTANTS.SCRIPT.DARKNET.TO_COPY) {
-            //copy scripts
-            var results = await evaluate.exec(ns, "ns.scp('" + script + "','" +
-                CONSTANTS.SERVER.DARKWEB + "')")
-            }
+            var results = ns.scp(CONSTANTS.SCRIPT.DARKNET.TO_COPY, CONSTANTS.SERVER.DARKWEB)
             //start worker
             var result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, CONSTANTS.SERVER.DARKWEB, {
                 preventDuplicates: true,
@@ -52,16 +48,14 @@ export class darknet_obj {
             //check if ok
             if (result == false) {
                 //debug
-                log.error(ns, "Darknet", "Failed to start worker!")
-                ns.ui.openTail()                
+                log.error(ns, "Darknet", "Failed to start initial worker!", true)
                 //stop
-                ns.exit()
+                return
             }
-
 			//signal start is done, to speed up execution
             this.darknet_started = true
             //log
-            log.success(ns, "Darkweb", "darkweb worker deployed")
+            log.success(ns, "Darkweb", "Initial darkweb worker deployed")
         }
     }
 }

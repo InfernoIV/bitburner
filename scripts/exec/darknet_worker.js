@@ -195,6 +195,13 @@ async function authenticate(ns, hostname_self, darknet_hostname, passwords) {
 
 //function that starts worker on server
 async function start_worker(ns, hostname) {
+    //get server information
+    const server_info = ns.getServer(hostname)
+    //if already ram used = worker running
+    if (server_info.ramUsed > 0.0) {
+        //already running
+        return
+    }
     //get server details
     const server_details = ns.dnet.getServerDetails(hostname)
     //get blocked ram
@@ -223,13 +230,7 @@ async function start_worker(ns, hostname) {
         log.warning(ns, "", "Failed to copy '" + script + "' to '" + hostname + "'")
         //stop
         return
-    }
-
-    //kill scripts on target server -> still needed?
-    //await ns.killall(hostname)
-
-    //get server information
-    const server_info = ns.getServer(hostname)
+    }    
     //calc ram costs: the eval worker for the darknet worker needs to scale, therefore it is not counted
     const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET.WORKER)
     //launch worker
