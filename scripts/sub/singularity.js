@@ -3,14 +3,11 @@
 /*
 https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.singularity.md
 Singularity		Singularity API
-16/4/1 * 32 = 512/128/32 GB
 */
-//TODO: transform into class
 
 
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
-import * as evaluate from "scripts/sub/evaluate.js"
 
 
 export class singularity_obj {
@@ -22,17 +19,34 @@ export class singularity_obj {
     init(ns) {
         //disable logging
         ns.disableLog("singularity.installBackdoor")
+        ns.disableLog("singularity.purchaseTor")
+        ns.disableLog("singularity.purchaseProgram")
         //debug
         log.info(ns, "Singularity", "Init complete", true)
     }
 
     
     manage(ns, sleeve, bladeburner, grafting) {
-
+        this.manage_tools(ns)
     }
 
     //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
-    
+    manage_tools(ns) {
+        //keep track of tools
+        const tools = []
+        //if we can buy / have bought TOR
+        if (ns.singularity.purchaseTor()) {
+            
+            //get tools
+            //const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.DARKNET)) {
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.DARKNET + "'", true)
+            }
+
+        }
+        
+        
+    }
 }
 /*
 

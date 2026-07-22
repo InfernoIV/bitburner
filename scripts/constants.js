@@ -126,8 +126,12 @@ export const RAM = {
     /*
     ns.singularity.connect  16/4/1      1   (but implemented in root)
     ns.singularity.installBackdoor      2   (but implemented in root)
+    purchaseProgram                     2
+
+    
+    //purchaseProgrampurchaseProgram    2
     */
-    SINGULARITY: 3.0,
+    SINGULARITY: 5.0,
 
     /*
 

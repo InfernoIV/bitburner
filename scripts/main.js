@@ -265,6 +265,9 @@ export async function main(ns) {
 
         //do stuff
         singularity.manage(ns, sleeve, bladeburner, grafting)
+
+
+        
         //manage gang
         await gang.manage(ns)
         //manage corporation

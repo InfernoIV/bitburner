@@ -232,7 +232,7 @@ export class hack_obj {
                 }
             }
             //debug
-            log.info(ns, "Hack", this.hack_level_previous + " -> found hack target: '" + this.hack_target + "'")
+            //log.info(ns, "Hack", this.hack_level_previous + " -> found hack target: '" + this.hack_target + "'")
         }
     }
 

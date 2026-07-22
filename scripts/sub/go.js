@@ -35,12 +35,16 @@ export class go_obj {
         //if not our turn
         if (current_player == "White") {
             /*
-		Pass the player's turn rather than making a move, and await the opponent's response. 
-		This ends the game if the opponent passed on the previous turn, or if the opponent passes on their following turn.
-		This can also be used if you pick up the game in a state where the opponent needs to play next. 
-		For example: if BitBurner was closed while waiting for the opponent to make a move, you may need to call passTurn() to get them to play their move on game start.
-		*/
-            ns.go.passTurn()
+            Pass the player's turn rather than making a move, and await the opponent's response. 
+            This ends the game if the opponent passed on the previous turn, or if the opponent passes on their following turn.
+            This can also be used if you pick up the game in a state where the opponent needs to play next. 
+            For example: if BitBurner was closed while waiting for the opponent to make a move, you may need to call passTurn() to get them to play their move on game start.
+            */
+            try {
+                ns.go.passTurn()
+            } catch (err) {
+                //ignore
+            }
         }
         //get board state
         const board_state = ns.go.getBoardState()
@@ -48,6 +52,19 @@ export class go_obj {
         this.board_size = board_state.length
         //save wins
         this.wins = 0
+        //save losses
+        this.losses = 0
+        //save loss streak
+        this.loss_streak = 0
+        //keep track of factions
+        this.opponent_list = [
+            "Netburners", //increased hacknet production
+            "Slum Snakes", //crime success rate
+            "The Black Hand", //hacking money
+            "Tetrads", //strength, defense, dexterity, and agility levels
+            "Daedalus", //reputation gain
+            "Illuminati", //faster hack(), grow(), and weaken()
+        ] //| "No AI"
         //reset stats to easily see if we have won 2x
         ns.go.analysis.resetStats(true)
         //log
@@ -80,14 +97,7 @@ export class go_obj {
         //debug
         //log.info(ns, "Go", "Starting new game")
         //in order of difficulty
-        const opponent_list = [
-            "Netburners", //increased hacknet production
-            "Slum Snakes", //crime success rate
-            "The Black Hand", //hacking money
-            "Tetrads", //strength, defense, dexterity, and agility levels
-            "Daedalus", //reputation gain
-            "Illuminati", //faster hack(), grow(), and weaken()
-        ] //| "No AI"
+        
 
         //Returns the name of the opponent faction in the current subnet.
         const opponent_current = ns.go.getOpponent()
@@ -107,8 +117,18 @@ export class go_obj {
         if (stats[opponent_current].wins > this.wins) {
             //save the win
             this.wins = stats[opponent_current].wins
+            //reset loss streak
+            this.loss_streak = 0
             //log message
             log.success(ns, "Go", "Won a match vs " + opponent_current, true)
+        }
+        //if we lost a match
+        if (stats[opponent_current].losses > this.losses) {
+            //save the win
+            this.losses = stats[opponent_current].losses
+            this.loss_streak += 1
+            //log message
+            log.warning(ns, "Go", "Lost a match vs " + opponent_current + " (" + this.loss_streak + ")", true)
         }
         //if we have gotten a winstreak of 2, resulting in rep to favor conversion
         if (stats[opponent_current].winStreak >= 2) {
@@ -116,20 +136,45 @@ export class go_obj {
             var opponent_index = opponent_list.indexOf(opponent_current) + 1
             //check if out of bounds
             //TODO: integrate strategies for each opponent
-            if (opponent_index >= 0) { //opponent_list.length) {
+            if (opponent_index >= opponent_list.length) { //) {
                 //set to 1st index
                 opponent_index = 0
             }
             //set opponent
             opponent_next = opponent_list[opponent_index]
             //debug
-            log.success(ns, "Go", "Won 2x against '" + opponent_current + "', next opponent: '" + opponent_next +
-                "'", true)
+            log.success(ns, "Go", "Won 2x in a row against " + opponent_current + ", next opponent: " + opponent_next +
+                "", true)
             //reset stats to easily see if we have won 2x
             ns.go.analysis.resetStats(true)
             //set wins back to 0
             this.wins = 0
+            this.losses = 0
+            this.loss_streak = 0
 
+        } else if (this.loss_streak >= 10) {
+            //determine the next index
+            var opponent_index = this.opponent_list.indexOf(opponent_current) + 1
+            //check if out of bounds
+            //TODO: integrate strategies for each opponent
+            if (opponent_index >= this.opponent_list.length) { //) {
+                //set to 1st index
+                opponent_index = 0
+            }
+            //set opponent
+            opponent_next = opponent_list[opponent_index]
+            //remove opponent
+            this.opponent_list.splice(this.opponent_list.indexOf(opponent_currentarray), 1)
+
+            //debug
+            log.warning(ns, "Go", "Lost " + 10 + "x in a row against " + opponent_current + ", next opponent: " + opponent_next +
+                "", true)
+            //reset stats to easily see if we have won 2x
+            ns.go.analysis.resetStats(true)
+            //set wins back to 0
+            this.wins = 0
+            this.losses = 0
+            this.loss_streak = 0
         }
 
         //default size
@@ -155,7 +200,7 @@ export class go_obj {
             case "Illuminati":
                 //TODO: decide board size
                 break
-            case "????????????":
+            //case "????????????":
                 //TODO: decide board size
                 break
             default:
@@ -167,7 +212,7 @@ export class go_obj {
         Note that some factions will have a few routers already on the subnet after a reset.
         */
         ns.go.resetBoardState(opponent_next, board_size)
-        
+
         //save the board size
         this.board_size = board_size
     }
@@ -208,7 +253,7 @@ export class go_obj {
         Previous move will be null for a pass, or if there are no prior moves.
         */
         const state_game = ns.go
-        .getGameState() //{"currentPlayer":"Black","whiteScore":1.5,"blackScore":0,"previousMove":null,"komi":1.5,"bonusCycles":0}
+            .getGameState() //{"currentPlayer":"Black","whiteScore":1.5,"blackScore":0,"previousMove":null,"komi":1.5,"bonusCycles":0}
         /*
         Returns all the prior moves in the current game, as an array of simple board states.	
         For example, a single 5x5 prior move board might look like this:
