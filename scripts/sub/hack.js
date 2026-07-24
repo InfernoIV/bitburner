@@ -86,17 +86,17 @@ export class hack_obj {
                             //run the script
                             var result = ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target)
                             //check for result
-                            if (result == false) {
-                                log.warning(ns, "Hack", "Failed to start '" + CONSTANTS.SCRIPT.HACK.GROW + "' on '" + threads + "' (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB")
-                                //temp
-                                ns.exit()
+                            if (result == false) {                    
+                                log.warning(ns, "Hack", "W: Failed to start '" + CONSTANTS.SCRIPT.HACK.GROW + "' on '" + server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB", true)
+                                log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
+                                ns.ui.openTail()
                             }
                             //debug
                             //log.info(ns, "Hack", "Started weaken on '" + server + "' (x" + threads + ")")
                         }
                     }
                     //debug
-                    log.info(ns, "Hack", "Started weaken for '" + this.hack_target + "' = " + ath.ceil((server_info.hackDifficulty / server_info.minDifficulty) * 100) + "%", true)                                   
+                    log.info(ns, "Hack", "Started weaken for '" + this.hack_target + "' = " + Math.ceil((server_info.hackDifficulty / server_info.minDifficulty) * 100) + "%", true)                                   
                     //stop
                     break
 
@@ -125,16 +125,14 @@ export class hack_obj {
                             var result = ns.exec(CONSTANTS.SCRIPT.HACK.GROW, server, threads, this.hack_target, delay_grow_1 + job_delay)
                             //check for result
                             if (result == false) {
-                                log.warning(ns, "Hack", "Failed to start '" + CONSTANTS.SCRIPT.HACK.GROW + "' on '" + threads + "' (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB")
-                                //temp
-                                ns.exit()
+                                log.warning(ns, "Hack", "GW: Failed to start '" + CONSTANTS.SCRIPT.HACK.GROW + "' on '" + server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB", true)
+                                log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
                             }
                             result = ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target, delay_weaken + job_delay)
                             //check for result
                             if (result == false) {
-                                log.warning(ns, "Hack", "Failed to start '" + CONSTANTS.SCRIPT.HACK.GROW + "' on '" + threads + "' (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB")
-                                //temp
-                                ns.exit()
+                                log.warning(ns, "Hack", "GW: Failed to start '" + CONSTANTS.SCRIPT.HACK.WEAKEN + "' on '" + server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB", true)
+                                log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
                             }
                             //increase job delay
                             job_delay += (2 * CONSTANTS.TIME.SAFETY)
@@ -160,26 +158,54 @@ export class hack_obj {
                     //ram calc
                     job_size = CONSTANTS.RAM.WORKER.HACK.HACK + CONSTANTS.RAM.WORKER.HACK.GROW + ( 2 * CONSTANTS.RAM.WORKER.HACK.WEAKEN)
                     //do stuff
-                    for (var [server, ram_available] of execute_servers) {                       
+                    for (var [server, ram_server] of execute_servers) {      
+                        //save to local variable
+                        var ram_available = ram_server    
                         //if we can run the total job on this server
-                        while (job_size < ram_available) {
+                        //while (job_size < ram_available) {
+                            //log.info(ns, ns.pid, "ram_available: " + ram_available, true)
                             //calc threads
                             threads = Math.floor(ram_available / job_size)
+
+                            if (threads < 1) {
+                                //go next
+                                continue
+                            }
                             //if threads higher than 100
-                            if (threads > 100) {
+                            /*if (threads > 100) {
                                 //cap threads
                                 threads = 100
-                            } 
+                            } */
                             //execute scripts with the correct timing
-                            ns.exec(CONSTANTS.SCRIPT.HACK.HACK, server, threads, this.hack_target, delay_hack + job_delay)
-                            ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target, delay_weaken1 + job_delay)
-                            ns.exec(CONSTANTS.SCRIPT.HACK.GROW, server, threads, this.hack_target, delay_grow_2 + job_delay)
-                            ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target, delay_weaken2 + job_delay)
+                            var result = ns.exec(CONSTANTS.SCRIPT.HACK.HACK, server, threads, this.hack_target, delay_hack + job_delay)
+                            //check for result
+                            if (result == false) {
+                                log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.HACK.HACK + "' on '" + server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB", true)
+                                log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
+                            }
+                            result = ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target, delay_weaken1 + job_delay)
+                            //check for result
+                            if (result == false) {
+                                log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.HACK.WEAKEN + "' on '" + server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB", true)
+                                log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
+                            }
+                            result = ns.exec(CONSTANTS.SCRIPT.HACK.GROW, server, threads, this.hack_target, delay_grow_2 + job_delay)
+                            //check for result
+                            if (result == false) {
+                                log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.HACK.GROW + "' on '" + server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB", true)
+                                log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
+                            }
+                            result = ns.exec(CONSTANTS.SCRIPT.HACK.WEAKEN, server, threads, this.hack_target, delay_weaken2 + job_delay)
+                            //check for result
+                            if (result == false) {
+                                log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.HACK.WEAKEN + "' on '" + server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads + " threads => " + threads * job_size + " GB", true)
+                                log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
+                            }
                             //increase job delay
                             job_delay += 4 * CONSTANTS.TIME.SAFETY
                             //lower the ram available
-                            ram_available -= threads * job_size
-                        }
+                            ram_available = ram_available - (threads * job_size)
+                        //}
                     }
                     //set the time to wait
                     time_wait = time_weaken + job_delay //- CONSTANTS.TIME.SAFETY

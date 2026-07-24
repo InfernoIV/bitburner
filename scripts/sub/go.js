@@ -119,8 +119,9 @@ export class go_obj {
             this.wins = stats[opponent_current].wins
             //reset loss streak
             this.loss_streak = 0
-            //log message
-            log.success(ns, "Go", "Won a match vs " + opponent_current, true)
+            //toast message
+            ns.toast("Go: Won a match vs " + opponent_current)
+            //log.success(ns, "Go", "Won a match vs " + opponent_current, true)
         }
         //if we lost a match
         if (stats[opponent_current].losses > this.losses) {
@@ -128,47 +129,41 @@ export class go_obj {
             this.losses = stats[opponent_current].losses
             this.loss_streak += 1
             //log message
-            log.warning(ns, "Go", "Lost a match vs " + opponent_current + " (" + this.loss_streak + ")", true)
+            //log.warning(ns, "Go", "Lost a match vs " + opponent_current + " (" + this.loss_streak + ")", true)
         }
+        var change_opponent = false
+        var change_message = ""
         //if we have gotten a winstreak of 2, resulting in rep to favor conversion
         if (stats[opponent_current].winStreak >= 2) {
-            //determine the next index
-            var opponent_index = opponent_list.indexOf(opponent_current) + 1
-            //check if out of bounds
-            //TODO: integrate strategies for each opponent
-            if (opponent_index >= opponent_list.length) { //) {
-                //set to 1st index
-                opponent_index = 0
-            }
-            //set opponent
-            opponent_next = opponent_list[opponent_index]
-            //debug
-            log.success(ns, "Go", "Won 2x in a row against " + opponent_current + ", next opponent: " + opponent_next +
-                "", true)
-            //reset stats to easily see if we have won 2x
-            ns.go.analysis.resetStats(true)
-            //set wins back to 0
-            this.wins = 0
-            this.losses = 0
-            this.loss_streak = 0
-
+            //go to next
+            change_opponent = true
+            //set message
+            change_message = "Won 2x in a row"
         } else if (this.loss_streak >= 10) {
+            //go to next
+            change_opponent = true
+            //set message
+            change_message = "Lost 10x in a row"
+        }
+        //if we want to change opponent
+        if (change_opponent) {
             //determine the next index
             var opponent_index = this.opponent_list.indexOf(opponent_current) + 1
             //check if out of bounds
             //TODO: integrate strategies for each opponent
-            if (opponent_index >= this.opponent_list.length) { //) {
+            if (opponent_index >= 2) { //this.opponent_list.length) { //) {
                 //set to 1st index
                 opponent_index = 0
             }
             //set opponent
-            opponent_next = opponent_list[opponent_index]
-            //remove opponent
-            this.opponent_list.splice(this.opponent_list.indexOf(opponent_currentarray), 1)
-
-            //debug
-            log.warning(ns, "Go", "Lost " + 10 + "x in a row against " + opponent_current + ", next opponent: " + opponent_next +
-                "", true)
+            opponent_next = this.opponent_list[opponent_index]
+            if(change_message.includes("Won")) {
+                //debug
+                log.success(ns, "Go", change_message + " against " + opponent_current + ", next opponent: " + opponent_next, true)
+            } else {
+                //debug
+                log.warning(ns, "Go", change_message + " against " + opponent_current + ", next opponent: " + opponent_next, true)
+            }
             //reset stats to easily see if we have won 2x
             ns.go.analysis.resetStats(true)
             //set wins back to 0

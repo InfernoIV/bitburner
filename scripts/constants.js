@@ -17,16 +17,16 @@ export const SCRIPT = {
     MAIN: "scripts/main.js",
     JUMP: "scripts/jump.js",
     HACK: {
-        GROW: "scripts/exec/grow.js",
-        WEAKEN: "scripts/exec/weaken.js",
-        HACK: "scripts/exec/hack.js",
-        TO_COPY: ["scripts/exec/grow.js", "scripts/exec/weaken.js", "scripts/exec/hack.js"]
+        GROW: "scripts/worker/grow.js",
+        WEAKEN: "scripts/worker/weaken.js",
+        HACK: "scripts/worker/hack.js",
+        TO_COPY: ["scripts/worker/grow.js", "scripts/worker/weaken.js", "scripts/worker/hack.js"]
     },
     DARKNET: {
-        WORKER: "scripts/exec/darknet_worker.js",
-        TO_COPY: [ "scripts/sub/log.js", "scripts/constants.js", "scripts/exec/darknet_worker.js", ]
+        WORKER: "scripts/worker/darknet_worker.js",
+        TO_COPY: ["scripts/sub/log.js", "scripts/constants.js", "scripts/worker/darknet_worker.js", ]
     },
-    SHARE_WORKER: "scripts/exec/share.js",
+    SHARE_WORKER: "scripts/worker/share.js",
 }
 
 
@@ -44,7 +44,7 @@ export const RAM = {
     ns.atExit           0
     */
     MAIN: 4.6,
-    
+
     /*
     getServer (fn)	2.00GB  -> already covered in main
     baseCost (misc)	1.60GB  -> already covered in main
@@ -87,7 +87,7 @@ export const RAM = {
     ns.scp              done by root
     ns.dnet.probe       0.2
     */
-    DARKNET: 0.2,   
+    DARKNET: 0.2,
 
     /*
     ns.getPlayer    0.5
@@ -118,7 +118,7 @@ export const RAM = {
     ns.go.cheat.repairOfflineNode           8
     ns.go.cheat.playTwoMoves                8
     */
-   GO: 16.0,
+    GO: 16.0,
 
 
     //Bitnode dependent scripts
@@ -152,7 +152,7 @@ export const RAM = {
     /*
 
     */
-    GANG: 25.0,     
+    GANG: 25.0,
 
     /*
 
@@ -169,8 +169,8 @@ export const RAM = {
     */
     GRAFTING: 0.0,
 
-    
-    
+
+
     //worker scripts
     /*
     base    1.6
@@ -182,38 +182,39 @@ export const RAM = {
     base                1.6
     exec                1.3
     dnet.authenticate   0.4
+    setStasisLink       12
     */
-    DARKNET_WORKER: 12.9, 
-    
+    DARKNET_WORKER: 12.9, //12.9, 
+    DARKNET_WORKER_STASIS: 24.9,
     WORKER: {
         HACK: {
-        /*
-        base        1.6
-        ns.weaken   1.15
-        */
-        WEAKEN: 1.75,
+            /*
+            base        1.6
+            ns.weaken   1.15
+            */
+            WEAKEN: 1.75,
 
-        /*
-        base    1.6
-        ns.grow 0.16
-        */
-        GROW: 1.75,
+            /*
+            base    1.6
+            ns.grow 0.16
+            */
+            GROW: 1.75,
 
-        /*
-        base    1.6
-        ns.hack 0.1    
-        */
-        HACK: 1.7
+            /*
+            base    1.6
+            ns.hack 0.1    
+            */
+            HACK: 1.7
         },
     },
-    
+
 }
 
 
 //enum for port data
 export const PORT = {
     NO_DATA: "NULL PORT DATA",
-    //EVAL ports are on PID
+    DARKNET: "1",
 }
 
 

@@ -41,6 +41,15 @@ export class darknet_obj {
         if (servers_darknet.includes(CONSTANTS.SERVER.DARKWEB)) {
             //get server information
             const server_info = ns.getServer(CONSTANTS.SERVER.DARKWEB)
+            //check if already something running (e.g. with save + exit)
+            if (server_info.ramUsed > 0) {
+                //signal start is done, to speed up execution
+                this.darknet_started = true
+                //log
+                log.success(ns, "Darkweb", "Initial darkweb already running")
+                //stop
+                return
+            }
 			//calc ram costs
 			const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET_WORKER)
             //copy scripts

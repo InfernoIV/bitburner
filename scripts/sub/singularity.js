@@ -21,6 +21,16 @@ export class singularity_obj {
         ns.disableLog("singularity.installBackdoor")
         ns.disableLog("singularity.purchaseTor")
         ns.disableLog("singularity.purchaseProgram")
+        //get tools
+        const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
+        this.brute_ssh = executables.includes(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)
+        this.ftp_crack = executables.includes(CONSTANTS.TOOLS.HACKING.FTP_CRACK)
+        this.relay_smtp = executables.includes(CONSTANTS.TOOLS.HACKING.RELAY_SMTP)
+        this.http_worm = executables.includes(CONSTANTS.TOOLS.HACKING.HTTP_WORM)
+        this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
+        this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
+        
+
         //debug
         log.info(ns, "Singularity", "Init complete", true)
     }
@@ -36,16 +46,14 @@ export class singularity_obj {
         const tools = []
         //if we can buy / have bought TOR
         if (ns.singularity.purchaseTor()) {
-            
-            //get tools
-            //const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.DARKNET)) {
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.DARKNET + "'", true)
+            //if darknet tools is not yet bought
+            if (!this.darknet) {
+                if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.DARKNET)) {
+                    log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.DARKNET + "'", true)
+                    this.darknet = true
+                }
             }
-
-        }
-        
-        
+        }        
     }
 }
 /*

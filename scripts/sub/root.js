@@ -84,6 +84,10 @@ export class root_obj {
         const level_hacking = ns.getHackingLevel()
         //for each server found
         for (const [hostname, server] of servers) {
+            //ignore cloud server
+            if (hostname.includes("cloud")) {
+                continue
+            }
             //log.info(ns, "Root", "Checking '" + hostname + "': '" + server.requiredHackingSkill + "', '" + server.numOpenPortsRequired + "'")
             //check if we can hack it (according to hacking level)
             if (level_hacking >= server.requiredHackingSkill && hacking_tools_owned >= server
@@ -130,8 +134,8 @@ export class root_obj {
                 if (flag_rooted) {
                     //copy scripts
                     ns.scp(CONSTANTS.SCRIPT.HACK.TO_COPY, hostname)
-                    //if backdoor not installed and is not home
-                    if (this.singularity_available && !server.backdoorInstalled && hostname != CONSTANTS.SERVER.HOME) {
+                    //if backdoor not installed and is not home and does not include "cloud"
+                    if (this.singularity_available && !server.backdoorInstalled && hostname != CONSTANTS.SERVER.HOME && !hostname.includes("cloud")) {
                         //debug
                         log.info(ns, "Root", "'" + hostname + "' vs '" + CONSTANTS.SERVER.HOME + "'")
                         //backdoor the server
