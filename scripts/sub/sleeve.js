@@ -6,14 +6,24 @@ import * as log from "scripts/sub/log.js"
 import * as evaluate from "scripts/sub/evaluate.js"
 
 
+export function create_object() {
+  return new sleeve_obj()
+}
+
+
 // Declaration
-export class sleeve_obj {
+class sleeve_obj {
     constructor() {
+      this.available = true
     }
+
+
     init(ns) {
         
     }
 }
+
+
 /*
 https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.sleeve.md
 

@@ -10,13 +10,21 @@ import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
 
 
-export class singularity_obj {
+export function create_object() {
+    return new singularity_obj()
+}
+
+
+class singularity_obj {
     constructor() {
         this.available = true
     }
 
-
-    init(ns) {
+    /*
+    singularity.connect 2   -> used by root
+    2 + 2 + 2 + 3 = 9 GB
+    */
+    init(ns, tor_owned = false) {
         //disable logging
         ns.disableLog("singularity.installBackdoor")
         ns.disableLog("singularity.purchaseTor")
@@ -29,31 +37,116 @@ export class singularity_obj {
         this.http_worm = executables.includes(CONSTANTS.TOOLS.HACKING.HTTP_WORM)
         this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
         this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
-        
 
+        //TODO: if we have SF15, purchaseTor is not needed since we already own TOR automatically
+        this.tor_owned = tor_owned
         //debug
         log.info(ns, "Singularity", "Init complete", true)
     }
 
-    
+
     manage(ns, sleeve, bladeburner, grafting) {
-        this.manage_tools(ns)
+        //upgrade home
+        this.upgrade_home(ns)
+        //check if we don't own tor
+        if (!this.tor_owned) {
+            //try to buy tor
+            this.manage_tor(ns)
+            //tor owned
+        } else {
+            //buy tools from tor
+            this.manage_tools(ns)
+        }
+
+        //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
     }
 
-    //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
-    manage_tools(ns) {
-        //keep track of tools
-        const tools = []
+
+    /*
+    singularity.purchaseTor     2
+    */
+    //function that buys tor
+    manage_tor(ns) {
         //if we can buy / have bought TOR
         if (ns.singularity.purchaseTor()) {
-            //if darknet tools is not yet bought
-            if (!this.darknet) {
-                if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.DARKNET)) {
-                    log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.DARKNET + "'", true)
-                    this.darknet = true
-                }
+            //set flag
+            this.tor_owned = true
+        }
+    }
+
+    /*
+    
+    singularity.purchaseProgram 2
+    */
+    manage_tools(ns) {
+        //if darknet tools is not yet bought
+        if (!this.darknet) {
+            //try to buy
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.DARKNET)) {
+                //log 
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.DARKNET + "'", true)
+                //set flag
+                this.darknet = true
             }
-        }        
+        }
+        if (!this.brute_ssh) {
+            //try to buy
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)) {
+                //log 
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.BRUTE_SSH + "'", true)
+                //set flag
+                this.brute_ssh = true
+            }
+        }
+        if (!this.ftp_crack) {
+            //try to buy
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.FTP_CRACK)) {
+                //log 
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.FTP_CRACK + "'", true)
+                //set flag
+                this.ftp_crack = true
+            }
+        }
+        if (!this.relay_smtp) {
+            //try to buy
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.RELAY_SMTP)) {
+                //log 
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.RELAY_SMTP + "'", true)
+                //set flag
+                this.relay_smtp = true
+            }
+        }
+        if (!this.http_worm) {
+            //try to buy
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HTTP_WORM)) {
+                //log 
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HTTP_WORM + "'", true)
+                //set flag
+                this.http_worm = true
+            }
+        }
+        if (!this.sql_inject) {
+            //try to buy
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.SQL_INJECT)) {
+                //log 
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.SQL_INJECT + "'", true)
+                //set flag
+                this.sql_inject = true
+            }
+
+        }
+    }
+
+
+    /*
+    singularity.upgradeHomeRam  3
+    */
+    //upgrade home
+    upgrade_home(ns) {
+        //Upgrade home computer RAM.
+        ns.singularity.upgradeHomeRam()
+        //Upgrade home computer cores.
+        //ns.singularity.upgradeHomeCores()
     }
 }
 /*
@@ -458,43 +551,43 @@ async function manage_factions(ns, player) {
         	else return "Street cred";
         	},
         */
-        /*
-        ns.singularity.getFactionInviteRequirements("The Syndicate");
+/*
+ns.singularity.getFactionInviteRequirements("The Syndicate");
 
-        [
-          { "type": "someCondition", "conditions": [
-        	  { "type": "city", "city": "Aevum" },
-        	  { "type": "city", "city": "Sector-12" }
-        	]
-          },
-          { "type": "not", "condition": {
-        	  "type": "employedBy", "company": "Central Intelligence Agency"
-        	}
-          },
-          { "type": "not", "condition": {
-        	  "type": "employedBy", "company": "National Security Agency"
-        	}
-          },
-          { "type": "money", "money": 10000000 },
-          { "type": "skills", "skills": { "hacking": 200 } },
-          { "type": "skills", "skills": { "strength": 200 } },
-          { "type": "skills", "skills": { "defense": 200 } },
-          { "type": "skills", "skills": { "dexterity": 200 } },
-          { "type": "skills", "skills": { "agility": 200 } },
-          { "type": "karma", "karma": -90 }
-        ]
-        */
+[
+  { "type": "someCondition", "conditions": [
+	  { "type": "city", "city": "Aevum" },
+	  { "type": "city", "city": "Sector-12" }
+	]
+  },
+  { "type": "not", "condition": {
+	  "type": "employedBy", "company": "Central Intelligence Agency"
+	}
+  },
+  { "type": "not", "condition": {
+	  "type": "employedBy", "company": "National Security Agency"
+	}
+  },
+  { "type": "money", "money": 10000000 },
+  { "type": "skills", "skills": { "hacking": 200 } },
+  { "type": "skills", "skills": { "strength": 200 } },
+  { "type": "skills", "skills": { "defense": 200 } },
+  { "type": "skills", "skills": { "dexterity": 200 } },
+  { "type": "skills", "skills": { "agility": 200 } },
+  { "type": "karma", "karma": -90 }
+]
+*/
 
-        /*
-        
-        donateToFaction(faction, amount)							Donate to a faction.
-        */
+/*
 
-        //player karma
-        //player.karma
-        //player kills
-        //player.numPeopleKilled
-        /*
+donateToFaction(faction, amount)							Donate to a faction.
+*/
+
+//player karma
+//player.karma
+//player kills
+//player.numPeopleKilled
+/*
         const focus_type = {
         	MONEY: "money",						//How much money is given
         	KARMA: "karma",						//Amount of karma lost for successfully committing this crime

@@ -4,10 +4,9 @@ import * as evaluate from "scripts/sub/evaluate.js"
 
 
 /** @param {NS} ns */
-export async function share_exec(ns) {
+export function share_exec(ns) {
     //the the ram available
-    const ram_server_max = await parseFloat(await evaluate.exec(ns, "ns.getServerMaxRam('" + CONSTANTS.SERVER.HOME +
-        "')"))
+    const ram_server_max = await parseFloat(ns.getServer(CONSTANTS.SERVER.HOME).maxRam)
     //get the available ram
     const ram_available = ram_server_max - CONSTANTS.RAM.MAIN.ORCHESTRATOR - CONSTANTS.RAM.EVAL_ORCHESTRATOR -
         CONSTANTS.RAM.MAIN.EVAL

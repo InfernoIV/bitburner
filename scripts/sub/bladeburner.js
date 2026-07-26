@@ -18,8 +18,13 @@ const blade_burner_action_type = {
 }
 
 
+export function create_object(){
+    return new bladeburner_obj()
+}
+
+
 // Declaration
-export class bladeburner_obj {
+class bladeburner_obj {
     constructor() {
         //flag to indicate if we can start
         this.can_start = false

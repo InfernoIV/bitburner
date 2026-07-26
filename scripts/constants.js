@@ -131,7 +131,7 @@ export const RAM = {
     
     //purchaseProgrampurchaseProgram    2
     */
-    SINGULARITY: 5.0,
+    SINGULARITY: 9.0,//5.0,
 
     /*
 

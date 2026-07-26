@@ -4,9 +4,15 @@ import * as log from "scripts/sub/log.js"
 import * as evaluate from "scripts/sub/evaluate.js"
 
 
+export function create_object(){
+    return new corporation_obj
+}
+
+
 // Declaration
-export class corporation_obj {
+class corporation_obj {
     constructor() {
+        this.available = true
     }
 
 

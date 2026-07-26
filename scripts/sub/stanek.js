@@ -7,9 +7,15 @@ import * as log from "scripts/sub/log.js"
 import * as evaluate from "scripts/sub/evaluate.js"
 
 
+export function create_object(){
+    return new stanek_obj
+}
+
+
 // Declaration
-export class stanek_obj {
+class stanek_obj {
     constructor() {
+        this.available = true
     }
 
     

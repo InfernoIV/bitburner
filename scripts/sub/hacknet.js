@@ -4,11 +4,15 @@
 
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
-import * as evaluate from "scripts/sub/evaluate.js"
+
+
+export function create_object() {
+    return new hacknet_obj
+}
 
 
 // Declaration
-export class hacknet_obj {
+class hacknet_obj {
     constructor() {
         this.available = true
     }
