@@ -140,7 +140,13 @@ async function authenticate_server(ns, server_details, hostname) {
             return await authenticate(ns, hostname, "")
 
         case "Laika4"://works
-            return await try_passwords(ns, hostname, ["spot", "fido"], "Laika4")
+        //decide on length
+            if (length == 3) {
+                return await authenticate(ns, hostname, "max")
+            } else {
+                return await try_passwords(ns, hostname, ["spot", "fido"], "Laika4")
+            }
+            
 
         case "DeskMemo_3.1"://works
             return await authenticate(ns, hostname, get_password(hint, length))
@@ -173,6 +179,7 @@ async function authenticate_server(ns, server_details, hostname) {
             return await find_number_higher_lower(ns, hostname, length)
 
         case "OpenWebAccessPoint": //work in progress
+            log.info(ns, ns.pid, "server_details: " + JSON.stringify(server_details))
             return await derive_password_from_heartbleed(ns, hostname, length)
 
 
@@ -387,14 +394,18 @@ async function derive_password_from_heartbleed(ns, hostname, length) {
     //log
     log.info(ns, ns.pid, "derive_password_from_heartbleed (try_passwords): " + JSON.stringify(result), true)
     //if not succesfull
-    if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
+    if (result == ns.enums.DarknetResponseCode.AuthFailure) {
         //heartbleed for more information
         var heartbleed = await ns.dnet.heartbleed(hostname)
-        //just print for now
-        log.info(ns, ns.pid, "derive_password_from_heartbleed (heartbleed): " + JSON.stringify(heartbleed), true)
-        //stop
-        ns.ui.openTail()
-        ns.exit()
+        //get the log
+        const heartbleed_log = JSON.parse(heartbleed.logs[0])
+        //create regex
+        const regex = new RegExp(String.raw`\d{${length}}`, "g")
+        //get passwords
+        const matches = heartbleed_log.data.match(regex)
+        //log.info(ns, ns.pid, "Found '" + JSON.stringify(matches) + "' in '" + JSON.stringify(heartbleed_log.message) + "'". true)
+        //try passwords
+        result = await try_passwords(ns, hostname, matches, "derive_password_from_heartbleed")
     }
     //return result
     return result
@@ -497,7 +508,8 @@ async function find_number_higher_lower(ns, hostname, length) {
             //heartbleed for more information
             var result = await ns.dnet.heartbleed(hostname)
             if (result.code == ns.enums.DarknetResponseCode.Success) {
-                const log_heartbleed = result.logs[0]
+                //get the log
+                const log_heartbleed = JSON.parse(result.logs[0])
                 //if we need to go lower
                 if (log_heartbleed.data == "Lower") {
                     //decrease the number by 25%

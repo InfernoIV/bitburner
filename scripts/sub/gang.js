@@ -21,13 +21,8 @@ import {
 } from "scripts/data/gang.js"
 
 
-export function create_object() {
-    return new gang_obj
-}
-
-
 //25 GB
-class gang_obj {
+export class gang_obj {
     constructor() {
         this.available = true
     }

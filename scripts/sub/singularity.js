@@ -10,12 +10,7 @@ import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
 
 
-export function create_object() {
-    return new singularity_obj()
-}
-
-
-class singularity_obj {
+export class singularity_obj {
     constructor() {
         this.available = true
         //config
@@ -33,6 +28,7 @@ class singularity_obj {
         ns.disableLog("singularity.installBackdoor")
         ns.disableLog("singularity.purchaseTor")
         ns.disableLog("singularity.purchaseProgram")
+        ns.disableLog("singularity.upgradeHomeRam")
         //get tools
         const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
         this.brute_ssh = executables.includes(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)
@@ -58,6 +54,8 @@ class singularity_obj {
     manage_tools    2
     */
     manage(ns, sleeve, bladeburner, grafting) {
+        //test
+
         //upgrade home
         this.upgrade_home(ns)
         //check if we don't own tor
@@ -156,7 +154,12 @@ class singularity_obj {
     //upgrade home
     upgrade_home(ns) {
         //Upgrade home computer RAM.
-        ns.singularity.upgradeHomeRam()
+        if (ns.singularity.upgradeHomeRam()) {
+            //get server
+            const server = ns.getServer(CONSTANTS.SERVER.HOME)
+            //log
+            log.success(ns, "Singularity", "Upgraded home RAM to " + server.maxRam, true)
+        }
         //Upgrade home computer cores.
         //ns.singularity.upgradeHomeCores()
     }

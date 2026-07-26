@@ -6,13 +6,8 @@ import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
 
 
-export function create_object() {
-    return new hacknet_obj
-}
-
-
 // Declaration
-class hacknet_obj {
+export class hacknet_obj {
     constructor() {
         this.available = true
     }

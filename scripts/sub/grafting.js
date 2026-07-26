@@ -5,13 +5,8 @@ import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
 
 
-export function create_object(){
-    return new grafting_obj
-}
-
-
 // Declaration
-class grafting_obj {
+export class grafting_obj {
     constructor() {
         this.available = true
     }

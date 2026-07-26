@@ -109,7 +109,7 @@ export class hack_obj {
                     */
 
                     //ram calc
-                    job_size = CONSTANTS.RAM.WORKER.WORKER.GROW + CONSTANTS.RAM.WORKER.WORKER.WEAKEN
+                    job_size = CONSTANTS.RAM.WORKER.GROW + CONSTANTS.RAM.WORKER.WEAKEN
                     //do stuff
                     for (const [server, ram_available] of execute_servers) {
                         //copy the script

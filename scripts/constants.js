@@ -171,44 +171,42 @@ export const RAM = {
 
     //worker scripts
     WORKER: {
-        HACK: {
-            /*
-            base        1.6
-            ns.weaken   1.15
-            */
-            WEAKEN: 1.75,
+        /*
+        base        1.6
+        ns.weaken   1.15
+        */
+        WEAKEN: 1.75,
 
-            /*
-            base    1.6
-            ns.grow 0.16
-            */
-            GROW: 1.75,
+        /*
+        base    1.6
+        ns.grow 0.16
+        */
+        GROW: 1.75,
 
+        /*
+        base    1.6
+        ns.hack 0.1    
+        */
+        HACK: 1.7,
             /*
-            base    1.6
-            ns.hack 0.1    
-            */
-            HACK: 1.7,
-             /*
-            base    1.6
-            share   2.4
-            */
-            SHARE: 4.0,
-            /*
-            base                                1.6
-            ns.dnet.probe()                     0.2 GB
-            ns.dnet.authenticate()              0.4 GB
-            ns.dnet.phishingAttack()            2 GB 
-            ns.dnet.openCache()                 2 GB
-            ns.dnet.unleashStormSeed            0.1 GB
-            ns.dnet.labradar()                  0 GB
-            ns.dnet.labreport()                 0 GB
-            ns.dnet.heartbleed()                0.6 GB
-            ns.getServer()                      2 GB
-            1.6 + 0.2 + 0.4 + 2 + 2 + 0.1 + 0 + 0 + 0.6 + 2 = 8.9
-            */
-            DARKNET: 8.9,
-        },
+        base    1.6
+        share   2.4
+        */
+        SHARE: 4.0,
+        /*
+        base                                1.6
+        ns.dnet.probe()                     0.2 GB
+        ns.dnet.authenticate()              0.4 GB
+        ns.dnet.phishingAttack()            2 GB 
+        ns.dnet.openCache()                 2 GB
+        ns.dnet.unleashStormSeed            0.1 GB
+        ns.dnet.labradar()                  0 GB
+        ns.dnet.labreport()                 0 GB
+        ns.dnet.heartbleed()                0.6 GB
+        ns.getServer()                      2 GB
+        1.6 + 0.2 + 0.4 + 2 + 2 + 0.1 + 0 + 0 + 0.6 + 2 = 8.9
+        */
+        DARKNET: 8.9,
     },
 }
 

@@ -133,7 +133,7 @@ export class root_obj {
                 //if rooted
                 if (flag_rooted) {
                     //copy scripts
-                    ns.scp(CONSTANTS.SCRIPT.HACK.TO_COPY, hostname)
+                    //ns.scp(CONSTANTS.SCRIPT.TO_COPY.HACK, hostname)
                     //if backdoor not installed and is not home and does not include "cloud"
                     if (this.singularity_available && !server.backdoorInstalled && hostname != CONSTANTS.SERVER.HOME && !hostname.includes("cloud")) {
                         //debug
