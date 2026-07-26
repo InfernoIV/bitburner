@@ -16,17 +16,17 @@ export const TIME = {
 export const SCRIPT = {
     MAIN: "scripts/main.js",
     JUMP: "scripts/jump.js",
-    HACK: {
+    WORKER: {
         GROW: "scripts/worker/grow.js",
         WEAKEN: "scripts/worker/weaken.js",
         HACK: "scripts/worker/hack.js",
-        TO_COPY: ["scripts/worker/grow.js", "scripts/worker/weaken.js", "scripts/worker/hack.js"]
+        DARKNET: "scripts/worker/darknet.js",
+        SHARE: "scripts/worker/share.js",
     },
-    DARKNET: {
-        WORKER: "scripts/worker/darknet_worker.js",
-        TO_COPY: ["scripts/sub/log.js", "scripts/constants.js", "scripts/worker/darknet_worker.js", ]
+    TO_COPY: {
+        HACK: ["scripts/worker/grow.js", "scripts/worker/weaken.js", "scripts/worker/hack.js"],
+        DARKNET: ["scripts/sub/log.js", "scripts/constants.js", "scripts/worker/darknet.js", ]
     },
-    SHARE_WORKER: "scripts/worker/share.js",
 }
 
 
@@ -124,14 +124,14 @@ export const RAM = {
     //Bitnode dependent scripts
     //automation
     /*
-    ns.singularity.connect  16/4/1      1   (but implemented in root)
+    ns.singularity.connect              1   (but implemented in root)
     ns.singularity.installBackdoor      2   (but implemented in root)
     purchaseProgram                     2
-
-    
-    //purchaseProgrampurchaseProgram    2
+    singularity.purchaseTor             2
+    singularity.upgradeHomeRam          3   
+    ls (fn)	                            0.2 covered by root)             
     */
-    SINGULARITY: 9.0,//5.0,
+    SINGULARITY: 10.0,//5.0,
 
     /*
 
@@ -169,23 +169,7 @@ export const RAM = {
     */
     GRAFTING: 0.0,
 
-
-
     //worker scripts
-    /*
-    base    1.6
-    share   2.4
-    */
-    SHARE: 4.0,
-
-    /*
-    base                1.6
-    exec                1.3
-    dnet.authenticate   0.4
-    setStasisLink       12
-    */
-    DARKNET_WORKER: 12.9, //12.9, 
-    DARKNET_WORKER_STASIS: 24.9,
     WORKER: {
         HACK: {
             /*
@@ -204,10 +188,28 @@ export const RAM = {
             base    1.6
             ns.hack 0.1    
             */
-            HACK: 1.7
+            HACK: 1.7,
+             /*
+            base    1.6
+            share   2.4
+            */
+            SHARE: 4.0,
+            /*
+            base                                1.6
+            ns.dnet.probe()                     0.2 GB
+            ns.dnet.authenticate()              0.4 GB
+            ns.dnet.phishingAttack()            2 GB 
+            ns.dnet.openCache()                 2 GB
+            ns.dnet.unleashStormSeed            0.1 GB
+            ns.dnet.labradar()                  0 GB
+            ns.dnet.labreport()                 0 GB
+            ns.dnet.heartbleed()                0.6 GB
+            ns.getServer()                      2 GB
+            1.6 + 0.2 + 0.4 + 2 + 2 + 0.1 + 0 + 0 + 0.6 + 2 = 8.9
+            */
+            DARKNET: 8.9,
         },
     },
-
 }
 
 

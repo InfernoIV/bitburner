@@ -18,11 +18,15 @@ export function create_object() {
 class singularity_obj {
     constructor() {
         this.available = true
+        //config
+        //min chance for a crime
+        this.crime_min_chance = 0.65 //65% chance
+        //ratio of SF12 to other SF (0.5 = 2 other SF for 1 SF12)
+        this.sf_12_mult = 0.5
     }
 
     /*
-    singularity.connect 2   -> used by root
-    2 + 2 + 2 + 3 = 9 GB
+    ls  0.2
     */
     init(ns, tor_owned = false) {
         //disable logging
@@ -37,14 +41,22 @@ class singularity_obj {
         this.http_worm = executables.includes(CONSTANTS.TOOLS.HACKING.HTTP_WORM)
         this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
         this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
-
         //TODO: if we have SF15, purchaseTor is not needed since we already own TOR automatically
         this.tor_owned = tor_owned
+        //config
+        
         //debug
         log.info(ns, "Singularity", "Init complete", true)
     }
 
 
+    /*
+    singularity.connect 2   -> used by root
+    manage          0
+    upgrade_home    3
+    manage_tor      2
+    manage_tools    2
+    */
     manage(ns, sleeve, bladeburner, grafting) {
         //upgrade home
         this.upgrade_home(ns)
@@ -148,40 +160,44 @@ class singularity_obj {
         //Upgrade home computer cores.
         //ns.singularity.upgradeHomeCores()
     }
+
+
+    /*
+
+    */
+    manage_player(ns) {
+        const work_type = {
+            FACTION: "FACTION",
+            COMPANY: "COMPANY",
+            CRIME: "CRIME",
+            CREATE_PROGRAM: "CREATE_PROGRAM",
+            STUDY: "CLASS",
+            GRAFTING: "GRAFTING",
+        }
+
+        const focus_type = {
+            MONEY: "money", //How much money is given
+            KARMA: "karma", //Amount of karma lost for successfully committing this crime
+            KILLS: "kills", //How many people die as a result of this crime
+            HACKING: "hacking_exp", //hacking exp gained from crime	
+            STRENGTH: "strength_exp", //strength exp gained from crime
+            DEXTERITY: "dexterity_exp", //dexterity exp gained from crime
+            AGILITY: "agility_exp", //agility exp gained from crime
+            DEFENSE: "defense_exp", //defense exp gained from crime
+            CHARISMA: "charisma_exp", //charisma exp gained from crime
+            INTELLIGENCE: "intelligence_exp" //intelligence exp gained from crime
+        }
+
+        //get player activity
+
+        //if not already doing something
+        //set to mug for now?
+
+    }
 }
 /*
 
-const script_main = "scripts/main.js"
 
-const work_type = {
-    FACTION: "FACTION",
-    COMPANY: "COMPANY",
-    CRIME: "CRIME",
-    CREATE_PROGRAM: "CREATE_PROGRAM",
-    STUDY: "CLASS",
-    GRAFTING: "GRAFTING",
-}
-
-
-const focus_type = {
-    MONEY: "money", //How much money is given
-    KARMA: "karma", //Amount of karma lost for successfully committing this crime
-    KILLS: "kills", //How many people die as a result of this crime
-    HACKING: "hacking_exp", //hacking exp gained from crime	
-    STRENGTH: "strength_exp", //strength exp gained from crime
-    DEXTERITY: "dexterity_exp", //dexterity exp gained from crime
-    AGILITY: "agility_exp", //agility exp gained from crime
-    DEFENSE: "defense_exp", //defense exp gained from crime
-    CHARISMA: "charisma_exp", //charisma exp gained from crime
-    INTELLIGENCE: "intelligence_exp" //intelligence exp gained from crime
-}
-
-
-//config
-//min chance for a crime
-const crime_min_chance = 0.65 //65% chance
-//ratio of SF12 to other SF (0.5 = 2 other SF for 1 SF12)
-const sf_12_mult = 0.5
 
 
 //function to backdoor a server, to be called by root.js

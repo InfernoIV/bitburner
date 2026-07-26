@@ -753,7 +753,7 @@ async function start_worker(ns, hostname) {
     //get server details
     const server_details = ns.dnet.getServerDetails(hostname)
     //copy scripts
-    var result = ns.scp(CONSTANTS.SCRIPT.DARKNET.TO_COPY, hostname)
+    var result = ns.scp(CONSTANTS.SCRIPT.TO_COPY.DARKNET, hostname)
     //if failed
     if (!result) {
         //log warning
@@ -764,12 +764,12 @@ async function start_worker(ns, hostname) {
     //get blocked ram
     var ram_blocked = ns.dnet.getBlockedRam(hostname)
     //calc ram costs: the eval worker for the darknet worker needs to scale, therefore it is not counted
-    var threads_while_blocked = Math.floor((server_info.maxRam-ram_blocked) / CONSTANTS.RAM.DARKNET_WORKER)
+    var threads_while_blocked = Math.floor((server_info.maxRam-ram_blocked) / CONSTANTS.RAM.WORKER.DARKNET)
     //calc threads for normal
     //debug
     //log.info(ns, ns.pid, hostname + " -> ram: total = " + server_info.maxRam + ", blocked: " + ram_blocked, true)
     //calc the threads while there is ram blocked
-    var threads_unblocked = Math.floor(server_info.maxRam / CONSTANTS.RAM.DARKNET_WORKER)
+    var threads_unblocked = Math.floor(server_info.maxRam / CONSTANTS.RAM.WORKER.DARKNET)
     //set threads to default value
     var threads = threads_while_blocked
     //if it has value to unblock
@@ -804,7 +804,7 @@ async function start_worker(ns, hostname) {
     }
     
     //launch worker
-    result = ns.exec(CONSTANTS.SCRIPT.DARKNET.WORKER, hostname, {
+    result = ns.exec(CONSTANTS.SCRIPT.WORKER.DARKNET, hostname, {
         preventDuplicates: true,
         threads: threads,
     }, hostname)
