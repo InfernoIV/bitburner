@@ -1,5 +1,6 @@
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
+import * as format from "scripts/sub/format.js"
 
 
 //object programs
@@ -59,7 +60,8 @@ import {
     corporation_obj
 } from "scripts/sub/corporation.js"
 
-import { statusRegistry, showComponentStatusMenus } from "scripts/sub/ui_ai.js"
+
+//import { statusRegistry, showComponentStatusMenus } from "scripts/sub/ui_ai.js"
 
 /** @param {NS} ns */
 export async function main(ns) {
@@ -70,8 +72,6 @@ export async function main(ns) {
     ram_in_use = Math.round(ram_in_use * 100) / 100
     //set ram
     ns.ramOverride(ram_in_use)
-    //open tail
-    ns.ui.openTail()
     //log
     log.info(ns, "Main", "Starting with " + ram_in_use.toFixed(2) + "GB RAM in use", true)
     //initialize main
@@ -148,7 +148,7 @@ export async function main(ns) {
 
 
     //ui test
-    statusRegistry.register("Server", "homeMoney", ns => (ns.getServer(CONSTANTS.SERVER.HOME)).moneyAvailable)
+    /*statusRegistry.register("Server", "homeMoney", ns => (ns.getServer(CONSTANTS.SERVER.HOME)).moneyAvailable)
     statusRegistry.register("Root", "Hacking Tools", (ns,programs) => programs.root.get_number_of_hacking_tools_owned(ns))
     /*
     statusRegistry.register('Gang','members', ns => ns.gang.getMemberNames().length)
@@ -156,7 +156,7 @@ export async function main(ns) {
     statusRegistry.register("Gang", "wanted", async ns => (await ns.gang.getGangInformation()).wantedLevel)
     */
 
-    const handle = await showComponentStatusMenus(ns, [], { useRegistry: true, layout: 'grid', refreshMs: 0 })
+    //const handle = await showComponentStatusMenus(ns, [], { useRegistry: true, layout: 'grid', refreshMs: 0 })
 
 
 
@@ -183,6 +183,9 @@ export async function main(ns) {
         
         //start darknet main loop on darkweb
         programs.darknet.manage(ns)
+        //manage stock
+        programs.stock.manage(ns)
+
         //play go
         await programs.go.manage(ns)
         //manage gang
@@ -191,10 +194,9 @@ export async function main(ns) {
         programs.corporation.manage(ns)
         
 
-
         //update ui
         //programs.ui.manage(ns, programs)
-        await handle.refresh()
+        //await handle.refresh()
 
 
 
@@ -229,12 +231,12 @@ async function init(ns) {
     //ns.disableLog("exec")
     //ns.disableLog("ALL")
     //open tail
-    const [x, y] = ns.ui.windowSize()
+    /*const [x, y] = ns.ui.windowSize()
     const width = x / 2
     const height = y / 3
     ns.ui.openTail()
     ns.ui.resizeTail(width, height)
-    ns.ui.moveTail(x - width - 5, y - height - 5)
+    ns.ui.moveTail(x - width - 5, y - height - 5)*/
     //callback
     ns.atExit(() => {
         //log exit
@@ -279,14 +281,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if ((current_node == 5 || owned_source_files.hasOwnProperty(5)) && !programs.intelligence.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.INTELLIGENCE) < max_ram ) {
+            //log
+            log_ram(ns, "Intelligence", ram_in_use, CONSTANTS.RAM.INTELLIGENCE, max_ram)
             //up the ram    
             ram_in_use += CONSTANTS.RAM.INTELLIGENCE
             //adjust ram
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Intelligence, RAM: " + ram_in_use + " + " + CONSTANTS.RAM
-                .INTELLIGENCE + " = " + (
-                    ram_in_use + CONSTANTS.RAM.INTELLIGENCE) + " < " + max_ram, true)
             //set flag to true
             programs.intelligence.available = true
             //get the bitnode multipliers
@@ -307,14 +307,12 @@ async function manage_imports(ns, ram_in_use, programs) {
         }
         //check ram
         if ((ram_in_use + ram_needed) < max_ram) {
+            //log
+            log_ram(ns, "Singularity", ram_in_use, CONSTANTS.RAM.SINGULARITY, max_ram)
             //up the ram    
             ram_in_use += ram_needed
             //change the RAM
             ns.ramOverride(ram_in_use)            
-            //log
-            log.success(ns, "Main", "Imported Singularity, RAM: " + ram_in_use + " + " + ram_needed +
-                " = " + (
-                    ram_in_use + ram_needed) + " < " + max_ram, true)
             //import scripts
             programs.singularity = new singularity_obj()
             //init
@@ -328,13 +326,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if ((current_node == 10 || owned_source_files.hasOwnProperty(10)) && !programs.sleeve.available) { 
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.SLEEVE) < max_ram ) {
+            //log
+            log_ram(ns, "Sleeve", ram_in_use, CONSTANTS.RAM.SLEEVE, max_ram)
             //up the ram
             ram_in_use += CONSTANTS.RAM.SLEEVE
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Sleeve, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.SLEEVE + " = " + (
-                ram_in_use + CONSTANTS.RAM.SLEEVE) + " < " + max_ram, true)
             //import scripts
             programs.sleeve = new sleeve_obj()
             //init
@@ -346,13 +343,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if (!programs.darknet.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.DARKNET) < max_ram) {
+            //log
+            log_ram(ns, "Darknet", ram_in_use, CONSTANTS.RAM.DARKNET, max_ram)
             //up the ram    
             ram_in_use += CONSTANTS.RAM.DARKNET
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Darknet, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.DARKNET +
-                " = " + (ram_in_use + CONSTANTS.RAM.DARKNET) + " / " + max_ram, true)
             //import scripts
             programs.darknet = new darknet_obj()
             //init
@@ -364,15 +360,14 @@ async function manage_imports(ns, ram_in_use, programs) {
     if (!programs.go.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.GO) < max_ram) {
+            //log
+            log_ram(ns, "Go", ram_in_use, CONSTANTS.RAM.GO, max_ram)
             //up the ram    
             ram_in_use += CONSTANTS.RAM.GO
             //change the RAM
             ns.ramOverride(ram_in_use)
             //import scripts
-            programs.go = new go_obj()
-            //log
-            log.success(ns, "Main", "Imported Go, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GO +
-                " = " + (ram_in_use + CONSTANTS.RAM.GO) + " / " + max_ram, true)            
+            programs.go = new go_obj()        
             //init
             programs.go.init(ns)
         }
@@ -382,13 +377,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if (programs.go.available && !programs.go.can_analyse) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.GO_ANALYSIS) < max_ram) {
+            //log
+            log_ram(ns, "Go (analysis)", ram_in_use, CONSTANTS.RAM.GO_ANALYSIS, max_ram)
             //up the ram    
             ram_in_use += CONSTANTS.RAM.GO_ANALYSIS
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Go (analysis), RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GO_ANALYSIS +
-                " = " + (ram_in_use + CONSTANTS.RAM.GO_ANALYSIS) + " / " + max_ram, true)
             //import scripts
             programs.go.can_analyse = true
         }
@@ -407,13 +401,12 @@ async function manage_imports(ns, ram_in_use, programs) {
         if ((current_node == 14 && go_level == 1) || go_level >= 2) {
              //check ram
             if ((ram_in_use + CONSTANTS.RAM.GO_CHEAT) < max_ram) {
+                //log
+                log_ram(ns, "Go (cheat)", ram_in_use, CONSTANTS.RAM.GO_CHEAT, max_ram)
                 //up the ram    
                 ram_in_use += CONSTANTS.RAM.GO_CHEAT
                 //change the RAM
                 ns.ramOverride(ram_in_use)                
-                //log
-                log.success(ns, "Main", "Imported Go (cheat), RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GO_CHEAT +
-                    " = " + (ram_in_use + CONSTANTS.RAM.GO_CHEAT) + " / " + max_ram, true)
                 //import scripts
                 programs.go.can_cheat = true
             }
@@ -424,13 +417,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if (!programs.cloud.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.CLOUD) < max_ram) {
+            //log
+            log_ram(ns, "Cloud", ram_in_use, CONSTANTS.RAM.CLOUD, max_ram)
             //up the ram    
             ram_in_use += CONSTANTS.RAM.CLOUD
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Cloud, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.CLOUD +
-                " = " + (ram_in_use + CONSTANTS.RAM.CLOUD) + " / " + max_ram, true)
             //import scripts
             programs.cloud = new cloud_obj()
             //init
@@ -442,13 +434,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if (false && !programs.coding_contract.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.CODING_CONTRACT) < max_ram) {
+            //log
+            log_ram(ns, "Coding Contracts", ram_in_use, CONSTANTS.RAM.CODING_CONTRACT, max_ram)
             //up the ram    
             ram_in_use += CONSTANTS.RAM.CODING_CONTRACT
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Coding Contracts, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.CODING_CONTRACT +
-                " = " + (ram_in_use + CONSTANTS.RAM.CODING_CONTRACT) + " / " + max_ram, true)
             //import scripts
             programs.coding_contract = new coding_contract_obj()
             //init
@@ -457,16 +448,15 @@ async function manage_imports(ns, ram_in_use, programs) {
     }
     
     //Stock
-    if (false && !programs.stock.available) {
+    if (!programs.stock.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.STOCK) < max_ram) {
+            //log
+            log_ram(ns, "Stock", ram_in_use, CONSTANTS.RAM.STOCK, max_ram)
             //up the ram    
             ram_in_use += CONSTANTS.RAM.STOCK
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Stock, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.STOCK +
-                " = " + (ram_in_use + CONSTANTS.RAM.STOCK) + " / " + max_ram, true)
             //import scripts
             programs.stock = new stock_obj()
             //init
@@ -478,13 +468,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if (false && !programs.infiltration.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.INFILTRATION) < max_ram) {
+            //log
+            log_ram(ns, "Infiltration", ram_in_use, CONSTANTS.RAM.INFILTRATION, max_ram)
             //up the ram    
             ram_in_use += CONSTANTS.RAM.INFILTRATION
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Infiltration, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.INFILTRATION +
-                " = " + (ram_in_use + CONSTANTS.RAM.INFILTRATION) + " / " + max_ram, true)
             //import scripts
             programs.infiltration = new infiltration_obj()
             //init
@@ -498,14 +487,12 @@ async function manage_imports(ns, ram_in_use, programs) {
         && programs.bitnode_multipliers.BladeburnerRank > 0 && !programs.bladeburner.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.BLADEBURNER) < max_ram) {
+            //log
+            log_ram(ns, "Bladeburner", ram_in_use, CONSTANTS.RAM.BLADEBURNER, max_ram)
             //up the ram
             ram_in_use += CONSTANTS.RAM.BLADEBURNER
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Bladeburner, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.BLADEBURNER +
-                " = " + (
-                    ram_in_use + CONSTANTS.RAM.BLADEBURNER) + " / " + max_ram, true)
             //import scripts
             programs.bladeburner = bladeburner_obj()
             //init
@@ -518,13 +505,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if ((current_node == 13 || owned_source_files.hasOwnProperty(13)) && programs.bitnode_multipliers.StaneksGiftExtraSize > -99 && !programs.stanek.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.STANEK) < max_ram) {
+            //log
+            log_ram(ns, "Stanek", ram_in_use, CONSTANTS.RAM.STANEK, max_ram)
             //up the ram    
             ram_in_use += CONSTANTS.RAM.STANEK
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Stanek, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.STANEK + " = " + (
-                ram_in_use + CONSTANTS.RAM.STANEK) + " / " + max_ram, true)
             //import scripts
             programs.stanek = new stanek_obj()
             //init
@@ -537,13 +523,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if ((current_node == 2 || owned_source_files.hasOwnProperty(2)) && programs.bitnode_multipliers.GangSoftcap > 0 && !programs.gang.available) { 
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.GANG) < max_ram) {
+            //log
+            log_ram(ns, "Gang", ram_in_use, CONSTANTS.RAM.GANG, max_ram)
             //up the ram
             ram_in_use += CONSTANTS.RAM.GANG
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Gang, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GANG + " = " + (
-                ram_in_use + CONSTANTS.RAM.GANG) + " / " + max_ram, true)
             //import scripts
             programs.gang = new gang_obj()
             //init
@@ -556,13 +541,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if ((current_node == 9 || owned_source_files.hasOwnProperty(9)) && !programs.hacknet.available) { 
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.HACKNET) < max_ram) {
+            //log
+            log_ram(ns, "Hacknet", ram_in_use, CONSTANTS.RAM.HACKNET, max_ram)
             //up the ram
             ram_in_use += CONSTANTS.RAM.HACKNET
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Hacknet, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.HACKNET + " = " +
-                (ram_in_use + CONSTANTS.RAM.HACKNET) + " / " + max_ram, true)
             //import scripts
             programs.hacknet = new hacknet_obj()
             //init
@@ -576,14 +560,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if ((current_node == 3 || owned_source_files.hasOwnProperty(3)) && programs.bitnode_multipliers.CorporationSoftcap >= 0.15 && !programs.corporation.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.CORPORATION) < max_ram) {
+            //log
+            log_ram(ns, "Corporation", ram_in_use, CONSTANTS.RAM.CORPORATION, max_ram)
             //up the ram
             ram_in_use += CONSTANTS.RAM.CORPORATION
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Corporation, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.CORPORATION +
-                " = " + (
-                    ram_in_use + CONSTANTS.RAM.CORPORATION) + " / " + max_ram, true)
             //import scripts
             programs.corporation = new corporation_obj()
             //init
@@ -595,14 +577,12 @@ async function manage_imports(ns, ram_in_use, programs) {
     if ((current_node == 10 || owned_source_files.hasOwnProperty(10)) && !programs.grafting.available) {
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.GRAFTING) < max_ram) {
+            //log
+            log_ram(ns, "Grafting", ram_in_use, CONSTANTS.RAM.GRAFTING, max_ram)
             //set the object
             ram_in_use += CONSTANTS.RAM.GRAFTING
             //change the RAM
             ns.ramOverride(ram_in_use)
-            //log
-            log.success(ns, "Main", "Imported Grafting, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GRAFTING +
-                " = " + (
-                    ram_in_use + CONSTANTS.RAM.GRAFTING) + " / " + max_ram, true)
             //import scripts
             programs.grafting = new grafting_obj()
             //init
@@ -615,4 +595,10 @@ async function manage_imports(ns, ram_in_use, programs) {
 
     //return the ram in use and all objects
     return ram_in_use
+}
+
+function log_ram(ns, subject, ram_in_use, ram_script, max_ram) {
+    //log
+    log.success(ns, "Main", "Imported " + subject + ", RAM: " + format.float(ram_in_use) + " + " + format.float(ram_script) +
+        " = " + format.float(ram_in_use + ram_script) + " / " + format.float(max_ram), true)
 }

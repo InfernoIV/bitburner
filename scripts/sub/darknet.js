@@ -18,7 +18,7 @@ export class darknet_obj {
 
     init(ns) {
         //log
-        log.info(ns, "Darknet", "Init complete", true)
+        log.info(ns, "Darknet", "Init complete")
     }
  
 

@@ -14,11 +14,14 @@ export class singularity_obj {
     constructor() {
         this.available = true
         this.tor_owned = false
+
         //config
         //min chance for a crime
         this.crime_min_chance = 0.65 //65% chance
         //ratio of SF12 to other SF (0.5 = 2 other SF for 1 SF12)
         this.sf_12_mult = 0.5
+        //minimum skill
+        this.skill_min = 50
     }
 
     /*
@@ -37,9 +40,9 @@ export class singularity_obj {
         this.relay_smtp = executables.includes(CONSTANTS.TOOLS.HACKING.RELAY_SMTP)
         this.http_worm = executables.includes(CONSTANTS.TOOLS.HACKING.HTTP_WORM)
         this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
-        this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)        
+        this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
         //debug
-        log.info(ns, "Singularity", "Init complete", true)
+        log.info(ns, "Singularity", "Init complete")
     }
 
 
@@ -49,6 +52,8 @@ export class singularity_obj {
     upgrade_home    3
     manage_tor      2  
     manage_tools    2
+    manage_factions 9
+    manage_player   15.5
     */
     manage(ns, programs) {
         //test
@@ -64,7 +69,10 @@ export class singularity_obj {
             //buy tools from tor
             this.manage_tools(ns)
         }
-
+        //manage faction (invites)
+        this.manage_factions(ns)
+        //manage player actions
+        this.manage_player(ns)
         //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
     }
 
@@ -107,7 +115,7 @@ export class singularity_obj {
         }
         if (!this.ftp_crack) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.FTP_CRACK)) {
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.FTP_CRACK)) {
                 //log 
                 log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.FTP_CRACK + "'", true)
                 //set flag
@@ -116,7 +124,7 @@ export class singularity_obj {
         }
         if (!this.relay_smtp) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.RELAY_SMTP)) {
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.RELAY_SMTP)) {
                 //log 
                 log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.RELAY_SMTP + "'", true)
                 //set flag
@@ -125,7 +133,7 @@ export class singularity_obj {
         }
         if (!this.http_worm) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HTTP_WORM)) {
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.HTTP_WORM)) {
                 //log 
                 log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HTTP_WORM + "'", true)
                 //set flag
@@ -134,7 +142,7 @@ export class singularity_obj {
         }
         if (!this.sql_inject) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.SQL_INJECT)) {
+            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.SQL_INJECT)) {
                 //log 
                 log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.SQL_INJECT + "'", true)
                 //set flag
@@ -166,28 +174,14 @@ export class singularity_obj {
 
     */
     manage_player(ns) {
-        const work_type = {
-            FACTION: "FACTION",
-            COMPANY: "COMPANY",
-            CRIME: "CRIME",
-            CREATE_PROGRAM: "CREATE_PROGRAM",
-            STUDY: "CLASS",
-            GRAFTING: "GRAFTING",
+        if (this.study(ns)) {
+            //training, stop
+            return
+            //no need for training
+        } else {
+            //do mug?
+            this.perform_action(ns, work_type.CRIME, "Mug")
         }
-
-        const focus_type = {
-            MONEY: "money", //How much money is given
-            KARMA: "karma", //Amount of karma lost for successfully committing this crime
-            KILLS: "kills", //How many people die as a result of this crime
-            HACKING: "hacking_exp", //hacking exp gained from crime	
-            STRENGTH: "strength_exp", //strength exp gained from crime
-            DEXTERITY: "dexterity_exp", //dexterity exp gained from crime
-            AGILITY: "agility_exp", //agility exp gained from crime
-            DEFENSE: "defense_exp", //defense exp gained from crime
-            CHARISMA: "charisma_exp", //charisma exp gained from crime
-            INTELLIGENCE: "intelligence_exp" //intelligence exp gained from crime
-        }
-
         //get player activity
 
         //if not already doing something
@@ -205,7 +199,229 @@ export class singularity_obj {
         CodingContractMoney: 0,
         */
     }
+
+    /*
+    getPlayer   
+    */
+    study(ns) {
+        //get skills
+        const skills = ns.getPlayer().skills
+        //hacking < combat < charisma
+        if (skills.hacking < this.skill_min) {
+            this.perform_action(ns, work_type.STUDY, "Algorithms")
+            return true
+
+        } else if (skills.strength < this.skill_min) {
+            this.perform_action(ns, work_type.STUDY, "str")
+            return true
+
+        } else if (skills.defense < this.skill_min) {
+            this.perform_action(ns, work_type.STUDY, "def")
+            return true
+
+        } else if (skills.dexterity < this.skill_min) {
+            this.perform_action(ns, work_type.STUDY, "dex")
+            return true
+
+        } else if (skills.agility < this.skill_min) {
+            this.perform_action(ns, work_type.STUDY, "agi")
+            return true
+
+        } else if (skills.charisma < this.skill_min) {
+            this.perform_action(ns, work_type.STUDY, "Leadership")
+            return true
+
+        } else {
+            return false
+        }
+    }
+
+    /*
+    singularity.getCurrentWork      0.5
+    singularity.commitCrime         5
+    singularity.universityCourse    2
+    Singularity.gymWorkout          2
+    singularity.workForFaction      3
+    singularity.workForCompany      3
+    15.5
+    */
+    perform_action(ns, type, activity) {
+        //flag to keep track if we need to switch
+        var flag_switch_work = false
+        //get current work
+        const current_work = ns.singularity.getCurrentWork()
+        //if not working
+        if (current_work == null) {
+            //set flag
+            flag_switch_work = true
+            //working
+        } else {
+            //if different work is required
+            if (current_work.type != type) {
+                //set flag
+                flag_switch_work = true
+            } else {
+                //depending on the type
+                switch (type) {
+                    case work_type.FACTION:
+                        flag_switch_work = (activity != current_work.factionName);
+                        break
+                    case work_type.COMPANY:
+                        flag_switch_work = (activity != current_work.companyName);
+                        break
+                    case work_type.CRIME:
+                        flag_switch_work = (activity != current_work.crimeType);
+                        break
+                    case work_type.CREATE_PROGRAM:
+                        flag_switch_work = (activity != current_work.programName);
+                        break
+                    case work_type.STUDY:
+                        flag_switch_work = (activity != current_work.classType);                        
+                        break
+                    case work_type.GRAFTING:
+                        flag_switch_work = (activity != current_work.augmentation);
+                        break
+                    default:
+                        log.error(ns, "Singularity", "Uncaught work_type 1: '" + work_type + "'")
+                }
+            }
+        }
+        //if we need to switch
+        if (flag_switch_work == true) {
+            //depending on the type
+            switch (type) {
+                case work_type.FACTION:
+                    //TODO: improve
+                    ns.singularity.workForFaction(activity, "hacking")
+                    return
+
+                case work_type.COMPANY:
+                    //TODO: manage position and work type
+                    ns.singularity.workForCompany(activity)
+                    return
+
+                case work_type.CRIME:
+                    //TODO: manage crime type?
+                    ns.singularity.commitCrime(activity)
+                    return                
+
+                case work_type.STUDY:
+                    //get city
+                    const city = ns.getPlayer().city
+                    //guard clause: if not in a correct city
+                    if (city != "Sector-12" && city != "Aevum" && city != "Volhaven") {
+                        //stop (for now)
+                        return
+                    }
+                    //get university
+                    const university = universities[city]
+                    //get gym
+                    const gym = gyms[city]
+                    //check for stats
+                    switch (activity) {
+                        case "hacking":
+                            ns.singularity.universityCourse(university, "Algorithms", false)
+                            return
+
+                        case "str":
+                            ns.singularity.gymWorkout(gym, "str", false)
+                            return
+
+                        case "def":
+                            ns.singularity.gymWorkout(gym, "def", false)
+                            return
+
+                        case "dex":
+                            ns.singularity.gymWorkout(gym, "dex", false)
+                            return
+
+                        case "agi":
+                            ns.singularity.gymWorkout(gym, "agi", false)
+                            return
+
+                        case "charisma":
+                            ns.singularity.universityCourse(university, "Leadership", false)
+                            return
+
+                        default:
+                            log.error(ns, "Singularity", "Uncaught study activity: '" + JSON.stringify(activity) +
+                                "'")
+                    }
+
+                case work_type.CREATE_PROGRAM:
+                    //ns.singularity.createProgram()
+                    return
+
+                case work_type.GRAFTING:
+                    //skip for now
+                    return 
+
+                default:
+                    log.error(ns, "Singularity", "Uncaught work_type 2: '" + work_type + "'")
+            }
+        }
+
+    }
+
+    /*
+    singularity.checkFactionInvitations     3
+    singularity.joinFaction                 3
+    singularity.getFactionEnemies           3
+    */
+    manage_factions(ns) {
+        //get invites
+        const invites = ns.singularity.checkFactionInvitations()
+        //log.info(ns, "Singularity", "invites: '" + JSON.stringify(invites) + "'")
+        //for each invite
+        for (const invite of invites) {
+            //get enemies
+            const enemies = ns.singularity.getFactionEnemies(invite)
+            //log.info(ns, "Singularity", "enemies: '" + JSON.stringify(enemies) + "' (" + + ")")
+            //check for no enemies
+            if (enemies.length == 0) {
+                //join faction
+                ns.singularity.joinFaction(invite)
+            }
+        }
+    }
 }
+
+const gyms = {
+    "Sector-12": "Powerhouse Gym", //or "Iron Gym"?
+    "Aevum": "Crush Fitness Gym", //or "Snap Fitness Gym"?
+    "Volhaven": "Millenium Fitness Gym",
+}
+
+const universities = {
+    "Sector-12": "Rothman University",
+    "Aevum": "Summit University",
+    "Volhaven": "ZB Institute of Technology",
+}
+
+const work_type = {
+    FACTION: "FACTION",
+    COMPANY: "COMPANY",
+    CRIME: "CRIME",
+    CREATE_PROGRAM: "CREATE_PROGRAM",
+    STUDY: "CLASS",
+    GRAFTING: "GRAFTING",
+}
+
+
+   const focus_type = {
+            MONEY: "money", //How much money is given
+            KARMA: "karma", //Amount of karma lost for successfully committing this crime
+            KILLS: "kills", //How many people die as a result of this crime
+            HACKING: "hacking_exp", //hacking exp gained from crime	
+            STRENGTH: "strength_exp", //strength exp gained from crime
+            DEXTERITY: "dexterity_exp", //dexterity exp gained from crime
+            AGILITY: "agility_exp", //agility exp gained from crime
+            DEFENSE: "defense_exp", //defense exp gained from crime
+            CHARISMA: "charisma_exp", //charisma exp gained from crime
+            INTELLIGENCE: "intelligence_exp" //intelligence exp gained from crime
+        }
+
+
 /*
 
 

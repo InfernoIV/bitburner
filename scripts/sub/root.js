@@ -21,7 +21,7 @@ export class root_obj {
         ns.disableLog("ftpcrack")
         ns.disableLog("scan")
         //debug
-        log.info(ns, "Root", "Init complete", true)
+        log.info(ns, "Root", "Init complete")
     }
 
 
@@ -62,16 +62,18 @@ export class root_obj {
         //get hacking level
         const level_hacking = ns.getPlayer().skills.hacking
         //for each server found
-        for (const server of servers) {
+        for (const hostname of servers) {
+            //get server information
+            const server = ns.getServer(hostname)
             //ignore home server
-            if (server.hostname == CONSTANTS.SERVER.HOME) {
+            if (hostname == CONSTANTS.SERVER.HOME) {
                 //next
                 continue
             }
             //ignore cloud servers, but add to ram
-            if (server.hostname.includes("cloud")) {
+            if (hostname.includes("cloud")) {
                 //only save ram 
-                this.servers_ram.set(server.hostname, server.maxRam)
+                this.servers_ram.set(hostname, server.maxRam)
                 //next
                 continue
             }
@@ -83,15 +85,15 @@ export class root_obj {
                 //check on what actions to perform
                 switch (server.numOpenPortsRequired) {
                     case 5:
-                        ns.sqlinject(server.hostname) //5th toool: hacking 750
+                        ns.sqlinject(hostname) //5th toool: hacking 750
                     case 4:
-                        ns.httpworm(server.hostname) //4th toool: hacking 500
+                        ns.httpworm(hostname) //4th toool: hacking 500
                     case 3:
-                        ns.relaysmtp(server.hostname) //3rd tool: hacking 250
+                        ns.relaysmtp(hostname) //3rd tool: hacking 250
                     case 2:
-                        ns.ftpcrack(server.hostname) //2nd tool: hacking 100
+                        ns.ftpcrack(hostname) //2nd tool: hacking 100
                     case 1:
-                        ns.brutessh(server.hostname) //1st tool: hacking 50
+                        ns.brutessh(hostname) //1st tool: hacking 50
                     case 0:
                         break //no action needed
                     default:
@@ -100,11 +102,11 @@ export class root_obj {
                         break
                 }
                 //nuke to get root access
-                if (ns.nuke(server.hostname)) {
+                if (ns.nuke(hostname)) {
                     //set flag
                     flag_server_rooted = true
                     //log success
-                    log.success(ns, "Root", "Rooted '" + server.hostname + "'")
+                    log.success(ns, "Root", "Rooted '" + hostname + "'")
                 }
             }
             //if it was already rooted or we have rooted it just now
@@ -112,17 +114,17 @@ export class root_obj {
                 //check if we need to backdoor and we have singularity to backdoor
                 if (!server.backdoorInstalled && this.singularity_available) {
                     //backdoor the server
-                    await this.backdoor_server(ns, server.hostname)
+                    await this.backdoor_server(ns, hostname)
                 }
                 //check if there is money
                 if (server.moneyMax > 0 || server.moneyMax != "0") {
                     //only save money
-                    this.servers_money.set(server.hostname, server.moneyMax)
+                    this.servers_money.set(hostname, server.moneyMax)
                 }
                 //check ram
                 if (server.maxRam > 0) {
                     //only save ram 
-                    this.servers_ram.set(server.hostname, server.maxRam)
+                    this.servers_ram.set(hostname, server.maxRam)
                 }
             }
         }

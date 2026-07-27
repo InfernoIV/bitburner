@@ -12,8 +12,8 @@ export function share_exec(ns) {
     //check how many times we can run the script
     const threads = Math.floor(ram_available / CONSTANTS.RAM.WORKER.SHARE)
     //debug
-    log.info(ns, "Share", "Home has " + ram_available + ", need " +
-        CONSTANTS.RAM.WORKER.SHARE + " => " + threads + " threads for sharing", true)
+    log.info(ns, "Share", "Home has " + ram_available + " GB left, need " +
+        CONSTANTS.RAM.WORKER.SHARE + " GB per threads, resulting into " + threads + " threads for sharing")
     //if there is a possibility to share
     if (threads > 0) {
         //share ram

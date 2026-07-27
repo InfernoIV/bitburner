@@ -1,7 +1,19 @@
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
-import * as evaluate from "scripts/sub/evaluate.js"
 
+const { React } = globalThis
+const h = React.createElement
+
+const C = {
+    teal: "#4dd9c0",
+    tealDark: "#0d2e29",
+    bg: "#0a1f1c",
+    bgMid: "#0f2925",
+    border: "#1e5c50",
+    text: "#cff5ee",
+    textDim: "#4a8c80",
+
+}
 
 // Declaration
 export class ui_obj {

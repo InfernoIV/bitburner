@@ -45,7 +45,7 @@ export class cloud_obj {
             //log.info(ns, "Cloud", "Found cloud server '" + server + "' with '" + ram + "' ram => '" + this.servers_owned.size + "'", true)
         }
         //log
-        log.info(ns, "Cloud", "Init complete", true)
+        log.info(ns, "Cloud", "Init complete")
     }
 
 

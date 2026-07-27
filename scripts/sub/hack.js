@@ -17,7 +17,7 @@ export class hack_obj {
         //disable logging
         ns.disableLog("exec")
         //log
-        log.info(ns, "Hack", "Init complete", true)
+        log.info(ns, "Hack", "Init complete")
     }
 
 

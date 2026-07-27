@@ -135,9 +135,9 @@ export const RAM = {
     purchaseProgram                     2
     singularity.purchaseTor             2
     singularity.upgradeHomeRam          3   
-    ls (fn)	                            0.2 covered by root)             
+    ls (fn)	                            0.2 -> already covered in root             
     */
-    SINGULARITY: 10.0,
+    SINGULARITY: 31.5,
 
     /*
 
@@ -199,8 +199,12 @@ export const RAM = {
     CODING_CONTRACT: 20.0,
 
     /*
+    stock.getSymbols    2
+    stock.hasWseAccount 0.05
+    Stock.sellStock     2.5
+    Stock.getPosition   2
     */
-    STOCK: 0.0,
+    STOCK: 6.55,
 
     /*
     */

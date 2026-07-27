@@ -25,7 +25,7 @@ export class coding_contract_obj {
     ns.ls     0.2
     */
     //function that manages the actions of coding contracts: reads port for other programs to post their found coding contracts to (e.g. root or darknet)
-    manage(ns) {
+    async manage(ns) {
         //if there is nothing to do
         if (this.port.peek() == CONSTANTS.PORT.NO_DATA) {
             //stop

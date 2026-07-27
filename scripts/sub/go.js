@@ -68,7 +68,7 @@ export class go_obj {
         //reset stats to easily see if we have won 2x
         ns.go.analysis.resetStats(true)
         //log
-        log.info(ns, "Go", "Init complete", true)
+        log.info(ns, "Go", "Init complete")
     }
 
 
@@ -291,7 +291,7 @@ export class go_obj {
     //just play the 1st move available
     brute_force(ns, information) {
         //try to play in the middle first
-        if (information.moves_valid[2,2]) {
+        if (information.moves_valid[2][2]) {
             //play in the middle
             ns.go.makeMove(2, 2)
         }
@@ -317,7 +317,10 @@ export class go_obj {
                 if (valid_move && isNotReservedSpace) {
                     /*Make a move on the IPvGO subnet game board, and await the opponent's response. 
                     x:0 y:0 represents the bottom-left corner of the board in the UI.*/
-                    ns.go.makeMove(x, y)
+                    try {
+                        ns.go.makeMove(x, y)
+                    } catch (e) {}
+                    
                     //debug
                     //log.info(ns, "Go", "Made a move on " + x + "," + y)
                     //stop
@@ -335,7 +338,9 @@ export class go_obj {
                 if (valid_move) {
                     /*Make a move on the IPvGO subnet game board, and await the opponent's response. 
                         x:0 y:0 represents the bottom-left corner of the board in the UI.*/
-                    ns.go.makeMove(x, y)
+                    try {
+                        ns.go.makeMove(x, y)
+                    } catch (e) {}
                     //debug
                     //log.info(ns, "Go", "Made a move on " + x + "," + y)
                     //stop

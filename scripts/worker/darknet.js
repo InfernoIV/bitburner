@@ -141,12 +141,14 @@ async function authenticate_server(ns, server_details, hostname) {
 
         case "Laika4"://works
         //decide on length
-            if (length == 3) {
-                return await authenticate(ns, hostname, "max")
-            } else {
-                return await try_passwords(ns, hostname, ["spot", "fido"], "Laika4")
-            }
-            
+        switch (length) {
+            case 3: return await authenticate(ns, hostname, "max")
+            case 4: return await try_passwords(ns, hostname, ["spot", "fido"], "Laika4")
+            case 5: return await authenticate(ns, hostname, "rover")
+            case 6: return await authenticate(ns, hostname, "tigger")
+            default:
+                log.error(ns, ns.pid, "Uncaught length: " + length)
+        }
 
         case "DeskMemo_3.1"://works
             return await authenticate(ns, hostname, get_password(hint, length))
@@ -172,11 +174,11 @@ async function authenticate_server(ns, server_details, hostname) {
         case "Factori-Os": //works
             return await find_number_divisible(ns, hostname, length)
 
-
-
-
-        case "AccountsManager_4.2": //work in progress
+        case "AccountsManager_4.2": //works
             return await find_number_higher_lower(ns, hostname, length)
+
+
+
 
         case "OpenWebAccessPoint": //work in progress
             log.info(ns, ns.pid, "server_details: " + JSON.stringify(server_details))
@@ -202,6 +204,7 @@ async function authenticate_server(ns, server_details, hostname) {
             //stop for now
             ns.exit()
     }
+    return false
 }
 
 
@@ -253,7 +256,9 @@ async function mastermind_password(ns, hostname, lenght) {
     while (true) {
         //try password
         var result = await try_passwords(ns, hostname, [password.join("")], "mastermind_password", true)
-       //log.info(ns, ns.pid, "Tried password '" + password.join("") + "' -> " + JSON.stringify(result))
+       log.info(ns, ns.pid, "try_passwords: '" + JSON.stringify(result) + "'")
+       
+        //log.info(ns, ns.pid, "Tried password '" + password.join("") + "' -> " + JSON.stringify(result))
         //if failed
         if (result == ns.enums.DarknetResponseCode.AuthFailure) {
             //heartbleed for more information
@@ -348,7 +353,7 @@ async function increment_password(ns, hostname, length) {
         }
     }
     //failsafe
-    return {code: ns.enums.DarknetResponseCode.AuthFailure}
+    return {code: ns.enums.DarknetResponseCode.AuthFailure, success: false}
 
 /*
     [2026-07-24 02:37:27] WARNING	48087	increment_password: '{"success":false,"code":401,"message":"Unauthorized"}' --- 
@@ -399,6 +404,7 @@ async function derive_password_from_heartbleed(ns, hostname, length) {
         var heartbleed = await ns.dnet.heartbleed(hostname)
         //get the log
         const heartbleed_log = JSON.parse(heartbleed.logs[0])
+        log.info(ns, ns.pid, "heartbleed_log: '" + JSON.stringify(heartbleed_log) + "'")
         //create regex
         const regex = new RegExp(String.raw`\d{${length}}`, "g")
         //get passwords
@@ -467,7 +473,7 @@ async function try_passwords(ns, hostname, passwords, prefix = "", should_print 
         }
     }
     //nothing worked
-    return ns.enums.DarknetResponseCode.AuthFailure
+    return {code: ns.enums.DarknetResponseCode.AuthFailure, success: false}
 }
 
 
@@ -495,6 +501,7 @@ code: 401
                 [2026-07-24 03:52:24] WARNING	61604	Auth failed for 'neon-flame;oasis': '{"success":false,"code":401,"message":"Unauthorized"}', getServerDetails: '{"isOnline":true,"isConnectedToCurrentServer":true,"hasSession":false,"modelId":"AccountsManager_4.2","passwordHint":"The password is a number between 0 and 100","data":"","logTrafficInterval":20.683,"passwordLength":2,"passwordFormat":"numeric","blockedRam":2,"difficulty":4,"requiredCharismaSkill":182,"depth":1,"isStationary":false}', heartbleed: '{"success":true,"code":200,"message":"Success","logs":["{\"code\":401,\"message\":\"The password is a number between 0 and 100\",\"data\":\"Lower\",\"passwordAttempted\":\"99\"}"]}'
 
                 */
+               //works
 async function find_number_higher_lower(ns, hostname, length) {
     //start in the middle
     var number = parseInt("9".repeat(length))
@@ -502,11 +509,11 @@ async function find_number_higher_lower(ns, hostname, length) {
     //try to keep solving
     while (true) {
         //try a password
-        var result_code = await try_passwords(ns, hostname, [number],"find_number_higher_lower", true) //authenticate(ns, hostname, number)
+        var result = await try_passwords(ns, hostname, [number],"find_number_higher_lower", false) //authenticate(ns, hostname, number)
         //
-        if (result_code == ns.enums.DarknetResponseCode.AuthFailure) {
+        if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //heartbleed for more information
-            var result = await ns.dnet.heartbleed(hostname)
+            result = await ns.dnet.heartbleed(hostname)
             if (result.code == ns.enums.DarknetResponseCode.Success) {
                 //get the log
                 const log_heartbleed = JSON.parse(result.logs[0])
@@ -532,18 +539,18 @@ async function find_number_higher_lower(ns, hostname, length) {
                 }
             } else {
                 //stop
-                return result_code
+                return result
             }
 
         } else {
             //stop
-            return result_code
+            return result
         }
         //adjust the number smaller
         number_change = Math.ceil(number_change / 2)
     }
     //failsafe
-    return {code: ns.enums.DarknetResponseCode.AuthFailure}
+    return {code: ns.enums.DarknetResponseCode.AuthFailure, success: false}
 }
 
 
@@ -634,7 +641,7 @@ async function find_number_divisible(ns, hostname, length) {
     [2026-07-24 01:19:47] ERROR	31248	'gig4.org'heartbleed uncaught: 'undefined' ({"success":true,"code":200,"message":"Success","logs":["{\"code\":401,\"message\":\"Password is not divisible by '99'\",\"data\":\"false\",\"passwordAttempted\":\"99\"}"]})
     */
     //WIP
-    return {code: ns.enums.DarknetResponseCode.AuthFailure}
+    return {code: ns.enums.DarknetResponseCode.AuthFailure, success: false}
 }
 
 
@@ -735,7 +742,7 @@ async function sort_password(ns, hostname, data, length) {
     //check for lenght
     if (length != 3) {
         //indicate WIP
-        log.warnig(ns, "", "sorting for size '" + length + "' not yet implemented!", true)
+        log.warning(ns, "", "sorting for size '" + length + "' not yet implemented!", true)
         //return empty
         return ns.enums.DarknetResponseCode.AuthFailure
     }

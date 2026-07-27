@@ -12,10 +12,50 @@ export class stock_obj {
     
     init(ns) {
         //ns.disableLog("")
+
+        //get symbols
+        this.symbols = ns.stock.getSymbols()
     }
 
-    manage(ns) {
 
+    /*
+    stock.getSymbols    2
+    stock.hasWseAccount 0.05
+    Stock.sellStock     2.5
+    Stock.getPosition   2
+    */
+    manage(ns) {
+        //if we're allowed to trade
+        if(ns.stock.hasWseAccount) {
+            //for each order
+            for (const symbol of this.symbols) {
+                //get stocks
+                const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
+                //if we have longs
+                if (sharesLong > 0) {
+                    //just sell
+                    const profit = ns.stock.sellStock(symbol, sharesLong)
+                    //if profit
+                    if (profit > 0) {
+                        log.info(ns, "Stock", "Sold '" + symbol + "' * " + sharesLong + " for a profit of " + profit, true)
+                    }
+                }
+                /*
+                //if we have shorts (currently possible?)
+                 if (sharesShort > 0) {
+                    //just sell
+                    ns.stock.sellStock()
+                }*/
+            }
+        }
+            
+
+            
+            //has4SData         0.05
+            //hasTixApiAccess() 0.05
+            //hasWseAccount()	0.05
+            //has4SDataTixApi() 0.05
+            //Stock.getOrders   2.5 -> requires BN8.3 or be in BN8
     }
 }
 
