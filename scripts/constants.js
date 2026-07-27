@@ -165,17 +165,23 @@ export const RAM = {
     ns.go.analysis.resetStats               0
     ns.go.getBoardState                     4
     ns.go.analysis.getValidMoves            8
-
-    //TODO:
+    */
+    GO: 16.0,
+    
+    /*
     ns.go.analysis.getControlledEmptyNodes  16
     ns.go.analysis.getChains                16
     ns.go.analysis.getLiberties             16
+    */
+    GO_ANALYSIS: 48.0,
+    
+    /*
     ns.go.cheat.destroyNode                 8
     ns.go.cheat.removeRouter                8    
     ns.go.cheat.repairOfflineNode           8
     ns.go.cheat.playTwoMoves                8
     */
-    GO: 16.0,
+    GO_CHEAT: 24.0,
 
     /*
     ns.getPlayer    0.5

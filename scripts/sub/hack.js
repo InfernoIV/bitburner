@@ -12,6 +12,7 @@ export class hack_obj {
         this.available = true
     }
 
+    
     init(ns) {
         //disable logging
         ns.disableLog("exec")
@@ -22,14 +23,14 @@ export class hack_obj {
 
     //function that target hacks a single server
     /** @param {NS} ns */
-    async manage(ns, root_obj) {//, cloud_obj) {
+    async manage(ns, servers_ram, servers_money) {
         //if the timing has not yet passed
         if (Date.now() < this.time_of_next_check) {
             //stop
             return
         }
         //update the target, if needed (global variable)
-        this.find_target(ns, root_obj)
+        this.find_target(ns, servers_money)
         //check if we HAVE a target
         if (this.hack_target == "") {
             //debug
@@ -37,12 +38,8 @@ export class hack_obj {
             //wait a bit before checking again
             this.time_of_next_check = Date.now() + CONSTANTS.TIME.SAFETY
         } else {
-            const root_servers = [...root_obj.servers_ram]
-            //const cloud_servers = [...cloud_obj.servers_owned]
-            //debug
-            //log.info(ns, "Hack", "Found root: '" + JSON.stringify(root_servers) + "', and cloud: '" + JSON.stringify(cloud_servers) + "' servers", true)
             //get the executing servers
-            var execute_servers = root_servers//[].concat(root_servers, cloud_servers)
+            var execute_servers = servers_ram
             //re-set the wait time, to be set later
             var time_wait = 0
             //get server data
@@ -225,11 +222,11 @@ export class hack_obj {
 
 
     //function that finds a target
-    find_target(ns, root_obj) {
+    find_target(ns, servers_money) {
         //get current hacking level
-        var hacking_level_current = ns.getHackingLevel()
+        var hacking_level_current = ns.getPlayer().skills.hacking
         //get list of servers with money
-        const servers_target = root_obj.servers_money
+        const servers_target = servers_money
         //if change in situation
         if (hacking_level_current > this.hack_level_previous) {
             //update hack level

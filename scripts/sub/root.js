@@ -6,29 +6,22 @@ import * as log from "scripts/sub/log.js"
 export class root_obj {
     constructor() {
         this.available = true
+        this.singularity_available = false
+        //maps of servers
+        this.servers_ram = new Map()
+        this.servers_money = new Map()
     }
 
 
-    init(ns, singularity_available) {
+    init(ns) {
         //disable logging
         ns.disableLog("brutessh")
         ns.disableLog("nuke")
         ns.disableLog("relaysmtp")
         ns.disableLog("ftpcrack")
         ns.disableLog("scan")
-        //save if singularity is available
-        this.singularity_available = singularity_available
-        //maps of servers
-        this.servers_ram = new Map()
-        this.servers_money = new Map()
         //debug
-        log.info(ns, "Root", "Init complete", true) //, found '" + this.servers_found.size + "' servers", true)
-    }
-
-    //function that sets if singularity is available
-    set_singularity_available(singularity_available) {
-        //set the flag
-        this.singularity_available = singularity_available
+        log.info(ns, "Root", "Init complete", true)
     }
 
 
@@ -172,13 +165,13 @@ export class root_obj {
         //for every jump of the route    
         for (let jump of route) {
             //connect to the step
-            eval("ns.singularity.connect('" + jump + "')")
+            ns.singularity.connect(jump)
         }
 
         //try-catch to ensure script not crashing
         try {
             //install backdoor
-            await eval("ns.singularity.installBackdoor()")
+            await ns.singularity.installBackdoor()
             //log information
             log.success(ns, "Root", "Backdoored server '" + server + "'")
             //catch error
@@ -187,6 +180,6 @@ export class root_obj {
             log.error(ns, "Root", "Failed to backdoor server '" + server + "': " + err, true)
         }
         //connect to home
-        eval("ns.singularity.connect('" + CONSTANTS.SERVER.HOME + "')")
+        ns.singularity.connect(CONSTANTS.SERVER.HOME)
     }
 }

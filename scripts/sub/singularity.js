@@ -13,6 +13,7 @@ import * as log from "scripts/sub/log.js"
 export class singularity_obj {
     constructor() {
         this.available = true
+        this.tor_owned = false
         //config
         //min chance for a crime
         this.crime_min_chance = 0.65 //65% chance
@@ -23,7 +24,7 @@ export class singularity_obj {
     /*
     ls  0.2
     */
-    init(ns, tor_owned = false) {
+    init(ns) {
         //disable logging
         ns.disableLog("singularity.installBackdoor")
         ns.disableLog("singularity.purchaseTor")
@@ -36,11 +37,7 @@ export class singularity_obj {
         this.relay_smtp = executables.includes(CONSTANTS.TOOLS.HACKING.RELAY_SMTP)
         this.http_worm = executables.includes(CONSTANTS.TOOLS.HACKING.HTTP_WORM)
         this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
-        this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
-        //TODO: if we have SF15, purchaseTor is not needed since we already own TOR automatically
-        this.tor_owned = tor_owned
-        //config
-        
+        this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)        
         //debug
         log.info(ns, "Singularity", "Init complete", true)
     }
@@ -50,10 +47,10 @@ export class singularity_obj {
     singularity.connect 2   -> used by root
     manage          0
     upgrade_home    3
-    manage_tor      2
+    manage_tor      2  
     manage_tools    2
     */
-    manage(ns, sleeve, bladeburner, grafting) {
+    manage(ns, programs) {
         //test
 
         //upgrade home
@@ -196,6 +193,17 @@ export class singularity_obj {
         //if not already doing something
         //set to mug for now?
 
+
+        /*
+        bitnode multipliers can be 
+        CompanyWorkMoney: 0,
+        CrimeMoney: 0,
+        HacknetNodeMoney: 0,
+        ManualHackMoney: 0,
+        ScriptHackMoney: 0.3,
+        ScriptHackMoneyGain: 0,
+        CodingContractMoney: 0,
+        */
     }
 }
 /*
@@ -293,19 +301,20 @@ async function determine_next_bitnode(ns) {
         //reduces the RAM cost of singularity functions in other BitNodes: 16x
         [4, 2], //reduces the RAM cost of singularity functions in other BitNodes: 4x
         [4, 3], //reduces the RAM cost of singularity functions in other BitNodes: 1x
+        [9, 1], //Permanently unlocks the Hacknet Server in other BitNodes
+        //increases hacknet production and reduces hacknet costs by: 12%
+        [9, 2], //You start with 128GB of RAM on your home computer when entering a new BitNode
+        //increases hacknet production and reduces hacknet costs by: 18%
         [5,
             1
         ], //This Source-File grants you a new stat called Intelligence. Intelligence is unique because it is permanent and persistent (it never gets reset back to 1). However, gaining Intelligence experience is much slower than other stats. Higher Intelligence levels will boost your production for many actions in the game.
         //In addition, this Source-File will unlock: getBitNodeMultipliers(), Permanent access to formulas, Access to BitNode multiplier information on the Stats page
         //It will also raise all of your hacking-related multipliers by: 8%
         [10, 1], //Unlocks Sleeve and Grafting API in other BitNodes. 
-        [9, 1], //Permanently unlocks the Hacknet Server in other BitNodes
-        //increases hacknet production and reduces hacknet costs by: 12%
-        [9, 2], //You start with 128GB of RAM on your home computer when entering a new BitNode
-        //increases hacknet production and reduces hacknet costs by: 18%
 
 
         //unlocks
+        [15,1], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
         [2, 1], //This Source-File allows you to form gangs in other BitNodes once your karma decreases to a certain value. It
         //also increases your crime success rate, crime money, and charisma multipliers by: 24%
         [3, 1], //This Source-File lets you create corporations on other BitNodes (although some BitNodes will disable this mechanic)
@@ -326,15 +335,8 @@ async function determine_next_bitnode(ns) {
         //increases the player's company salary and reputation gain multipliers by: 32%
         //reduces the price increase for every augmentation bought by: 4%		
         [13, 1], //Unlock Stanek's gift
-        [15,
-            1
-        ], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
-        [15,
-            2
-        ], //Your charisma level increases job salary and rep gain. Also increases authentication speed by 20%
-        [15,
-            3
-        ], //Your charisma level increases faction work rep gain. Also increases the xp and money gained from .cache files by 50%.
+        [15, 2], //Your charisma level increases job salary and rep gain. Also increases authentication speed by 20%
+        [15, 3], //Your charisma level increases faction work rep gain. Also increases the xp and money gained from .cache files by 50%.
 
         //boosts
         [1, 2], //increases all of the player's multipliers by: 24%

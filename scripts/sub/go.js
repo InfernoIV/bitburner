@@ -12,7 +12,6 @@ https://github.com/bitburner-official/bitburner-src/blob/2e456f5a9c179fbb989b6bb
 
 
 import * as CONSTANTS from "scripts/constants.js"
-import * as evaluate from 'scripts/sub/evaluate.js'
 import * as log from 'scripts/sub/log.js'
 
 
@@ -20,6 +19,8 @@ import * as log from 'scripts/sub/log.js'
 export class go_obj {
     constructor() {
         this.available = true
+        this.can_analyse = false
+        this.can_cheat = false
     }
 
 
@@ -29,7 +30,6 @@ export class go_obj {
         ns.disableLog("go.makeMove")
         ns.disableLog("go.passTurn")
         ns.disableLog("go.resetBoardState")
-
         //Returns the color of the current player ("White" | "Black"), or 'None' if the game is over.
         const current_player = ns.go.getCurrentPlayer()
         //if not our turn
@@ -279,7 +279,7 @@ export class go_obj {
         information.moves_valid = moves_valid
         //Returns the name of the opponent faction in the current subnet.
         const opponent = ns.go.getOpponent()
-        //play depending on the opponent
+        //play depending on the opponent(?)
         switch (opponent) {
             default:
                 //not defined: brute force it
@@ -290,6 +290,19 @@ export class go_obj {
 
     //just play the 1st move available
     brute_force(ns, information) {
+        //try to play in the middle first
+        if (information.moves_valid[2,2]) {
+            //play in the middle
+            ns.go.makeMove(2, 2)
+        }
+        if(this.can_analyse) {
+            //use analysis information
+            //TODO
+        }
+        //check if we can cheat
+        if(this.can_cheat && information.cheat_chance == 1) {
+            //TODO
+        }
         //start from 1 from corner first?
         //This idea can also be improved to focus on a specific area or corner first, rather than spread across the whole board right away.
         //from left to right 
@@ -398,45 +411,53 @@ export class go_obj {
         Note that the [0][0] point is shown on the bottom-left on the visual board (as is traditional), and each string represents a vertical column on the board. 
         In other words, the printed example above can be understood to be rotated 90 degrees clockwise compared to the board UI as shown in the IPvGO subnet tab.*/
         information.state_board = ns.go.getBoardState()
-        /*Returns 'X' for black, 'O' for white, or '?' for each empty point to indicate which player controls that empty point. 
-        If no single player fully encircles the empty space, it is shown as contested with '?'. "#" are dead nodes that are not part of the subnet.
-        Takes an optional boardState argument; by default uses the current board state.	
-        Filled points of any color are indicated with '.'
-        In this example, white encircles some space in the top-left, black encircles some in the top-right, and between their routers is contested space in the center:
-        [	"OO..?",
-        	"OO.?.",
-        	"O.?.X",
-        	".?.XX",
-        	"?..X#",	]*/
-        //information.nodes_controlled_empty = ns.go.analysis.getControlledEmptyNodes()
-        /*Returns an ID for each point. All points that share an ID are part of the same network (or "chain"). Empty points are also given chain IDs to represent continuous empty space. Dead nodes are given the value null.
-        Takes an optional boardState argument; by default uses the current board state.
-        The data from getChains() can be used with the data from getBoardState() to see which player (or empty) each chain is
-        For example, a 5x5 board might look like this. There is a large chain #1 on the left side, smaller chains 2 and 3 on the right, and a large chain 0 taking up the center of the board.
-        [	[   0,0,0,3,4],
-        	[   1,0,0,3,3],
-        	[   1,1,0,0,0],
-        	[null,1,0,2,2],
-        	[null,1,0,2,5],	]*/
-        //information.chains = ns.go.analysis.getChains()
 
-        /*Returns a number for each point, representing how many open nodes its network/chain is connected to. Empty nodes and dead nodes are shown as -1 liberties.
-        Takes an optional boardState argument; by default uses the current board state.
-        For example, a 5x5 board might look like this. The chain in the top-left touches 5 total empty nodes, and the one in the center touches four. The group in the bottom-right only has one liberty; it is in danger of being captured!
-        [	[-1, 5,-1,-1, 2],
-        	[ 5, 5,-1,-1,-1],
-        	[-1,-1, 4,-1,-1],
-        	[ 3,-1,-1, 3, 1],
-        	[ 3,-1,-1, 3, 1],	]*/
-        //information.liberties = ns.go.analysis.getLiberties()
+        //if we can analyse
+        if(this.can_analyse) {
+            /*Returns 'X' for black, 'O' for white, or '?' for each empty point to indicate which player controls that empty point. 
+            If no single player fully encircles the empty space, it is shown as contested with '?'. "#" are dead nodes that are not part of the subnet.
+            Takes an optional boardState argument; by default uses the current board state.	
+            Filled points of any color are indicated with '.'
+            In this example, white encircles some space in the top-left, black encircles some in the top-right, and between their routers is contested space in the center:
+            [	"OO..?",
+                "OO.?.",
+                "O.?.X",
+                ".?.XX",
+                "?..X#",	]*/
+            information.nodes_controlled_empty = ns.go.analysis.getControlledEmptyNodes()
+            /*Returns an ID for each point. All points that share an ID are part of the same network (or "chain"). Empty points are also given chain IDs to represent continuous empty space. Dead nodes are given the value null.
+            Takes an optional boardState argument; by default uses the current board state.
+            The data from getChains() can be used with the data from getBoardState() to see which player (or empty) each chain is
+            For example, a 5x5 board might look like this. There is a large chain #1 on the left side, smaller chains 2 and 3 on the right, and a large chain 0 taking up the center of the board.
+            [	[   0,0,0,3,4],
+                [   1,0,0,3,3],
+                [   1,1,0,0,0],
+                [null,1,0,2,2],
+                [null,1,0,2,5],	]*/
+            information.chains = ns.go.analysis.getChains()
 
-        //temp until we have SF 14.2
+            /*Returns a number for each point, representing how many open nodes its network/chain is connected to. Empty nodes and dead nodes are shown as -1 liberties.
+            Takes an optional boardState argument; by default uses the current board state.
+            For example, a 5x5 board might look like this. The chain in the top-left touches 5 total empty nodes, and the one in the center touches four. 
+            The group in the bottom-right only has one liberty; it is in danger of being captured!
+            [	[-1, 5,-1,-1, 2],
+                [ 5, 5,-1,-1,-1],
+                [-1,-1, 4,-1,-1],
+                [ 3,-1,-1, 3, 1],
+                [ 3,-1,-1, 3, 1],	]*/
+            information.liberties = ns.go.analysis.getLiberties()
+        }
+
+        //set default value
         information.cheat_chance = 0
-        /*Returns your chance of successfully playing one of the special moves in the ns.go.cheat API. 
-        Scales up with your crime success rate stat. Scales down with the number of times you've attempted to cheat in the current game.
-        Warning: if you fail to play a cheat move, your turn will be skipped. 
-        After your first cheat attempt, if you fail, there is a small (~10%) chance you will instantly be ejected from the subnet.*/
-        //information.cheat_chance = await evaluate.exec(ns, "ns.go.cheat.getCheatSuccessChance()")
+        //check if we can cheat
+        if (this.can_cheat) {
+            /*Returns your chance of successfully playing one of the special moves in the ns.go.cheat API. 
+            Scales up with your crime success rate stat. Scales down with the number of times you've attempted to cheat in the current game.
+            Warning: if you fail to play a cheat move, your turn will be skipped. 
+            After your first cheat attempt, if you fail, there is a small (~10%) chance you will instantly be ejected from the subnet.*/
+            information.cheat_chance = ns.go.cheat.getCheatSuccessChance()
+        }
 
         //return the information
         return information
