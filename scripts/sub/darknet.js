@@ -11,6 +11,7 @@ import * as evaluate from "scripts/sub/evaluate.js"
 // Declaration
 export class darknet_obj {
     constructor() {
+        this.available = true
         //flag to keep track of launch
         this.darknet_started = false
     }

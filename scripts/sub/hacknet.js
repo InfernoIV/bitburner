@@ -14,8 +14,8 @@ export class hacknet_obj {
 
 
     init(ns) {
-
-    }
+        //ns.disableLog("")
+    }   
 
 
     manage(ns) {

@@ -1080,3 +1080,176 @@ type NSEnums = {
 References: CityNameEnumType, CrimeEnumType, FactionWorkEnumType, GymEnumType, JobNameEnumType, JobFieldEnumType, LocationNameEnumType, ToastVariantEnumType, UniversityClassEnumType, CompanyNameEnumType, FactionNameEnumType, CodingContractNameEnumType, PositionEnumType, OrderEnumType, BladeburnerActionEnumType, SpecialBladeburnerActionEnumTypeForSleeve, FragmentEnumType, DarknetResponseCodeType, ProgramNameEnumType, GangTaskNameEnumType
 
 */
+
+/*
+Below are some of the stats that will increase with play and reset during augmentation installs as you progress through the game. Your stats can be found in the Overview panel, the Stats subpage of the side menu, or with API methods like ns.getPlayer().
+Hack Skill
+
+For many aspects of Bitburner, increasing your Hack skill will be an important goal. Primarily affected by the efficiency of your hacking strategies, you will also be offered Augmentations that greatly enhance your Hack Skill level and how effective its results are.
+
+Affects:
+
+    Time needed to execute hack, grow, or weaken and similar methods
+    Your chance to successfully hack a server
+    Percent of a server's money stolen when hacking it
+    Success rate of certain crimes
+    Time needed to create a Program
+    Faction Reputation gain when carrying out Hacking Contracts or Field Work
+    Company Reputation gain for certain jobs
+
+Gain Hack experience by:
+
+    Manually hacking servers through the Terminal
+    Using ns.hack(), ns.grow(), or ns.weaken() through scripts
+    Committing certain crimes
+    Carrying out Hacking Contracts or doing Field work for Factions
+    Some Company jobs and other types of work
+    Studying at a university
+
+Combat Skills
+Strength, Defense, Dexterity, and Agility
+
+These represent your physical skill and attributes, including your ability to sneak, inflict or endure damage, and pull off high precision tasks. Similar to your Hack skill, you will be offered Faction Augmentations to multiplicatively enhance your Combat Skills and exp gain.
+
+Affects:
+
+    HP scales with Defense. Infiltration and some jobs may cause you to take damage.
+    Success rate of certain crimes
+    Faction Reputation gain for Security and Field Work
+    Company Reputation gain for certain jobs
+
+Gain experience by:
+
+    Working out at a gym
+    Committing certain crimes
+    Doing Security or Field Work for a Faction
+    Working certain jobs at a Company
+
+Charisma
+
+Rarely as useful as Hacking and Physical skills, Charisma can help get a company job, gain trust, or calm chaos in social situations.
+
+Charisma can also be enhanced with Augmentations.
+
+Affects:
+
+    Success rate of certain crimes
+    Faction Reputation gain for Field Work
+    Company Reputation gain for most jobs
+
+Gain experience by:
+
+    Committing certain crimes
+    Studying at a university
+    Working certain jobs at a Company
+    Doing Field work for a Faction
+
+Other Stats and abilities are available in later stages of the game.
+*/
+
+/*
+Reputation
+
+In order to acquire Augmentations from Factions, you need to earn their trust.
+
+This can be done in a variety of ways, but the most common is offering your services to a Faction. Another option is to give them intel from Infiltrations.
+
+When installing Augmentations, all your reputation gets converted to favor. Favor increases the rate at which reputation is gained with that faction.
+
+With enough favor, donations are unlocked. Donations allow you to spend money to acquire reputation directly. Without working for the faction. This feature is particularly useful when a very large amount of reputation is needed for an augmentation.
+*/
+
+/*
+Factions
+    Throughout the game you may receive invitations from factions. 
+    There are many different factions, and each faction has different criteria for determining its potential members. 
+    Joining a faction and furthering its cause is crucial to progressing in the game and unlocking endgame content.
+    It is possible to join multiple factions if you receive invitations from them. 
+    However, note that joining a faction may prevent you from joining other rival factions. 
+    (Don't worry, this usually isn't the case. Also, it would only be temporary since resetting the game by installing Augmentations will clear all your factions)
+    The Factions link on the menu brings up a list of all factions that you have joined. 
+    You can select a Faction on this list to go to that Faction page. 
+    This page displays general information about the Faction and also lets you perform work for the faction. 
+    Working for a Faction is similar to working for a Company except that you don't get paid a salary. You will only earn Reputation in your Faction and train your Stats.
+    Earning Reputation for a Faction unlocks powerful Augmentations. 
+    Purchasing and installing these Augmentations will upgrade your abilities. 
+    The Augmentations that are available to unlock vary from Faction to Faction.
+    See also the complete List of Factions and their Requirements (contains spoilers).
+*/
+
+/*
+Crimes
+    Committing crimes is an active gameplay mechanic that allows the player to train their Stats and potentially earn money. 
+    It also reduces your karma, and having low karma is a requirement of some factions.
+    The player can attempt to commit crimes by visiting The Slums through the City tab (Alt + w). The Slums is available in every city.
+    
+    Basic Mechanics
+        When you visit The Slums you will see a list of buttons that show all of the available crimes. 
+        Simply select one of the options to begin attempting that crime. 
+        Attempting to commit a crime takes a certain amount of time. This time varies between crimes.
+        While doing crimes, you can click Do something else simultaneously to be able to do things while you continue to do crimes in the background. 
+        There is a 20% penalty to the related gains. Clicking the Focus button under the overview will return you to the current task.
+        Crimes are not always successful. Your rate of success is determined by your Stats and Augmentations. 
+        The odds can be seen on the crime-selection page. If you are unsuccessful at committing a crime you will gain EXP, but you will not earn money. 
+        If you are successful at committing the crime you will gain extra EXP (4x of what an unsuccessful attempt would give) and earn money.
+        Harder crimes are typically more profitable, and also give more EXP.
+*/
+
+/*
+Companies
+    When exploring the World, you can visit various companies. At these companies, you can apply for jobs.
+    Working a job lets you earn money, experience, and Reputation with that company.
+    While working for a company, you can click Do something else simultaneously to be able to do things while you continue to work in the background. 
+    There is a 20% penalty to the related gains. Clicking the Focus button under the overview will return you to the current work.
+    If you've been hired to do a job you can click that Apply for X Job button again to get a promotion if you meet the requirements. 
+    You can see the requirements by hovering your cursor over the button. Higher positions give increased rewards.
+*/
+
+/*
+Augmentations
+    Advances in science and medicine have led to powerful new technologies that allow people to augment themselves beyond normal human capabilities. 
+    There are many different types of Augmentations, ranging from cybernetic to genetic to biological. 
+    Acquiring these Augmentations enhances the user's physical and mental faculties.
+    Augmentations provide persistent upgrades in the form of multipliers. 
+    These multipliers apply to a wide variety of things such as stats, experience gain, and hacking, just to name a few. 
+    The effects of Augmentations stack multiplicatively. Your multipliers can be viewed in the Character pages.
+
+How to acquire Augmentations
+    Because of how powerful Augmentations are, the technology behind them is kept private and secret by the corporations and organizations that create them. 
+    Therefore, the only way for the player to obtain Augmentations is through Factions. 
+    After joining a Faction and earning enough Reputation in it, you will be able to purchase its Augmentations. 
+    Different Factions offer different Augmentations. Augmentations must be purchased in order to be installed, and they are fairly expensive. 
+    They also require Reputation with a Faction before they will let you purchase their Augmentations.
+
+Installing Augmentations
+    You will not gain the benefits of your purchased Augmentations until you install them. You can choose to install Augmentations through the Augmentations menu tab, found under Character.
+    Unfortunately, installing Augmentations has side effects. You will lose most of the progress you've made, including your skills, stats, and money. You will have to start over, but you will have all of the Augmentations you have installed to help you progress. This is the game's "soft reset" or "prestige" mechanic.
+    To summarize, here is a list of everything you will LOSE when you install an Augmentation:
+        Stats/Skills
+        Money
+        Scripts on all servers EXCEPT your home computer
+        Cloud servers
+        Hacknet Nodes
+        Company / Faction Reputation, but you gain Favor.
+        Jobs and Faction memberships
+        Programs
+        Stocks
+        TOR router
+
+Here is everything you will KEEP when you install an Augmentation:
+    Every Augmentation you have previously installed
+    Scripts on your home computer
+    RAM / Core Upgrades on your home computer
+    World Stock Exchange account and TIX API Access
+
+Purchasing Multiple Augmentations
+    You do not have to install an Augmentation right after you purchase it. 
+    You can purchase as many Augmentations as you'd like before you choose to install them. 
+    When you install your purchased Augmentations they will ALL get installed at once.
+    There are a few drawbacks to this, however. 
+    First, obviously, you won't gain the benefits of your purchased Augmentations until after you install them. 
+    Second, purchasing multiple Augmentations before installing them will cause the Augmentations to get progressively more expensive. 
+    When you purchase an Augmentation, the price of purchasing another Augmentation doubles. This multiplier stacks for each Augmentation you purchase. 
+    Once you install your purchased Augmentations, their costs are reset back to the original prices. 
+    You can only purchase each augmentation once, with the exception of NeuroFlux Governor, which can be purchased infinitely at increasing cost.
+*/

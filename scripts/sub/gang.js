@@ -30,6 +30,7 @@ export class gang_obj {
 
     //set information
     init(ns, currentNodeMults) {
+        //ns.disableLog("")
         //set the softcap
         this.GangSoftcap = currentNodeMults.GangSoftcap
         //determine the type according to the mults

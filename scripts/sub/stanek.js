@@ -15,7 +15,7 @@ export class stanek_obj {
 
     
     init(ns) {
-        
+        //ns.disableLog("")
     }
 
     

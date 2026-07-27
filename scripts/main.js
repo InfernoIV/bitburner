@@ -2,7 +2,7 @@ import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
 
 
-//object imports
+//object programs
 import {
     root_obj
 } from "scripts/sub/root.js"
@@ -59,7 +59,7 @@ import {
     corporation_obj
 } from "scripts/sub/corporation.js"
 
-
+import { statusRegistry, showComponentStatusMenus } from "scripts/sub/ui_ai.js"
 
 /** @param {NS} ns */
 export async function main(ns) {
@@ -77,15 +77,6 @@ export async function main(ns) {
     //initialize main
     await init(ns)
 
-    //create objects
-    var root = new root_obj()
-    var hack = new hack_obj()
-    var darknet = new darknet_obj()
-    var cloud = new cloud_obj()
-    var go = new go_obj() //TO IMPROVE
-    var coding_contract = new coding_contract_obj() //TODO
-    var stock = new stock_obj() //TODO
-    var infiltration = new infiltration_obj() //TODO
     //create dummy objet
     const dummy_object = {
         available: false,
@@ -93,74 +84,100 @@ export async function main(ns) {
         manage: function () {},
     }
 
-    var imports = {singularity: dummy_object, sleeve: dummy_object, bladeburner: dummy_object, stanek: dummy_object, gang: dummy_object, corporation: dummy_object, grafting: dummy_object, hacknet: dummy_object}
-    //create SF dependant objects,
-    var singularity = dummy_object //automation
-    var sleeve = dummy_object //automation
-    var bladeburner = dummy_object //automation / other way to boost bitnode / boost
-    var stanek = dummy_object //boost
-    var gang = dummy_object //boost
-    var corporation = dummy_object //boost
-    var grafting = dummy_object //alternative way for augments
-    var hacknet = dummy_object //boost
-    //create a dummy bitnode multipliers object
-    const bitnode_multipliers = {
-        //1: cloud
-        CloudServerLimit: 1,
-        CloudServerMaxRam: 1,
-        //2: gang
-        //3: corporation
-        //4: singularity
-        //5: intelligence
-        //6&7: bladeburner
-        //8: stock
-        //9: hacknet
-        //10: sleeve / grafting
-        //13: stanek
-        //14: go
-        //15: darknet
-    }
+    //object which contains all functionality
+    var programs = {
+        //basic
+        root: new root_obj(),
+        hack: new hack_obj(),
+        //import
 
+        darknet: dummy_object,
+        cloud: dummy_object,
+        go: dummy_object,
+        coding_contract: dummy_object, //TODO
+        stock: dummy_object, //TODO
+        infiltration: dummy_object, //TODO
+        intelligence: dummy_object,
+        //imports
+        singularity: dummy_object, 
+        sleeve: dummy_object, 
+        bladeburner: dummy_object, 
+        stanek: dummy_object, 
+        gang: dummy_object, 
+        corporation: dummy_object, 
+        grafting: dummy_object, 
+        hacknet: dummy_object,
+        ui: dummy_object,
+        bitnode_multipliers: { //set to generic values, to be corrected later
+             //1: cloud
+            CloudServerLimit: 1,
+            CloudServerMaxRam: 1,
+            //2: gang
+            //3: corporation
+            //4: singularity
+            //5: intelligence
+            //6&7: bladeburner
+            //8: stock
+            //9: hacknet
+            //10: sleeve / grafting
+            //13: stanek
+            //14: go
+            //15: darknet
+        }
+    }
     //ram to start
     var previous_ram = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
-    //manage imports
-    ram_in_use = await manage_imports(ns, ram_in_use, imports) //singularity, sleeve, bladeburner, stanek, gang, hacknet, grafting, corporation)
+    //manage programs
+    ram_in_use = await manage_imports(ns, ram_in_use, programs)
 
     //init functions
-    darknet.init(ns) //money, tools, charisma exp
-    await root.init(ns, singularity.available) //hack exp, enable hack
-    hack.init(ns) //money, hack exp
-    go.init(ns) //boost, money, rep -> favor (for some factions)
-    await cloud.init(ns) //improves hacking
+    await programs.root.init(ns, programs.singularity.available) //hack exp, enable hack
+    programs.hack.init(ns) //money, hack exp
+
+    //ui test
+    statusRegistry.register("Server", "homeMoney", ns => (ns.getServer("home")).moneyAvailable)
+    statusRegistry.register("Root", "Hacking Tools", ns => programs.root.get_number_of_hacking_tools_owned(ns))
+    /*
+    statusRegistry.register('Gang','members', ns => ns.gang.getMemberNames().length)
+    statusRegistry.register("Gang", "members", ns => ns.gang.getMemberNames().length)
+    statusRegistry.register("Gang", "wanted", async ns => (await ns.gang.getGangInformation()).wantedLevel)
+    */
+
+    const handle = await showComponentStatusMenus(ns, [], { useRegistry: true, layout: 'grid', refreshMs: 0 })
 
     //log
     log.info(ns, "Main", "Starting main loop", true)
     // @ignore-infinite
     while (true) {
 
-        //start darknet main loop on darkweb
-        darknet.manage(ns)
-        //play go
-        await go.manage(ns)
+        //manage stanek
+        programs.stanek.manage(ns)
+
+        //do stuff
+        programs.singularity.manage(ns, programs.sleeve, programs.bladeburner, programs.grafting)
+        
         //check and add cloud servers
         //cloud.manage(ns)
-        //root servers
-        await root.manage(ns)
-        //hack servers
-        await hack.manage(ns, root, cloud)
-        //do stuff
-        imports.singularity.manage(ns, sleeve, bladeburner, grafting)
-        //manage gang
-        await imports.gang.manage(ns)
-        //manage corporation
-        imports.corporation.manage(ns)
         //manage hacknet
-        imports.hacknet.manage(ns)
-        //manage stanke
-        imports.stanek.manage(ns)
+        programs.hacknet.manage(ns)
 
+        //root servers
+        await programs.root.manage(ns)
+        //hack servers
+        await programs.hack.manage(ns, programs.root)
+        
+        //start darknet main loop on darkweb
+        programs.darknet.manage(ns)
+        //play go
+        await programs.go.manage(ns)
+        //manage gang
+        await programs.gang.manage(ns)
+        //manage corporation
+        programs.corporation.manage(ns)
+        
         //update ui
-        //await ui.update(ns)
+        //programs.ui.manage(ns, programs)
+        await handle.refresh()
 
         //get the max ram
         const max_ram = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
@@ -168,8 +185,8 @@ export async function main(ns) {
         if (previous_ram != max_ram) {
             //update previous ram
             previous_ram = max_ram
-            //manage imports
-            ram_in_use = await manage_imports(ns, ram_in_use, imports)
+            //manage programs
+            ram_in_use = await manage_imports(ns, ram_in_use, programs)
         }
 
         //wait a bit (what is the lowest time we can pick?)
@@ -227,7 +244,7 @@ ns.ramOverride      0
 
 
 //function that manages the imports, based on if already imported, owned source files, bitnode multipliers (if available) and max ram
-async function manage_imports(ns, ram_in_use, imports) { //singularity, sleeve, bladeburner, stanek, gang, hacknet, grafting, corporation) {
+async function manage_imports(ns, ram_in_use, programs) { //singularity, sleeve, bladeburner, stanek, gang, hacknet, grafting, corporation) {
     //get max ram
     const max_ram = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
     //save the ram to check later
@@ -240,25 +257,27 @@ async function manage_imports(ns, ram_in_use, imports) { //singularity, sleeve, 
     //kill all other scripts (share.js)
     ns.killall(CONSTANTS.SERVER.HOME, true)
 
-
-    //init where needed
-    if (owned_source_files.hasOwnProperty(5) && (ram_in_use + CONSTANTS.RAM.SINGULARITY) < max_ram) {
+    //Intelligence: bitnode multipliers (see what is effective and what is NOT effective)
+    if (owned_source_files.hasOwnProperty(5) && (ram_in_use + CONSTANTS.RAM.INTELLIGENCE) < max_ram && !programs.intelligence.available) {
         //log
         log.success(ns, "Main", "Imported Intelligence, RAM: " + ram_in_use + " + " + CONSTANTS.RAM
             .INTELLIGENCE + " = " + (
                 ram_in_use + CONSTANTS.RAM.INTELLIGENCE) + " < " + max_ram, true)
         //up the ram    
-        ram_in_use += CONSTANTS.RAM.SINGULARITY
+        ram_in_use += CONSTANTS.RAM.INTELLIGENCE
+        //set flag to true
+        programs.intelligence.available = true
         //adjust ram
         ns.ramOverride(ram_in_use)
         //get the bitnode multipliers
-        bitnode_multipliers = eval("ns.getBitNodeMultipliers()")
+        bitnode_multipliers = ns.getBitNodeMultipliers()
     }
-    //automation
+
+    //Singularity: automation
     if ((owned_source_files.hasOwnProperty(4) || true) && (ram_in_use + CONSTANTS.RAM.SINGULARITY) < max_ram && !
-        imports.singularity.available) {
+        programs.singularity.available) {
         //import scripts
-        imports.singularity = new singularity_obj()
+        programs.singularity = new singularity_obj()
         //log
         log.success(ns, "Main", "Imported Singularity, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.SINGULARITY +
             " = " + (
@@ -268,13 +287,16 @@ async function manage_imports(ns, ram_in_use, imports) { //singularity, sleeve, 
         //change the RAM
         ns.ramOverride(ram_in_use)
         //init
-        imports.singularity.init(ns) //automation
+        programs.singularity.init(ns) //automation
+        //set flag for rooting
+        programs.root.set_singularity_available(true)
     }
 
+    //Sleeve: faster automation
     if (owned_source_files.hasOwnProperty(10) && (ram_in_use + CONSTANTS.RAM.SLEEVE) < max_ram && !sleeve
         .available) {
         //import scripts
-        imports.sleeve = new sleeve_obj()
+        programs.sleeve = new sleeve_obj()
         //log
         log.success(ns, "Main", "Imported Sleeve, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.SLEEVE + " = " + (
             ram_in_use + CONSTANTS.RAM.SLEEVE) + " < " + max_ram, true)
@@ -283,101 +305,202 @@ async function manage_imports(ns, ram_in_use, imports) { //singularity, sleeve, 
         //change the RAM
         ns.ramOverride(ram_in_use)
         //init
-        imports.sleeve.init(ns) //automation
+        programs.sleeve.init(ns) //automation
     }
+
+    //Darknet: charisma, tools, stocks, money
+    if ((ram_in_use + CONSTANTS.RAM.DARKNET) < max_ram && !programs.darknet.available) {
+        //import scripts
+        programs.darknet = new darknet_obj()
+        //log
+        log.success(ns, "Main", "Imported Darknet, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.DARKNET +
+            " = " + (ram_in_use + CONSTANTS.RAM.DARKNET) + " / " + max_ram, true)
+        //up the ram    
+        ram_in_use += CONSTANTS.RAM.DARKNET
+        //change the RAM
+        ns.ramOverride(ram_in_use)
+        //init
+        programs.darknet.init(ns) //money, tools, charisma exp
+    }
+
+    //Go: boost, money, rep -> favor (for some factions)
+    if ((ram_in_use + CONSTANTS.RAM.GO) < max_ram && !programs.go.available) {
+        //import scripts
+        programs.go = new go_obj()
+        //log
+        log.success(ns, "Main", "Imported Go, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GO +
+            " = " + (ram_in_use + CONSTANTS.RAM.GO) + " / " + max_ram, true)
+        //up the ram    
+        ram_in_use += CONSTANTS.RAM.GO
+        //change the RAM
+        ns.ramOverride(ram_in_use)
+        //init
+        programs.go.init(ns)
+    }
+
+    //Cloud: improves hacking
+    if ((ram_in_use + CONSTANTS.RAM.CLOUD) < max_ram && !programs.cloud.available) {
+        //import scripts
+        programs.cloud = new cloud_obj()
+        //log
+        log.success(ns, "Main", "Imported Cloud, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.CLOUD +
+            " = " + (ram_in_use + CONSTANTS.RAM.CLOUD) + " / " + max_ram, true)
+        //up the ram    
+        ram_in_use += CONSTANTS.RAM.CLOUD
+        //change the RAM
+        ns.ramOverride(ram_in_use)
+        //init
+        await programs.cloud.init(ns)
+    }
+
+    //Coding contracts
+    /*
+    if ((ram_in_use + CONSTANTS.RAM.CODING_CONTRACT) < max_ram && !programs.coding_contract.available) {
+        //import scripts
+        programs.coding_contract = new coding_contract_obj()
+        //log
+        log.success(ns, "Main", "Imported Coding Contracts, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.CODING_CONTRACT +
+            " = " + (ram_in_use + CONSTANTS.RAM.CODING_CONTRACT) + " / " + max_ram, true)
+        //up the ram    
+        ram_in_use += CONSTANTS.RAM.CODING_CONTRACT
+        //change the RAM
+        ns.ramOverride(ram_in_use)
+        //init
+        await programs.coding_contract.init(ns)
+    }*/
+    
+    //Stock
+    /*
+    if ((ram_in_use + CONSTANTS.RAM.STOCK) < max_ram && !programs.stock.available) {
+        //import scripts
+        programs.stock = new stock_obj()
+        //log
+        log.success(ns, "Main", "Imported Stock, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.STOCK +
+            " = " + (ram_in_use + CONSTANTS.RAM.STOCK) + " / " + max_ram, true)
+        //up the ram    
+        ram_in_use += CONSTANTS.RAM.STOCK
+        //change the RAM
+        ns.ramOverride(ram_in_use)
+        //init
+        await programs.stock.init(ns) 
+    }*/
+    
+    //Infiltration
+    /*
+    if ((ram_in_use + CONSTANTS.RAM.INFILTRATION) < max_ram && !programs.infiltration.available) {
+        //import scripts
+        programs.infiltration = new infiltration_obj()
+        //log
+        log.success(ns, "Main", "Imported Infiltration, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.INFILTRATION +
+            " = " + (ram_in_use + CONSTANTS.RAM.INFILTRATION) + " / " + max_ram, true)
+        //up the ram    
+        ram_in_use += CONSTANTS.RAM.INFILTRATION
+        //change the RAM
+        ns.ramOverride(ram_in_use)
+        //init
+        await programs.infiltration.init(ns)
+    }*/
+
+    //Bladeburner: other ways to beat bitnode
     if ((owned_source_files.hasOwnProperty(6) || owned_source_files.hasOwnProperty(7)) && (ram_in_use +
             CONSTANTS.RAM.BLADEBURNER) < max_ram && !bladeburner.available) {
         //import scripts
-        imports.bladeburner = bladeburner_obj()
+        programs.bladeburner = bladeburner_obj()
         //log
         log.success(ns, "Main", "Imported Bladeburner, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.BLADEBURNER +
             " = " + (
-                ram_in_use + CONSTANTS.RAM.BLADEBURNER) + " < " + max_ram, true)
+                ram_in_use + CONSTANTS.RAM.BLADEBURNER) + " / " + max_ram, true)
         //up the ram
         ram_in_use += CONSTANTS.RAM.BLADEBURNER
         //change the RAM
         ns.ramOverride(ram_in_use)
         //init
-        imports.bladeburner.init(ns) //other ways to beat bitnode
+        programs.bladeburner.init(ns)
     }
-    //boost
+
+    //Stanek
     if (owned_source_files.hasOwnProperty(13) && (ram_in_use + CONSTANTS.RAM.STANEK) < max_ram && !stanek
         .available) {
         //import scripts
-        imports.stanek = new stanek_obj()
+        programs.stanek = new stanek_obj()
         //log
         log.success(ns, "Main", "Imported Stanek, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.STANEK + " = " + (
-            ram_in_use + CONSTANTS.RAM.STANEK) + " < " + max_ram, true)
+            ram_in_use + CONSTANTS.RAM.STANEK) + " / " + max_ram, true)
         //up the ram    
         ram_in_use += CONSTANTS.RAM.STANEK
         //change the RAM
         ns.ramOverride(ram_in_use)
         //init
-        imports.stanek.init(ns) //boost
+        programs.stanek.init(ns) //boost
     }
+
+    //Gang: money
     if (owned_source_files.hasOwnProperty(2) && (ram_in_use + CONSTANTS.RAM.GANG) < max_ram && !gang.available) {
         //import scripts
-        imports.gang = new gang_obj()
+        programs.gang = new gang_obj()
         //log
         log.success(ns, "Main", "Imported Gang, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GANG + " = " + (
-            ram_in_use + CONSTANTS.RAM.GANG) + " < " + max_ram, true)
+            ram_in_use + CONSTANTS.RAM.GANG) + " / " + max_ram, true)
         //up the ram
         ram_in_use += CONSTANTS.RAM.GANG
         //change the RAM
         ns.ramOverride(ram_in_use)
         //init
-        imports.gang.init(ns) //boost
+        programs.gang.init(ns) //boost
     }
+
+    //Hacknet
     if (owned_source_files.hasOwnProperty(9) && (ram_in_use + CONSTANTS.RAM.HACKNET) < max_ram && !hacknet
         .available) {
         //import scripts
-        imports.hacknet = new hacknet_obj()
+        programs.hacknet = new hacknet_obj()
         //log
         log.success(ns, "Main", "Imported Hacknet, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.HACKNET + " = " +
-            (
-                ram_in_use + CONSTANTS.RAM.HACKNET) + " < " + max_ram, true)
+            (ram_in_use + CONSTANTS.RAM.HACKNET) + " / " + max_ram, true)
         //up the ram
         ram_in_use += CONSTANTS.RAM.HACKNET
         //change the RAM
         ns.ramOverride(ram_in_use)
         //init
-        imports.hacknet.init(ns) //boost
+        programs.hacknet.init(ns) //boost
     }
-    if (owned_source_files.hasOwnProperty(10) && (ram_in_use + CONSTANTS.RAM.GRAFTING) < max_ram && !grafting
-        .available) {
-        //import scripts
-        imports.grafting = new grafting_obj()
-        //log
-        log.success(ns, "Main", "Imported Grafting, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GRAFTING +
-            " = " + (
-                ram_in_use + CONSTANTS.RAM.GRAFTING) + " < " + max_ram, true)
-        //set the object
-        ram_in_use += CONSTANTS.RAM.GRAFTING
-        //change the RAM
-        ns.ramOverride(ram_in_use)
-        //init
-        imports.grafting.init(ns) //other
-    }
+
+    //Corporation: money
     if (owned_source_files.hasOwnProperty(3) && (ram_in_use + CONSTANTS.RAM.CORPORATION) < max_ram && !corporation
         .available) {
         //import scripts
-        imports.corporation = new corporation_obj()
+        programs.corporation = new corporation_obj()
         //log
         log.success(ns, "Main", "Imported Corporation, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.CORPORATION +
             " = " + (
-                ram_in_use + CONSTANTS.RAM.CORPORATION) + " < " + max_ram, true)
+                ram_in_use + CONSTANTS.RAM.CORPORATION) + " / " + max_ram, true)
         //up the ram
         ram_in_use += CONSTANTS.RAM.CORPORATION
         //change the RAM
         ns.ramOverride(ram_in_use)
         //init
-        imports.corporation.init(ns) //other
-
+        programs.corporation.init(ns)
     }
 
-    //start share
-    share_exec(ns)
+    //Grafting: augmentations without installing
+    if (owned_source_files.hasOwnProperty(10) && (ram_in_use + CONSTANTS.RAM.GRAFTING) < max_ram && !grafting
+        .available) {
+        //import scripts
+        programs.grafting = new grafting_obj()
+        //log
+        log.success(ns, "Main", "Imported Grafting, RAM: " + ram_in_use + " + " + CONSTANTS.RAM.GRAFTING +
+            " = " + (
+                ram_in_use + CONSTANTS.RAM.GRAFTING) + " / " + max_ram, true)
+        //set the object
+        ram_in_use += CONSTANTS.RAM.GRAFTING
+        //change the RAM
+        ns.ramOverride(ram_in_use)
+        //init
+        programs.grafting.init(ns) //other
+    }
 
+    //start share (scales with leftover ram)
+    share_exec(ns)
     //return the ram in use and all objects
     return ram_in_use
 }

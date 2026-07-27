@@ -13,7 +13,12 @@ export class grafting_obj {
 
     
     init(ns) {
-        
+        //ns.disableLog("")
+    }
+
+    
+    manage(ns) {
+
     }
 }
 
@@ -23,4 +28,16 @@ getAugmentationGraftTime(augName)   Retrieves the time required to graft an aug.
 getGraftableAugmentations()         Retrieves a list of augmentations that can be grafted.
 graftAugmentation(augName, focus)   Begins grafting the named aug. You must be in New Tokyo to use this. When you call this API, the current work (grafting or other actions) will be canceled.
 waitForOngoingGrafting()            Wait until the ongoing grafting finishes or is canceled.
+*/
+
+/*
+Grafting
+
+Grafting is an experimental process through which you can obtain the benefits of Augmentations, without needing to reboot your body.
+
+Grafting can be done at VitaLife in New Tokyo, where you'll find a shady researcher with questionable connections. From there, you can spend a sum of money to begin grafting Augmentations. This will take some time. When done, the Augmentation will be applied to your character without needing to install.
+
+Be warned, some who have tested grafting have reported an unidentified malware. Dubbed Entropy, this virus seems to grow in potency as more Augmentations are grafted, causing unpredictable affects to the victim.
+
+Note that when grafting an Augmentation, cancelling will not save your progress, and the money spent will not be returned.
 */

@@ -18,30 +18,17 @@ export class root_obj {
         ns.disableLog("scan")
         //save if singularity is available
         this.singularity_available = singularity_available
-        //check if available
         //maps of servers
         this.servers_ram = new Map()
         this.servers_money = new Map()
-        this.servers_found = new Map()
-        //get the servers    
-        var scan_results = this.scan_servers(ns)
-        //for each server
-        for (const hostname of scan_results) {
-            //if home server
-            if (hostname == CONSTANTS.SERVER.HOME) {
-                //do nothing
-                continue
-            }
-            //kill all scripts on that server
-            //ns.killall(hostname)
-            //get number of ports to open
-            const server = ns.getServer(hostname)
-            //add to the map (value is required hacking tools)
-            this.servers_found.set(hostname, server)
-            //log.info(ns, "Root", "Found server '" + hostname + "' with '" + JSON.stringify(server) + "'")
-        }
         //debug
-        log.info(ns, "Root", "Init complete, found '" + this.servers_found.size + "' servers", true)
+        log.info(ns, "Root", "Init complete", true) //, found '" + this.servers_found.size + "' servers", true)
+    }
+
+    //function that sets if singularity is available
+    set_singularity_available(singularity_available) {
+        //set the flag
+        this.singularity_available = singularity_available
     }
 
 
@@ -60,8 +47,6 @@ export class root_obj {
     scan_server(ns, servers_found, server_name) {
         //get neighbours
         const neighbours = ns.scan(server_name)
-        //debug
-        //log.info(ns, "Root", "Found neighbours: '" + neighbours + "'")
         //for each neighbour found
         for (const neighbour of neighbours) {
             //if server is not yet found
@@ -74,85 +59,77 @@ export class root_obj {
         }
     }
 
+
     /** @param {NS} ns */
     async manage(ns) {
         //copy of list of servers found
-        const servers = this.servers_found
+        const servers = this.scan_servers(ns)
         //get number of hacking tools
         const hacking_tools_owned = this.get_number_of_hacking_tools_owned(ns)
         //get hacking level
-        const level_hacking = ns.getHackingLevel()
+        const level_hacking = ns.getPlayer().skills.hacking
         //for each server found
-        for (const [hostname, server] of servers) {
-            //ignore cloud server
-            if (hostname.includes("cloud")) {
+        for (const server of servers) {
+            //ignore home server
+            if (server.hostname == CONSTANTS.SERVER.HOME) {
+                //next
                 continue
             }
-            //log.info(ns, "Root", "Checking '" + hostname + "': '" + server.requiredHackingSkill + "', '" + server.numOpenPortsRequired + "'")
-            //check if we can hack it (according to hacking level)
-            if (level_hacking >= server.requiredHackingSkill && hacking_tools_owned >= server
-                .numOpenPortsRequired) {
-                //flag to check to remove or not
-                var flag_rooted = false
-                //flag to check if backdoored
-                //var flag_backdoored = false
-                //if not yet rooted
-                if (!server.hasAdminRights) {
-                    //check on what actions to perform
-                    switch (server.numOpenPortsRequired) {
-                        case 5:
-                            ns.sqlinject(hostname) //5th toool: hacking 750
-                        case 4:
-                            ns.httpworm(hostname) //4th toool: hacking 500
-                        case 3:
-                            ns.relaysmtp(hostname) //3rd tool: hacking 250
-                        case 2:
-                            ns.ftpcrack(hostname) //2nd tool: hacking 100
-                        case 1:
-                            ns.brutessh(hostname) //1st tool: hacking 50
-                        case 0:
-                            break //no action needed
-                        default:
-                            log.error(ns, "Root", "Uncaught condition on 'required_hacking_tools': '" +
-                                JSON.stringify(required_hacking_tools) + "'");
-                            break
-                    }
-                    //nuke to get root access
-                    if (ns.nuke(hostname)) {
-                        //set flag
-                        flag_rooted = true
-                        //log success
-                        log.success(ns, "Root", "Rooted '" + hostname + "'")
-                    }
-                } else {
-                    //set flag
-                    flag_rooted = true
-                    //log success
-                    log.success(ns, "Root", "Already rooted '" + hostname + "'")
+            //ignore cloud servers, but add to ram
+            if (server.hostname.includes("cloud")) {
+                //only save ram 
+                this.servers_ram.set(server.hostname, server.maxRam)
+                //next
+                continue
+            }
+            //set flag to check after rooting a server for backdoor purposes
+            var flag_server_rooted = false
+            //if we don't have rights, but we have the hacking level and the tools
+            if (!server.hasAdminRights && level_hacking >= server.requiredHackingSkill && hacking_tools_owned >=
+                server.numOpenPortsRequired) {
+                //check on what actions to perform
+                switch (server.numOpenPortsRequired) {
+                    case 5:
+                        ns.sqlinject(server.hostname) //5th toool: hacking 750
+                    case 4:
+                        ns.httpworm(server.hostname) //4th toool: hacking 500
+                    case 3:
+                        ns.relaysmtp(server.hostname) //3rd tool: hacking 250
+                    case 2:
+                        ns.ftpcrack(server.hostname) //2nd tool: hacking 100
+                    case 1:
+                        ns.brutessh(server.hostname) //1st tool: hacking 50
+                    case 0:
+                        break //no action needed
+                    default:
+                        log.error(ns, "Root", "Uncaught condition on 'required_hacking_tools': '" +
+                            JSON.stringify(server.required_hacking_tools) + "'");
+                        break
                 }
-                //if rooted
-                if (flag_rooted) {
-                    //copy scripts
-                    //ns.scp(CONSTANTS.SCRIPT.TO_COPY.HACK, hostname)
-                    //if backdoor not installed and is not home and does not include "cloud"
-                    if (this.singularity_available && !server.backdoorInstalled && hostname != CONSTANTS.SERVER.HOME && !hostname.includes("cloud")) {
-                        //debug
-                        log.info(ns, "Root", "'" + hostname + "' vs '" + CONSTANTS.SERVER.HOME + "'")
-                        //backdoor the server
-                        await this.backdoor_server(ns, hostname)                                        
-                    }
-                    //check if there is money
-                    if (server.moneyMax > 0 || server.moneyMax != "0") {
-                        //only save money
-                        this.servers_money.set(hostname, server.moneyMax)
-                    }
-                    //check ram
-                    if (server.maxRam > 0) {
-                        //only save ram 
-                        this.servers_ram.set(hostname, server.maxRam)
-                    }
-                    //remove from original list to prevent future checks
-                    this.servers_found.delete(hostname)
+                //nuke to get root access
+                if (ns.nuke(server.hostname)) {
+                    //set flag
+                    flag_server_rooted = true
+                    //log success
+                    log.success(ns, "Root", "Rooted '" + server.hostname + "'")
+                }
+            }
+            //if it was already rooted or we have rooted it just now
+            if (server.hasAdminRights || flag_server_rooted) {
+                //check if we need to backdoor and we have singularity to backdoor
+                if (!server.backdoorInstalled && this.singularity_available) {
+                    //backdoor the server
+                    await this.backdoor_server(ns, server.hostname)
+                }
+                //check if there is money
+                if (server.moneyMax > 0 || server.moneyMax != "0") {
+                    //only save money
+                    this.servers_money.set(server.hostname, server.moneyMax)
+                }
+                //check ram
+                if (server.maxRam > 0) {
+                    //only save ram 
+                    this.servers_ram.set(server.hostname, server.maxRam)
                 }
             }
         }
@@ -191,13 +168,13 @@ export class root_obj {
             //update target for next scan
             step = nextStep
         }
-        
+
         //for every jump of the route    
         for (let jump of route) {
             //connect to the step
             eval("ns.singularity.connect('" + jump + "')")
         }
-        
+
         //try-catch to ensure script not crashing
         try {
             //install backdoor

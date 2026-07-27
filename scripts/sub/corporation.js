@@ -12,7 +12,7 @@ export class corporation_obj {
 
 
     init(ns) {
-        
+        //ns.disableLog("")
     }
 
     

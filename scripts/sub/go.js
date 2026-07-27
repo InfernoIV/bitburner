@@ -91,7 +91,9 @@ export class go_obj {
         this.make_move(ns)
     }
 
-
+    /*
+    go.getStats     0
+    */
     //start a new game: select an opponent and a board size
     start_new_game(ns) {
         //debug
@@ -165,10 +167,10 @@ export class go_obj {
                 log.warning(ns, "Go", change_message + " against " + opponent_current + ", next opponent: " + opponent_next, true)
             }
             //reset stats to easily see if we have won 2x
-            ns.go.analysis.resetStats(true)
+            //ns.go.analysis.resetStats(true)
             //set wins back to 0
-            this.wins = 0
-            this.losses = 0
+            this.wins = stats[opponent_next].wins //0
+            this.losses = stats[opponent_next].losses// 0
             this.loss_streak = 0
         }
 

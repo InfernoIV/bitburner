@@ -7,11 +7,8 @@ import * as evaluate from "scripts/sub/evaluate.js"
 export function share_exec(ns) {
     //get home information
     const server_home = ns.getServer(CONSTANTS.SERVER.HOME)
-    //the the ram available
-    //const ram_server_max = parseFloat(server_home.maxRam)
     //get the available ram
-    const ram_available = server_home.maxRam - server_home.ramUsed  /*ram_server_max - CONSTANTS.RAM.MAIN.ORCHESTRATOR - CONSTANTS.RAM.EVAL_ORCHESTRATOR -
-        CONSTANTS.RAM.MAIN.EVAL*/
+    const ram_available = server_home.maxRam - server_home.ramUsed 
     //check how many times we can run the script
     const threads = Math.floor(ram_available / CONSTANTS.RAM.WORKER.SHARE)
     //debug

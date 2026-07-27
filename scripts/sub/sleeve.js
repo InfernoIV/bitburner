@@ -14,7 +14,11 @@ export class sleeve_obj {
 
 
     init(ns) {
-        
+        //ns.disableLog("")
+    }
+
+    manage(ns) {
+      
     }
 }
 
