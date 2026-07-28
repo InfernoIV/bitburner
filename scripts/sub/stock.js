@@ -37,7 +37,7 @@ export class stock_obj {
                     const profit = ns.stock.sellStock(symbol, sharesLong)
                     //if profit
                     if (profit > 0) {
-                        log.info(ns, "Stock", "Sold '" + symbol + "' * " + sharesLong + " for a profit of " + profit, true)
+                        log.success(ns, "Stock", "Sold '" + symbol + "' * " + sharesLong + " for a profit of " + profit)
                     }
                 }
                 /*

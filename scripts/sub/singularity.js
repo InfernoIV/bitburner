@@ -73,7 +73,8 @@ export class singularity_obj {
         this.manage_factions(ns)
         //manage player actions
         this.manage_player(ns)
-        //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
+        //manage augments
+        this.manage_augments(ns)
     }
 
 
@@ -117,7 +118,7 @@ export class singularity_obj {
             //try to buy
             if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.FTP_CRACK)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.FTP_CRACK + "'", true)
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.FTP_CRACK + "'", true)
                 //set flag
                 this.ftp_crack = true
             }
@@ -126,7 +127,7 @@ export class singularity_obj {
             //try to buy
             if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.RELAY_SMTP)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.RELAY_SMTP + "'", true)
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.RELAY_SMTP + "'", true)
                 //set flag
                 this.relay_smtp = true
             }
@@ -135,7 +136,7 @@ export class singularity_obj {
             //try to buy
             if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.HTTP_WORM)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HTTP_WORM + "'", true)
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.HTTP_WORM + "'", true)
                 //set flag
                 this.http_worm = true
             }
@@ -144,7 +145,7 @@ export class singularity_obj {
             //try to buy
             if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.SQL_INJECT)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.SQL_INJECT + "'", true)
+                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.SQL_INJECT + "'", true)
                 //set flag
                 this.sql_inject = true
             }
@@ -174,19 +175,11 @@ export class singularity_obj {
 
     */
     manage_player(ns) {
-        if (this.study(ns)) {
-            //training, stop
-            return
-            //no need for training
-        } else {
-            //do mug?
-            this.perform_action(ns, work_type.CRIME, "Mug")
-        }
-        //get player activity
-
-        //if not already doing something
-        //set to mug for now?
-
+        //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
+        if (this.study(ns)) return
+        if(this.work_for_faction(ns)) return
+        if(this.work_for_company(ns)) return
+        this.commit_crime(ns)
 
         /*
         bitnode multipliers can be 
@@ -199,6 +192,84 @@ export class singularity_obj {
         CodingContractMoney: 0,
         */
     }
+
+    /*
+    singularity.getAugmentationsFromFaction 5
+    singularity.getOwnedAugmentations       5
+    singularity.purchaseAugmentation        5
+    singularity.installAugmentations        5
+    singularity.getAugmentationPrice        2.5
+    */
+    manage_augments(ns) {
+        //get augments owned
+        var augments_owned = ns.singularity.getOwnedAugmentations(false)
+        //get factions
+        const factions = ns.getPlayer().factions
+        //get best rep
+        var best_rep = 0
+        //get best faction
+        var best_faction = ""
+        //for each faction
+        for  (const faction of factions) {
+            //get rep
+            const rep = ns.singularity.getFactionRep(faction)
+
+            log.info(ns, "Singularity", "Rep: " + rep + " (faction: " + faction + "), best_rep: " + best_rep, true)
+            //check if better than what we have
+            if (rep > best_rep) {
+                //save rep
+                best_rep = rep
+                //save faction
+                best_faction = faction
+            }
+
+            //augment_to_do = 
+            //get augmnets
+            const augments = ns.singularity.getAugmentationsFromFaction(faction) 
+            //for each augment
+            for (const augment in augments) {
+                /*/if neuroflux
+                if (augment == "") {
+                    //ignore
+                    continue
+                }*/
+                //if not owned
+                if (!augment in augments_owned) {
+                    //get the price
+                    //var price = ns.singularity.getAugmentationPrice(augment)
+                    //try to buy
+                    const success = ns.singularity.purchaseAugmentation(faction, augmentation)
+                    //if successfull
+                    if(success) {
+                        //log
+                        log.success(ns, "Singularity", "Bought augment: '" + augment + "'", true)
+                    }
+                }                
+            }
+        }
+        //get bought augments
+        var augments_bought = ns.singularity.getOwnedAugmentations(true)
+        //if we have bought at least 5 augments
+        if ((augments_bought.length - augments_owned.length) >= 5) {
+            //placeholder
+            var success = true
+            //keep trying
+            while (success) {
+                //try to buy NFG
+                success = ns.singularity.purchaseAugmentation(best_faction, "NeuroFlux Governor")
+            }
+            //update
+            augments_owned = ns.singularity.getOwnedAugmentations(false)
+            augments_bought = ns.singularity.getOwnedAugmentations(true)
+            //install augments
+            //ns.singularity.installAugmentations(CONSTANTS.SCRIPT.BOOT)
+            //log
+            log.info(ns, "Singularity", "Ready to start install " + (augments_bought.length - augments_owned.length) + " new augments!")
+            ns.ui.openTail()
+            ns.exit()
+        }
+    }
+
 
     /*
     getPlayer   
@@ -236,6 +307,96 @@ export class singularity_obj {
         }
     }
 
+
+    /*
+    Singularity.getFactionFavor 1
+    */
+    work_for_faction(ns) {
+        //constant
+        const favor_for_donate = 150
+        //get augments owned
+        const augments_owned = ns.getResetInfo().ownedAugs
+        //get factions
+        const factions = ns.getPlayer().factions
+        //variable to fill
+        var target_faction = ""
+        //for each faction
+        for (const faction of factions) {
+            //get favor
+            const favor = ns.singularity.getFactionFavor(faction)
+            //get rep
+            const rep = ns.singularity.getFactionRep(faction)
+            const rep_to_favor = Math.log1p(rep / 25000) / 0.019802627296179712
+            const favor_needed = favor_for_donate - favor - rep_to_favor
+            
+            //if we need to get more rep or favor
+            if (favor_needed > 0) {
+                //set as target faction
+                target_faction = faction
+                //stop
+                break
+            }
+        }
+        //if a target faction is set
+        if (target_faction != "") {
+            //set to work for faction
+            this.perform_action(ns, work_type.FACTION, target_faction) 
+            //indicate sucess
+            return true
+        }
+        //indicate failure
+        return false
+    }
+
+
+
+    work_for_company(ns) {
+        //get rep needed for faction
+        //const rep_needed = 400000
+        //faction name, company name
+        const company_factions = {
+            "ECorp": "ECorp",
+            "MegaCorp": "MegaCorp",
+            "Bachman & Associates": "Bachman & Associates",
+            "Blade Industries": "Blade Industries",
+            "NWO": "NWO",
+            "Clarke Incorporated": "Clarke Incorporated",
+            "OmniTek Incorporated": "OmniTek Incorporated",
+            "Four Sigma": "Four Sigma",
+            "KuaiGong International": "KuaiGong International",
+            "Fulcrum Secret Technologies": "Fulcrum Technologies",
+        }
+        //get factions
+        const factions_joined = ns.getPlayer().factions
+        //variable to fill
+        var target_company = ""
+
+        //for each company faction
+        for (const [faction, company] of company_factions) {
+            //if not yet joined
+            if (!faction in factions_joined) {
+                //set as target
+                target_company = company
+                //stop
+                break
+            }
+        }
+        //if there is an company set
+        if (target_company != "") {
+            //work for company
+            perform_action(ns, work_type.COMPANY, target_company)
+            //indicate success
+            return true
+        }
+        //indicate failure
+        return false
+    }
+
+    //commit crime
+    commit_crime(ns){
+        //default to mug for now
+        this.perform_action(ns, work_type.CRIME, "Mug")
+    }
     /*
     singularity.getCurrentWork      0.5
     singularity.commitCrime         5
@@ -320,6 +481,7 @@ export class singularity_obj {
                     //check for stats
                     switch (activity) {
                         case "hacking":
+                        case "Algorithms": 
                             ns.singularity.universityCourse(university, "Algorithms", false)
                             return
 
@@ -340,6 +502,7 @@ export class singularity_obj {
                             return
 
                         case "charisma":
+                        case "Leadership":
                             ns.singularity.universityCourse(university, "Leadership", false)
                             return
 
@@ -384,6 +547,8 @@ export class singularity_obj {
             }
         }
     }
+
+
 }
 
 const gyms = {
@@ -424,6 +589,48 @@ const work_type = {
 
 /*
 
+/*
+Faction 'Illuminati': '[{"type":"numAugmentations","numAugmentations":30},{"type":"money","money":150000000000},{"type":"skills","skills":{"hacking":1500}},{"type":"skills","skills":{"strength":1200}},{"type":"skills","skills":{"defense":1200}},{"type":"skills","skills":{"dexterity":1200}},{"type":"skills","skills":{"agility":1200}}]'
+Faction 'Daedalus': '[{"type":"numAugmentations","numAugmentations":30},{"type":"money","money":100000000000},{"type":"someCondition","conditions":[{"type":"skills","skills":{"hacking":2500}},{"type":"skills","skills":{"strength":1500,"defense":1500,"dexterity":1500,"agility":1500}}]}]'
+Faction 'The Covenant': '[{"type":"numAugmentations","numAugmentations":20},{"type":"money","money":75000000000},{"type":"skills","skills":{"hacking":850}},{"type":"skills","skills":{"strength":850}},{"type":"skills","skills":{"defense":850}},{"type":"skills","skills":{"dexterity":850}},{"type":"skills","skills":{"agility":850}}]'
+
+Faction 'ECorp': '[{"type":"employedBy","company":"ECorp"},{"type":"companyReputation","company":"ECorp","reputation":400000}]'
+Faction 'MegaCorp': '[{"type":"employedBy","company":"MegaCorp"},{"type":"companyReputation","company":"MegaCorp","reputation":400000}]'
+Faction 'Bachman & Associates': '[{"type":"employedBy","company":"Bachman & Associates"},{"type":"companyReputation","company":"Bachman & Associates","reputation":400000}]'
+Faction 'Blade Industries': '[{"type":"employedBy","company":"Blade Industries"},{"type":"companyReputation","company":"Blade Industries","reputation":400000}]'
+Faction 'NWO': '[{"type":"employedBy","company":"NWO"},{"type":"companyReputation","company":"NWO","reputation":400000}]'
+Faction 'Clarke Incorporated': '[{"type":"employedBy","company":"Clarke Incorporated"},{"type":"companyReputation","company":"Clarke Incorporated","reputation":400000}]'
+Faction 'OmniTek Incorporated': '[{"type":"employedBy","company":"OmniTek Incorporated"},{"type":"companyReputation","company":"OmniTek Incorporated","reputation":400000}]'
+Faction 'Four Sigma': '[{"type":"employedBy","company":"Four Sigma"},{"type":"companyReputation","company":"Four Sigma","reputation":400000}]'
+Faction 'KuaiGong International': '[{"type":"employedBy","company":"KuaiGong International"},{"type":"companyReputation","company":"KuaiGong International","reputation":400000}]'
+Faction 'Fulcrum Secret Technologies': '[{"type":"employedBy","company":"Fulcrum Technologies"},{"type":"companyReputation","company":"Fulcrum Technologies","reputation":400000},{"type":"backdoorInstalled","server":"fulcrumassets"}]'
+
+Faction 'BitRunners': '[{"type":"backdoorInstalled","server":"run4theh111z"}]'
+Faction 'The Black Hand': '[{"type":"backdoorInstalled","server":"I.I.I.I"}]'
+Faction 'NiteSec': '[{"type":"backdoorInstalled","server":"avmnite-02h"}]'
+Faction 'CyberSec': '[{"type":"backdoorInstalled","server":"CSEC"}]'
+
+Faction 'Aevum': '[{"type":"city","city":"Aevum"},{"type":"money","money":40000000}]'
+Faction 'Chongqing': '[{"type":"city","city":"Chongqing"},{"type":"money","money":20000000}]'
+Faction 'Ishima': '[{"type":"city","city":"Ishima"},{"type":"money","money":30000000}]'
+Faction 'New Tokyo': '[{"type":"city","city":"New Tokyo"},{"type":"money","money":20000000}]'
+Faction 'Sector-12': '[{"type":"city","city":"Sector-12"},{"type":"money","money":15000000}]'
+Faction 'Volhaven': '[{"type":"city","city":"Volhaven"},{"type":"money","money":50000000}]'
+
+Faction 'Speakers for the Dead': '[{"type":"not","condition":{"type":"employedBy","company":"Central Intelligence Agency"}},{"type":"not","condition":{"type":"employedBy","company":"National Security Agency"}},{"type":"skills","skills":{"hacking":100}},{"type":"skills","skills":{"strength":300}},{"type":"skills","skills":{"defense":300}},{"type":"skills","skills":{"dexterity":300}},{"type":"skills","skills":{"agility":300}},{"type":"numPeopleKilled","numPeopleKilled":30},{"type":"karma","karma":-45}]'
+Faction 'The Dark Army': '[{"type":"city","city":"Chongqing"},{"type":"not","condition":{"type":"employedBy","company":"Central Intelligence Agency"}},{"type":"not","condition":{"type":"employedBy","company":"National Security Agency"}},{"type":"skills","skills":{"hacking":300}},{"type":"skills","skills":{"strength":300}},{"type":"skills","skills":{"defense":300}},{"type":"skills","skills":{"dexterity":300}},{"type":"skills","skills":{"agility":300}},{"type":"numPeopleKilled","numPeopleKilled":5},{"type":"karma","karma":-45}]'
+Faction 'The Syndicate': '[{"type":"someCondition","conditions":[{"type":"city","city":"Aevum"},{"type":"city","city":"Sector-12"}]},{"type":"not","condition":{"type":"employedBy","company":"Central Intelligence Agency"}},{"type":"not","condition":{"type":"employedBy","company":"National Security Agency"}},{"type":"money","money":10000000},{"type":"skills","skills":{"hacking":200}},{"type":"skills","skills":{"strength":200}},{"type":"skills","skills":{"defense":200}},{"type":"skills","skills":{"dexterity":200}},{"type":"skills","skills":{"agility":200}},{"type":"karma","karma":-90}]'
+Faction 'Silhouette': '[{"type":"someCondition","conditions":[{"type":"jobTitle","jobTitle":"Chief Technology Officer"},{"type":"jobTitle","jobTitle":"Chief Financial Officer"},{"type":"jobTitle","jobTitle":"Chief Executive Officer"}]},{"type":"money","money":15000000},{"type":"karma","karma":-22}]'
+Faction 'Tetrads': '[{"type":"someCondition","conditions":[{"type":"city","city":"Chongqing"},{"type":"city","city":"New Tokyo"},{"type":"city","city":"Ishima"}]},{"type":"skills","skills":{"strength":75}},{"type":"skills","skills":{"defense":75}},{"type":"skills","skills":{"dexterity":75}},{"type":"skills","skills":{"agility":75}},{"type":"karma","karma":-18}]'
+Faction 'Slum Snakes': '[{"type":"skills","skills":{"strength":30}},{"type":"skills","skills":{"defense":30}},{"type":"skills","skills":{"dexterity":30}},{"type":"skills","skills":{"agility":30}},{"type":"money","money":1000000},{"type":"karma","karma":-9}]'
+
+Faction 'Tian Di Hui': '[{"type":"someCondition","conditions":[{"type":"city","city":"Chongqing"},{"type":"city","city":"New Tokyo"},{"type":"city","city":"Ishima"}]},{"type":"skills","skills":{"hacking":50}},{"type":"money","money":1000000}]'
+
+
+Faction 'Bladeburners': '[{"type":"someCondition","conditions":[{"type":"someCondition","conditions":[{"type":"bitNodeN","bitNodeN":6},{"type":"sourceFile","sourceFile":6}]},{"type":"someCondition","conditions":[{"type":"bitNodeN","bitNodeN":7},{"type":"sourceFile","sourceFile":7}]}]},{"type":"bladeburnerRank","bladeburnerRank":25}]'
+Faction 'Church of the Machine God': '[{"type":"someCondition","conditions":[{"type":"bitNodeN","bitNodeN":13},{"type":"sourceFile","sourceFile":13}]},{"type":"numAugmentations","numAugmentations":0},{"type":"location","location":"Church of the Machine God"}]'
+Faction 'Shadows of Anarchy': '[{"type":"numInfiltrations","numInfiltrations":1}]'
+*
 
 
 

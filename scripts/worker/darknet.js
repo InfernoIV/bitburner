@@ -70,7 +70,7 @@ export async function main(ns) {
 function init(ns) {
     ns.disableLog("disableLog")
     ns.disableLog("sleep")
-    ns.disableLog("scp")
+    //ns.disableLog("scp")
     //ns.disableLog("exec")
     ns.disableLog("dnet.probe")
     ns.disableLog("dnet.phishingAttack")
@@ -83,10 +83,12 @@ async function authenticate_servers(ns, hostname_self) {
     const servers_darknet_hostnames = ns.dnet.probe()
     //for each server found by scan
     for (const darknet_hostname of servers_darknet_hostnames) {
+        //get player
+        const player = ns.getPlayer()
         //get server information
         var server_details = ns.dnet.getServerDetails(darknet_hostname)
-        //if no longer online or already authenticated
-        if (!server_details.isOnline || server_details.hasSession) {
+        //if no longer online or already authenticated or not enough charisma
+        if (!server_details.isOnline || server_details.hasSession || player.skills.charisma < server_details.requiredCharismaSkill) {
             //go to next
             continue
         }
@@ -110,6 +112,12 @@ async function authenticate_servers(ns, hostname_self) {
         } else if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //perform heartbleed for more information
             var heartbleed = await ns.dnet.heartbleed(darknet_hostname)
+            //if server became unavailable
+            if (heartbleed.code == ns.enums.DarknetResponseCode.ServiceUnavailable ||
+                heartbleed.code == ns.enums.DarknetResponseCode.DirectConnectionRequired) {
+                //next
+                continue
+            }
             //print message
             log.warning(ns, ns.pid, "Auth failed for '" + darknet_hostname + "': '" + JSON.stringify(result) +
                 "', getServerDetails: '" + JSON
@@ -177,28 +185,25 @@ async function authenticate_server(ns, server_details, hostname) {
         case "AccountsManager_4.2": //works
             return await find_number_higher_lower(ns, hostname, length)
 
-
-
-
-        case "OpenWebAccessPoint": //work in progress
-            log.info(ns, ns.pid, "server_details: " + JSON.stringify(server_details))
-            return await derive_password_from_heartbleed(ns, hostname, length)
-
-
-        case "NIL": //work in progress
+        case "NIL": //works
             return await increment_password(ns, hostname, length)
 
-        case "DeepGreen":  //work in progress
+        case "OpenWebAccessPoint": //works
+            return await derive_password_from_heartbleed(ns, hostname, length)         
+
+        case "DeepGreen":  //works
             return await mastermind_password(ns, hostname, length)
 
+
         case "buster":
+
         default:
             //heartbleed for more information
             var heartbleed = await ns.dnet.heartbleed(hostname)
             //log extra information
-            log.warning(ns, "", hostname + "-> unknown model '" + model +
+            log.error(ns, "", hostname + "-> unknown model '" + model +
                 "', server details: '" + JSON.stringify(server_details) + "', heartbleed: '" + JSON
-                .stringify(heartbleed) + "'")
+                .stringify(heartbleed) + "'", true)
             //open logs
             ns.ui.openTail()
             //stop for now
@@ -234,10 +239,7 @@ async function authenticate(ns, hostname, password) {
                 continue
 
             default:
-                log.error(ns, ns.pid, "authenticate - Uncaught result.code: '" + result.code + "'")
-                //debug
-                ns.ui.openTail()
-                ns.exit()
+                log.error(ns, ns.pid, "authenticate - Uncaught result.code: '" + result.code + "'", true)
         }
     }
 }
@@ -246,42 +248,52 @@ async function authenticate(ns, hostname, password) {
 //function that solves the password (in max 10 attempts)_
 async function mastermind_password(ns, hostname, lenght) {
     //open ui
-    ns.ui.openTail()
+    //ns.ui.openTail()
     //set index to loop
     var index = 0
     //create password
-    var password = [0,0,0] //[].fill(0,0,length)
+    var password = ["0","_","_"] //[].fill(0,0,length)
     //log.info(ns, ns.pid, "Starting with password: '" + password + "'", true)
     //loop
     while (true) {
         //try password
-        var result = await try_passwords(ns, hostname, [password.join("")], "mastermind_password", true)
-       log.info(ns, ns.pid, "try_passwords: '" + JSON.stringify(result) + "'")
+        var result = await try_passwords(ns, hostname, [password.join("")], "mastermind_password")
+        //log.info(ns, ns.pid, "try_passwords: '" + JSON.stringify(result) + "'")
        
         //log.info(ns, ns.pid, "Tried password '" + password.join("") + "' -> " + JSON.stringify(result))
         //if failed
-        if (result == ns.enums.DarknetResponseCode.AuthFailure) {
+        if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //heartbleed for more information
             const heartbleed = await ns.dnet.heartbleed(hostname)
             //information
-            //log.info(ns, ns.pid, "heartbleed '" + JSON.stringify(heartbleed))
             //check if successfull
             if (heartbleed.success == true) {
-
+                //check if we have logs (we should..)
+                if (heartbleed.logs.length == 0) {
+                    //go next
+                    continue
+                }
+                log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(heartbleed) + "'")
                 const heartbleed_log = JSON.parse(heartbleed.logs[0])
-                //log.info(ns, ns.pid, "log: '" + JSON.stringify(heartbleed_log) + "'", true)
-                const data = heartbleed_log.data
-                //log.info(ns, ns.pid, "data: '" + JSON.stringify(data) + "'", true)
-                
+                log.info(ns, ns.pid, "log: '" + JSON.stringify(heartbleed_log) + "'")
+                const data = heartbleed_log.data   
+                log.info(ns, ns.pid, "data: '" + JSON.stringify(data) + "'")
                 //update the index
                 index = data.split(",")[0]
-                //update the password
-                password[index] += 1
-                if (password[index] > 9) {
-                    log.warning(ns, ns.pid, "mastermind_password: going out of bounds... -> '" + password + "', index: " + index )
-                    return
+                //check if we need to set to a number
+                if (password[index] == "_") {
+                    //set to 0
+                    password[index] = "0"
+                } else {
+                    //update the password
+                    password[index] = "" + (parseInt(password[index]) + 1)
                 }
-                //log.info(ns, ns.pid, "Updated password to: '" + password + "'", true)
+                //if overrunning (should not happen..)
+                if (password[index] > "10") {
+                    //set to 0
+                    password[index] = "0"
+                }
+                log.info(ns, ns.pid, "Updated password to: '" + password + "'")
                 //Hint: 0 symbols are match exactly,  and 0 symbols match but are in the wrong place.\",
                 //\"data\":\"0,0\
             } else {
@@ -318,36 +330,43 @@ async function increment_password(ns, hostname, length) {
     //loop
     while (true) {
         //try to auth
-        var result = await try_passwords(ns, hostname, [password.join("")], "increment_password", true) // authenticate(ns, hostname, password.join(""))
+        var result = await try_passwords(ns, hostname, [password.join("")], "increment_password") // authenticate(ns, hostname, password.join(""))
         //if failed
         if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //heartbleed for more information
             var heartbleed = await ns.dnet.heartbleed(hostname)
-            log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(heartbleed) + "'", true)
+            
             //check if successfull
             if (heartbleed.success == true) {
-                //debug
-                log.info(ns, ns.pid, "password failed: '" + password + "'", true)
+                log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(heartbleed) + "'")
                 //get the results in array
-                const heartbleed_log = heartbleed.logs[0]
-                log.info(ns, ns.pid, "log: '" + JSON.stringify(heartbleed_log) + "'", true)
-                const feedback = heartbleed_log.message.split(",")
-                log.info(ns, ns.pid, "Feedback: '" + feedback + "'", true)
+                const heartbleed_log = JSON.parse(heartbleed.logs[0])
+                const data = heartbleed_log.data
+                //if failing for some reason
+                if (data == undefined) {
+                    //try again
+                    continue
+                }
+                log.info(ns, ns.pid, "data: '" + JSON.stringify(data) + "'")
+                const feedback = data.split(",")
+                //log.info(ns, ns.pid, "Feedback: '" + feedback + "'", true)
+                var password_attempted = heartbleed_log.passwordAttempted.split("")
                 //for each value
-                for (let i = 0; i < feedback.lenght; i++) {
+                for (let i = 0; i < feedback.length; i++) {
                     //if incorrect
                     if(feedback[i] == "yesn't") {
                         //up the value
-                        password[i] += 1
+                        password[i] = parseInt(password_attempted[i]) + 1
+                    } else {
+                        password[i] = parseInt(password_attempted[i])
                     }
                 }
-                log.info(ns, ns.pid, "new password: '" + password + "'", true)
             } else {
                 //stop
-                return result
+                return heartbleed
             }
         //successfull, offline or moved
-        } else {
+        } else {            
             //stop
             return result
         }
@@ -397,21 +416,35 @@ async function derive_password_from_heartbleed(ns, hostname, length) {
     //try a password
     var result = await try_passwords(ns, hostname, ["0".repeat(length)], "derive_password_from_heartbleed", true)
     //log
-    log.info(ns, ns.pid, "derive_password_from_heartbleed (try_passwords): " + JSON.stringify(result), true)
+    log.info(ns, ns.pid, "derive_password_from_heartbleed (try_passwords): " + JSON.stringify(result))
     //if not succesfull
-    if (result == ns.enums.DarknetResponseCode.AuthFailure) {
+    if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
+        log.info(ns, ns.pid, "try_passwords - Heartbleeding for more information")
         //heartbleed for more information
         var heartbleed = await ns.dnet.heartbleed(hostname)
-        //get the log
-        const heartbleed_log = JSON.parse(heartbleed.logs[0])
-        log.info(ns, ns.pid, "heartbleed_log: '" + JSON.stringify(heartbleed_log) + "'")
-        //create regex
-        const regex = new RegExp(String.raw`\d{${length}}`, "g")
-        //get passwords
-        const matches = heartbleed_log.data.match(regex)
-        //log.info(ns, ns.pid, "Found '" + JSON.stringify(matches) + "' in '" + JSON.stringify(heartbleed_log.message) + "'". true)
-        //try passwords
-        result = await try_passwords(ns, hostname, matches, "derive_password_from_heartbleed")
+        log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(heartbleed) + "'")
+        //for each log
+        for (const log_raw of heartbleed.logs) {
+            //convert to object
+            const heartbleed_log = JSON.parse(log_raw)
+            //debug
+            log.info(ns, ns.pid, "heartbleed_log: '" + JSON.stringify(heartbleed_log) + "'")
+            //if there is data
+            if ("data" in heartbleed_log) {
+                //create regex
+                const regex = new RegExp(String.raw`\d{${length}}`, "g") //RegExp(String.raw`\D\d{${length}}\D`, "g")
+                //get passwords
+                const matches = heartbleed_log.data.match(regex)
+                //debug
+                log.success(ns, ns.pid, "Found '" + JSON.stringify(matches) + "' in '" + JSON.stringify(heartbleed_log.message) + "'")
+                //try passwords
+                result = await try_passwords(ns, hostname, matches, "derive_password_from_heartbleed")
+                //check for success
+                if(result.success) {
+                    return result
+                }
+            }
+        }
     }
     //return result
     return result
@@ -447,7 +480,7 @@ async function try_default_passwords(ns, hostname, format, length) {
     //log
     log.error(ns, ns.pid, "")
     //should not happen
-    return ns.enums.DarknetResponseCode.AuthFailure
+    return {code: ns.enums.DarknetResponseCode.AuthFailure, success: false}
 }
 
 
@@ -514,9 +547,17 @@ async function find_number_higher_lower(ns, hostname, length) {
         if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //heartbleed for more information
             result = await ns.dnet.heartbleed(hostname)
-            if (result.code == ns.enums.DarknetResponseCode.Success) {
+            if (result.code == ns.enums.DarknetResponseCode.Success) {                
+                //log
+                log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(result) + "'")
+                //check if we have logs
+                const log_heartbleed_raw = result.logs[0]
+                if (!"data" in log_heartbleed_raw) {
+                    //go to next
+                    continue
+                }
                 //get the log
-                const log_heartbleed = JSON.parse(result.logs[0])
+                const log_heartbleed = JSON.parse(log_heartbleed_raw)
                 //if we need to go lower
                 if (log_heartbleed.data == "Lower") {
                     //decrease the number by 25%
@@ -532,10 +573,10 @@ async function find_number_higher_lower(ns, hostname, length) {
                     //stop
                     log.error(ns, ns.pid, "'" + hostname + "'heartbleed uncaught: '" + result.data + "' (" + JSON
                         .stringify(result) +
-                        ")")
-                    //debug
-                    ns.ui.openTail()
-                    ns.exit()
+                        ")", true)
+                    //next
+                    continue
+                    //ns.exit()
                 }
             } else {
                 //stop
@@ -562,42 +603,12 @@ async function find_number_divisible(ns, hostname, length) {
         //add to list
         passwords.push(i)
     }
-    /*
-    //try some numbers
-    var result = await try_passwords(ns, hostname, [0, 1, 2, 3, 4, 5], "find_number_divisible")
-    //get heartbleed
-    var heartbleed = await ns.dnet.heartbleed(hostname)
-    //if successfull
-    if (heartbleed.code == ns.enums.DarknetResponseCode.Success) {
-        //check logs
-        for (const log of heartbleed.logs) {
-            log.info(ns, ns.pid, "log: '" + JSON.stringify(log) + "'")
-            //get if divisible
-            const flag_divisible = !log.message.includes("not")
-            //get the number
-            const number = parseInt(log.message.split("'")[1]) //get the number
-            //new list
-            var passwords_new = []
-            //for each value saved
-            for (const password of passwords) {
-                //get leftover value
-                const leftover = password % number
-                //if not divisible
-                if ((flag_divisible && leftover == 0) || (!flag_divisible && leftover != 0)) {
-                    //add to the list
-                    passwords_new.push(password)
-                }
-            }
-            //overwrite old list
-            passwords = passwords_new
-        }
-    }*/
     //loop until found or server is offline / moved
     while (true) {
         //set default number of passwords to check, before heartbleed
         var amount = Math.max(5, passwords.length)
         //try the divisor
-        var result = await try_passwords(ns, hostname, passwords.slice(0,amount), "find_number_divisible", true)
+        var result = await try_passwords(ns, hostname, passwords.slice(0,amount), "find_number_divisible")
         //if incorrect
         if (result == ns.enums.DarknetResponseCode.AuthFailure) {
             //get heartbleed
@@ -740,7 +751,7 @@ function get_password(hint, lenght) {
 //"modelId":"PHP 5.4"
 async function sort_password(ns, hostname, data, length) {
     //check for lenght
-    if (length != 3) {
+    if (length > 3) {
         //indicate WIP
         log.warning(ns, "", "sorting for size '" + length + "' not yet implemented!", true)
         //return empty
@@ -750,9 +761,16 @@ async function sort_password(ns, hostname, data, length) {
     //create the combinations
     const s1 = data[0]
     const s2 = data[1]
+    var passwords
+
+    if (length == 2) {
+        passwords = [s1 + s2, s2 + s1]
+        //try the passwords
+        return await try_passwords(ns, hostname, passwords, "sort_password")
+    } 
+    
     const s3 = data[2]
-    //todo: make dynamic?
-    const passwords = [
+    passwords = [
         s1 + s2 + s3,
         s1 + s3 + s2,
         s2 + s3 + s1,
@@ -767,6 +785,17 @@ async function sort_password(ns, hostname, data, length) {
 
 //function that starts worker on server
 async function start_worker(ns, hostname) {
+    //get running scripts
+    const ps = ns.ps(hostname)
+    //if already running something
+    if (ps.length > 0) {
+        //log
+        log.info(ns, ns.pid, "Host '" + hostname +
+            "' is already running a worker!")
+        //next server
+        return
+    }
+
     //get server information
     const server_info = ns.getServer(hostname)
     //get server details
@@ -776,7 +805,7 @@ async function start_worker(ns, hostname) {
     //if failed
     if (!result) {
         //log warning
-        log.warning(ns, "", "Failed to copy '" + script + "' to '" + hostname + "'")
+        log.warning(ns, ns.pid, "Failed to copy '" + script + "' to '" + hostname + "'", true)
         //stop
         return
     }
@@ -793,7 +822,7 @@ async function start_worker(ns, hostname) {
     var threads = threads_while_blocked
     //if it has value to unblock
     if (threads_while_blocked < threads_unblocked) {
-        log.info(ns, ns.pid, "Unblocking ram for " + (threads_unblocked - threads_while_blocked) + " more threads", true)
+        //log.info(ns, ns.pid, "Unblocking ram for " + (threads_unblocked - threads_while_blocked) + " more threads")
         //variable for results 
         result = null
         //while still ram blocked
@@ -829,10 +858,13 @@ async function start_worker(ns, hostname) {
     }, hostname)
     //check if ok
     if (result == false) {
+        ns.ui.openTail()
         //debug
-        log.warning(ns, ns.pid, "Failed to start worker on '" + hostname + "' => " + JSON
-            .stringify(server_info))
-        //ns.ui.openTail()
+        log.warning(ns, ns.pid, "Failed to start worker (" + CONSTANTS.RAM.WORKER.DARKNET + " x " + threads + " = " + (CONSTANTS.RAM.WORKER.DARKNET * threads) + ") on '" + hostname + "' => " + JSON
+            .stringify(server_info), true)
+
+        //stop
+        ns.exit()
         //stop
         return
     }

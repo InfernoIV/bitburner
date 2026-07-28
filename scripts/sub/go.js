@@ -161,10 +161,10 @@ export class go_obj {
             opponent_next = this.opponent_list[opponent_index]
             if(change_message.includes("Won")) {
                 //debug
-                log.success(ns, "Go", change_message + " against " + opponent_current + ", next opponent: " + opponent_next, true)
+                log.success(ns, "Go", change_message + " against " + opponent_current + ", next opponent: " + opponent_next)
             } else {
                 //debug
-                log.warning(ns, "Go", change_message + " against " + opponent_current + ", next opponent: " + opponent_next, true)
+                log.warning(ns, "Go", change_message + " against " + opponent_current + ", next opponent: " + opponent_next)
             }
             //reset stats to easily see if we have won 2x
             //ns.go.analysis.resetStats(true)

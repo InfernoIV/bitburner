@@ -14,6 +14,7 @@ export const TIME = {
 
 //enum for script names
 export const SCRIPT = {
+    BOOT: "scripts/boot.js",
     MAIN: "scripts/main.js",
     JUMP: "scripts/jump.js",
     WORKER: {
@@ -136,8 +137,15 @@ export const RAM = {
     singularity.purchaseTor             2
     singularity.upgradeHomeRam          3   
     ls (fn)	                            0.2 -> already covered in root             
+
+    singularity.getAugmentationsFromFaction 5
+    singularity.getOwnedAugmentations       5
+    singularity.purchaseAugmentation        5
+    singularity.installAugmentations        5
+    singularity.getAugmentationPrice        2.5
+
     */
-    SINGULARITY: 31.5,
+    SINGULARITY: 54.0,
 
     /*
 
@@ -182,6 +190,17 @@ export const RAM = {
     ns.go.cheat.playTwoMoves                8
     */
     GO_CHEAT: 24.0,
+
+
+    /*
+    hacknet.numNodes        0.5
+    hacknet.purchaseNode    0.5
+    hacknet.getNodeStats    0.5
+    hacknet.upgradeRam      0.5
+    hacknet.upgradeLevel    0.5
+    hacknet.upgradeCore     0.5
+    */
+    HACKNET: 3.0,
 
     /*
     ns.getPlayer    0.5
@@ -229,11 +248,6 @@ export const RAM = {
     /*
 
     */
-    HACKNET: 0.0,
-
-    /*
-
-    */
     CORPORATION: 0.0,
 
     /*
@@ -268,18 +282,23 @@ export const RAM = {
         SHARE: 4.0,
 
         /*
-        base                                1.6
-        ns.dnet.probe()                     0.2 GB
-        ns.dnet.authenticate()              0.4 GB
-        ns.dnet.phishingAttack()            2 GB 
-        ns.dnet.openCache()                 2 GB
-        ns.dnet.unleashStormSeed            0.1 GB
-        ns.dnet.labradar()                  0 GB
-        ns.dnet.labreport()                 0 GB
-        ns.dnet.heartbleed()                0.6 GB
-        ns.getServer()                      2 GB
-        1.6 + 0.2 + 0.4 + 2 + 2 + 0.1 + 0 + 0 + 0.6 + 2 = 8.9
+        getServer (fn)	2.00GB
+        dnet.openCache (fn)	2.00GB
+        dnet.phishingAttack (fn)	2.00GB
+        baseCost (misc)	1.60GB
+        exec (fn)	1.30GB
+        dnet.memoryReallocation (fn)	1.00GB
+        dnet.heartbleed (fn)	0.60GB
+        scp (fn)	0.60GB
+        rm (fn)	0.60GB
+        getPlayer (fn)	0.50GB
+        dnet.authenticate (fn)	0.40GB
+        dnet.probe (fn)	0.20GB
+        ps (fn)	0.20GB
+        ls (fn)	0.20GB
+        dnet.getServerDetails (fn)	0.10GB
+        dnet.unleashStormSeed (fn)	0.10GB
         */
-        DARKNET: 8.9,
+        DARKNET: 13.4,
     },
 }

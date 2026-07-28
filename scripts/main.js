@@ -538,7 +538,7 @@ async function manage_imports(ns, ram_in_use, programs) {
 
     //Hacknet
     //HacknetNodeMoney can be 0 (can be used for something different than money?)
-    if ((current_node == 9 || owned_source_files.hasOwnProperty(9)) && !programs.hacknet.available) { 
+    if ((true || current_node == 9 || owned_source_files.hasOwnProperty(9)) && !programs.hacknet.available) { 
         //check ram
         if ((ram_in_use + CONSTANTS.RAM.HACKNET) < max_ram) {
             //log

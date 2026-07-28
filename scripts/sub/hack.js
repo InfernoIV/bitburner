@@ -281,7 +281,7 @@ export class hack_obj {
             return CONSTANTS.STATE.HACK.GROW
         } else {
             //debug
-            log.info(ns, "Hack", "hack target '" + this.hack_target + "' is prepared for hacking", true)
+            //log.info(ns, "Hack", "hack target '" + this.hack_target + "' is prepared for hacking", true)
         }
         return CONSTANTS.STATE.HACK.HACK
     }

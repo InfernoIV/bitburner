@@ -54,9 +54,9 @@ export class darknet_obj {
 			//calc ram costs
 			const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.WORKER.DARKNET)            
             //copy scripts
-            var results = ns.scp(CONSTANTS.SCRIPT.TO_COPY.DARKNET, CONSTANTS.SERVER.DARKWEB)
+            var result = ns.scp(CONSTANTS.SCRIPT.TO_COPY.DARKNET, CONSTANTS.SERVER.DARKWEB)
             //start worker
-            var result = ns.exec(CONSTANTS.SCRIPT.WORKER.DARKNET, CONSTANTS.SERVER.DARKWEB, {
+            result = ns.exec(CONSTANTS.SCRIPT.WORKER.DARKNET, CONSTANTS.SERVER.DARKWEB, {
                 preventDuplicates: true,
                 threads: threads,
             }, CONSTANTS.SERVER.DARKWEB)
