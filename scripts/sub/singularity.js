@@ -214,7 +214,7 @@ export class singularity_obj {
             //get rep
             const rep = ns.singularity.getFactionRep(faction)
 
-            log.info(ns, "Singularity", "Rep: " + rep + " (faction: " + faction + "), best_rep: " + best_rep, true)
+            //log.info(ns, "Singularity", "Rep: " + rep + " (faction: " + faction + "), best_rep: " + best_rep, true)
             //check if better than what we have
             if (rep > best_rep) {
                 //save rep
@@ -312,8 +312,7 @@ export class singularity_obj {
     Singularity.getFactionFavor 1
     */
     work_for_faction(ns) {
-        //constant
-        const favor_for_donate = 150
+
         //get augments owned
         const augments_owned = ns.getResetInfo().ownedAugs
         //get factions
@@ -322,11 +321,42 @@ export class singularity_obj {
         var target_faction = ""
         //for each faction
         for (const faction of factions) {
-            //get favor
-            const favor = ns.singularity.getFactionFavor(faction)
+            //save highest rep needed
+            var rep_highest = 0
+            //check if we have enough rep for the augments
+            //get augmnets
+            const augments = ns.singularity.getAugmentationsFromFaction(faction) 
+            //get owned augments
+            const augments_owned = ns.singularity.getOwnedAugmentations(true)
+            //for each augment the faction offers
+            for (const augment of augments) {
+                //if neurflux governor
+                if (augment == "NeuroFlux Governor") {
+                    //ignore
+                    continue
+                }
+                //if not owned
+                if (!(augment in augments_owned)) {
+                    //get rep requirement
+                    const augment_rep = ns.singularity.getAugmentationRepReq(augment)
+                    //if higher than what we have saved
+                    if (augment_rep > rep_highest) {
+                        //save the rep
+                        rep_highest = augment_rep                       
+                    }
+                }
+            }
             //get rep
             const rep = ns.singularity.getFactionRep(faction)
+            //if we have enough rep for all augments
+            if (rep >= rep_highest) {
+                //go to next
+                continue
+            } 
+            //get favor
+            const favor = ns.singularity.getFactionFavor(faction)            
             const rep_to_favor = Math.log1p(rep / 25000) / 0.019802627296179712
+            const favor_for_donate = 150
             const favor_needed = favor_for_donate - favor - rep_to_favor
             
             //if we need to get more rep or favor
@@ -370,7 +400,7 @@ export class singularity_obj {
         const factions_joined = ns.getPlayer().factions
         //variable to fill
         var target_company = ""
-
+        /*
         //for each company faction
         for (const [faction, company] of company_factions) {
             //if not yet joined
@@ -387,7 +417,7 @@ export class singularity_obj {
             perform_action(ns, work_type.COMPANY, target_company)
             //indicate success
             return true
-        }
+        }*/
         //indicate failure
         return false
     }
@@ -404,7 +434,8 @@ export class singularity_obj {
     Singularity.gymWorkout          2
     singularity.workForFaction      3
     singularity.workForCompany      3
-    15.5
+    singularity.getFactionWorkTypes 1
+    16.5
     */
     perform_action(ns, type, activity) {
         //flag to keep track if we need to switch
@@ -452,8 +483,9 @@ export class singularity_obj {
             //depending on the type
             switch (type) {
                 case work_type.FACTION:
+                    const faction_work_type = ns.singularity.getFactionWorkTypes(activity)
                     //TODO: improve
-                    ns.singularity.workForFaction(activity, "hacking")
+                    ns.singularity.workForFaction(activity, faction_work_type[0])
                     return
 
                 case work_type.COMPANY:

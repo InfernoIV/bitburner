@@ -145,7 +145,7 @@ export const RAM = {
     singularity.getAugmentationPrice        2.5
 
     */
-    SINGULARITY: 54.0,
+    SINGULARITY: 55.0,
 
     /*
 
