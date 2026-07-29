@@ -71,8 +71,9 @@ export class singularity_obj {
         }
         //manage faction (invites)
         this.manage_factions(ns)
+        //log.info(ns, "Singularity", "Programs: '" + JSON.stringify(programs) + "'", true)
         //manage player actions
-        this.manage_player(ns)
+        this.manage_player(ns, programs.darknet.darknet_started)
         //manage augments
         this.manage_augments(ns)
     }
@@ -174,11 +175,17 @@ export class singularity_obj {
     /*
 
     */
-    manage_player(ns) {
+    manage_player(ns, darknet_started) {
         //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
         if (this.study(ns)) return
-        if(this.work_for_faction(ns)) return
-        if(this.work_for_company(ns)) return
+        //get money
+        if (!darknet_started) {
+            this.commit_crime(ns)
+            return
+        }
+
+        if (this.work_for_faction(ns)) return
+        if (this.work_for_company(ns)) return
         this.commit_crime(ns)
 
         /*
@@ -202,7 +209,7 @@ export class singularity_obj {
     */
     manage_augments(ns) {
         //get augments owned
-        var augments_owned = ns.singularity.getOwnedAugmentations(false)
+        var augments_owned = ns.singularity.getOwnedAugmentations(true)
         //get factions
         const factions = ns.getPlayer().factions
         //get best rep
@@ -227,18 +234,19 @@ export class singularity_obj {
             //get augmnets
             const augments = ns.singularity.getAugmentationsFromFaction(faction) 
             //for each augment
-            for (const augment in augments) {
+            for (const augment of augments) {
                 /*/if neuroflux
                 if (augment == "") {
                     //ignore
                     continue
                 }*/
                 //if not owned
-                if (!augment in augments_owned) {
+                if (!augments_owned.includes(augment)) {
+                    //log.info(ns, "Singularity", "Found augment '" + augment + "' in faction '" + faction + "'", true)
                     //get the price
                     //var price = ns.singularity.getAugmentationPrice(augment)
                     //try to buy
-                    const success = ns.singularity.purchaseAugmentation(faction, augmentation)
+                    const success = ns.singularity.purchaseAugmentation(faction, augment)
                     //if successfull
                     if(success) {
                         //log
@@ -262,11 +270,11 @@ export class singularity_obj {
             augments_owned = ns.singularity.getOwnedAugmentations(false)
             augments_bought = ns.singularity.getOwnedAugmentations(true)
             //install augments
-            //ns.singularity.installAugmentations(CONSTANTS.SCRIPT.BOOT)
+            ns.singularity.installAugmentations(CONSTANTS.SCRIPT.BOOT)
             //log
             log.info(ns, "Singularity", "Ready to start install " + (augments_bought.length - augments_owned.length) + " new augments!")
-            ns.ui.openTail()
-            ns.exit()
+            //ns.ui.openTail()
+            //ns.exit()
         }
     }
 
@@ -314,7 +322,7 @@ export class singularity_obj {
     work_for_faction(ns) {
 
         //get augments owned
-        const augments_owned = ns.getResetInfo().ownedAugs
+        const augments_owned = ns.singularity.getOwnedAugmentations(true)//ns.getResetInfo().ownedAugs
         //get factions
         const factions = ns.getPlayer().factions
         //variable to fill
@@ -326,8 +334,6 @@ export class singularity_obj {
             //check if we have enough rep for the augments
             //get augmnets
             const augments = ns.singularity.getAugmentationsFromFaction(faction) 
-            //get owned augments
-            const augments_owned = ns.singularity.getOwnedAugmentations(true)
             //for each augment the faction offers
             for (const augment of augments) {
                 //if neurflux governor
@@ -336,7 +342,7 @@ export class singularity_obj {
                     continue
                 }
                 //if not owned
-                if (!(augment in augments_owned)) {
+                if (!augments_owned.includes(augment)) {
                     //get rep requirement
                     const augment_rep = ns.singularity.getAugmentationRepReq(augment)
                     //if higher than what we have saved
@@ -422,10 +428,40 @@ export class singularity_obj {
         return false
     }
 
+    /*
+    getCrimeChance(crime)       5
+    getCrimeStats(crime)        5
+    commitCrime(crime, focus)   5
+    */
     //commit crime
     commit_crime(ns){
+        //save best crime
+        var best_crime = "Mug"
+        //best score
+        var best_score = 0
+        //get crimes
+        for (const name in ns.enums.CrimeType) {
+            //get the actual crime
+            const crime = ns.enums.CrimeType[name]
+            //get chrime change
+            const crime_chance = ns.singularity.getCrimeChance(crime)
+            //check for chance
+            if (crime_chance >= 1) {
+                //get crime stats
+                const crime_stats = ns.singularity.getCrimeStats(crime)
+                //calc score (money / time)
+                var score = crime_stats.money / crime_stats.time
+                //if better than what we have
+                if (score > best_score) {
+                    //set score
+                    best_score = score
+                    //set crime
+                    best_crime = crime
+                }
+            }
+        }
         //default to mug for now
-        this.perform_action(ns, work_type.CRIME, "Mug")
+        this.perform_action(ns, work_type.CRIME, best_crime)
     }
     /*
     singularity.getCurrentWork      0.5

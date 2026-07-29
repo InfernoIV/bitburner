@@ -552,7 +552,8 @@ async function find_number_higher_lower(ns, hostname, length) {
                 log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(result) + "'")
                 //check if we have logs
                 const log_heartbleed_raw = result.logs[0]
-                if (!"data" in log_heartbleed_raw) {
+                //check if the property exists
+                if (!log_heartbleed_raw.hasOwnProperty('data')) {
                     //go to next
                     continue
                 }

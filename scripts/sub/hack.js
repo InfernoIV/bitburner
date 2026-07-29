@@ -93,7 +93,7 @@ export class hack_obj {
                         }
                     }
                     //debug
-                    log.info(ns, "Hack", "Started weaken for '" + this.hack_target + "' = " + Math.ceil((server_info.hackDifficulty / server_info.minDifficulty) * 100) + "%", true)                                   
+                    log.info(ns, "Hack", "Started weaken for '" + this.hack_target + "' = " + Math.ceil((server_info.hackDifficulty / server_info.minDifficulty) * 100) + "%")                                   
                     //stop
                     break
 
@@ -138,7 +138,7 @@ export class hack_obj {
                     //set the time to wait
                     time_wait = time_weaken + job_delay - CONSTANTS.TIME.SAFETY
                     //debug
-                    log.info(ns, "Hack", "Started grow for '" + this.hack_target + "' = " + Math.floor((server_info.moneyAvailable / server_info.moneyMax) * 100) + "%", true)
+                    log.info(ns, "Hack", "Started grow for '" + this.hack_target + "' = " + Math.floor((server_info.moneyAvailable / server_info.moneyMax) * 100) + "%")
                     //stop
                     break
 
@@ -207,7 +207,7 @@ export class hack_obj {
                     //set the time to wait
                     time_wait = time_weaken + job_delay //- CONSTANTS.TIME.SAFETY
                     //debug
-                    log.info(ns, "Hack", "Started hack for '" + this.hack_target + "'", true)
+                    log.info(ns, "Hack", "Started hack for '" + this.hack_target + "'")
                     //stop
                     break
                     //any other scenario

@@ -169,7 +169,7 @@ export async function main(ns) {
         programs.stanek.manage(ns)
 
         //do stuff
-        programs.singularity.manage(ns, programs.sleeve.available, programs.bladeburner.available, programs.grafting.available)
+        programs.singularity.manage(ns, programs)
         
         //check and add cloud servers
         //cloud.manage(ns)
