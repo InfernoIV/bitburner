@@ -14,8 +14,7 @@ export function main(ns) {
     //HOW TO REACH ALL DARKNET SERVER OR DARKNET SCRIPTS RUNNING?
 
     //keep track of ram
-    const ram_in_use = CONSTANTS.RAM.MAIN + CONSTANTS.RAM.ROOT + CONSTANTS.RAM.CLOUD + CONSTANTS.RAM.HACK + CONSTANTS
-        .RAM.DARKNET + CONSTANTS.RAM.GO
+    const ram_in_use = CONSTANTS.RAM.MAIN
     //boot main
     ns.exec(CONSTANTS.SCRIPT.JUMP, CONSTANTS.SERVER.HOME, 1,
         CONSTANTS.SCRIPT.MAIN, ram_in_use

@@ -2,6 +2,15 @@ import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
 
 
+//enum to keep track of server status
+export const STATE = {
+    HACK: {
+        HACK: "HACK",
+        GROW: "GROW",
+        WEAKEN: "WEAKEN"
+    }
+}
+
 // Declaration
 export class hack_obj {
     constructor() {
@@ -23,14 +32,14 @@ export class hack_obj {
 
     //function that target hacks a single server
     /** @param {NS} ns */
-    async manage(ns, servers_ram, servers_money) {
+    async manage(ns, handles) {//} servers_ram, servers_money) {
         //if the timing has not yet passed
         if (Date.now() < this.time_of_next_check) {
             //stop
             return
         }
         //update the target, if needed (global variable)
-        this.find_target(ns, servers_money)
+        this.find_target(ns, handles.root.servers_money)
         //check if we HAVE a target
         if (this.hack_target == "") {
             //debug
@@ -39,7 +48,7 @@ export class hack_obj {
             this.time_of_next_check = Date.now() + CONSTANTS.TIME.SAFETY
         } else {
             //get the executing servers
-            var execute_servers = servers_ram
+            var execute_servers = handles.root.servers_ram
             //re-set the wait time, to be set later
             var time_wait = 0
             //get server data
@@ -66,7 +75,7 @@ export class hack_obj {
             //depending on the state
             switch (state) {
                 //if we need to weaken
-                case CONSTANTS.STATE.HACK.WEAKEN:
+                case STATE.HACK.WEAKEN:
                     //set the time to wait
                     time_wait = time_weaken + CONSTANTS.TIME.SAFETY
                     //do stuff
@@ -98,7 +107,7 @@ export class hack_obj {
                     break
 
                     //if we need to grow
-                case CONSTANTS.STATE.HACK.GROW:
+                case STATE.HACK.GROW:
                     //weaken > grow > hack (time needed)
                     /*
                         <------------->			grow = weaken - grow - buffer
@@ -143,7 +152,7 @@ export class hack_obj {
                     break
 
                     //if we need to hack
-                case CONSTANTS.STATE.HACK.HACK:
+                case STATE.HACK.HACK:
                     //weaken > grow > hack (time needed)
                     /*
                                 <------->			hack = weaken - hack - buffer
@@ -274,15 +283,15 @@ export class hack_obj {
         //if security is not min
         if (server.hackDifficulty > server.minDifficulty) {
             //lower security
-            return CONSTANTS.STATE.HACK.WEAKEN
+            return STATE.HACK.WEAKEN
             //if money is not max
         } else if (server.moneyAvailable < server.moneyMax) {
             //grow money
-            return CONSTANTS.STATE.HACK.GROW
+            return STATE.HACK.GROW
         } else {
             //debug
             //log.info(ns, "Hack", "hack target '" + this.hack_target + "' is prepared for hacking", true)
         }
-        return CONSTANTS.STATE.HACK.HACK
+        return STATE.HACK.HACK
     }
 }

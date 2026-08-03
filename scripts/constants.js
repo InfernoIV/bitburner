@@ -11,6 +11,11 @@ export const TIME = {
     WAIT: 5,
 }
 
+//enum for port data
+export const PORT = {
+    NO_DATA: "NULL PORT DATA",
+    CODING_CONTRACT: "1",
+}
 
 //enum for script names
 export const SCRIPT = {
@@ -31,21 +36,30 @@ export const SCRIPT = {
 }
 
 
-//enum for port data
-export const PORT = {
-    NO_DATA: "NULL PORT DATA",
-    CODING_CONTRACT: "1",
+export const HANDLE = {                 //SF or BN requirement
+    ROOT: "ROOT",                       //0
+    HACK: "HACK",                       //0
+    GO: "GO",                           //0/15
+    SINGULARITY: "SINGULARITY",         //4
+    INTELLIGENCE: "INTELLIGENCE",       //5
+    STANEK: "STANEK",                   //13
+    SLEEVE: "SLEEVE",                   //10
+    GO_ANALYSIS: "GO_ANALYSIS",         //0
+    GO_CHEAT: "GO_CHEAT",               //
+    CODING_CONTRACT: "CODING_CONTRACT", //0
+    STOCK: "STOCK",                     //0
+    INFILTRATION: "INFILTRATION",       //0
+    BLADEBURNER: "BLADEBURNER",         //6/7
+    GANG: "GANG",                       //2
+    HACKNET: "HACKNET",                 //9
+    CORPORATION: "CORPORATION",         //3
+    GRAFTING: "GRAFTING",               //10
 }
 
 
-//enum to keep track of server status
-export const STATE = {
-    HACK: {
-        HACK: "HACK",
-        GROW: "GROW",
-        WEAKEN: "WEAKEN"
-    }
-}
+
+
+
 
 export const AUGMENT = {
     NFG: "NeuroFlux Governor",
