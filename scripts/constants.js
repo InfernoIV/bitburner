@@ -158,8 +158,16 @@ export const RAM = {
     ns.getServer        done by main
     ns.scp              done by root
     ns.dnet.probe       0.2
+    
+    getServer (fn)	2.00GB
+    baseCost (misc)	1.60GB
+    exec (fn)	1.30GB
+    scp (fn)	0.60GB
+    ls (fn)	0.20GB
+    dnet.probe (fn)	0.20GB
+
     */
-    DARKNET: 0.2,
+    DARKNET: 0.2,   //5.90
 
     /*
     ns.go.getCurrentPlayer                  0
@@ -191,6 +199,18 @@ export const RAM = {
     */
     GO_CHEAT: 24.0,
 
+    /*
+    analysis.getControlledEmptyNodes (fn)	16.00GB
+    analysis.getChains (fn)	16.00GB
+    analysis.getLiberties (fn)	16.00GB
+    analysis.getValidMoves (fn)	8.00GB
+    go.getBoardState (fn)	4.00GB
+    go.makeMove (fn)	4.00GB
+    baseCost (misc)	1.60GB
+    cheat.getCheatSuccessChance (fn)	1.00GB
+    66.60 GB
+    */
+
 
     /*
     hacknet.numNodes        0.5
@@ -203,19 +223,24 @@ export const RAM = {
     HACKNET: 3.0,
 
     /*
-    ns.getPlayer    0.5
-    getServerNames  1.05    
-    purchaseServer  2.25    
-    upgradeServer   0.25    
+    cloud.purchaseServer (fn)	2.25GB
+    baseCost (misc)	1.60GB
+    exec (fn)	1.30GB
+    cloud.getServerNames (fn)	1.05GB
+    getPlayer (fn)	0.50GB
+    cloud.upgradeServer (fn)	0.25GB
+    getServerMaxRam (fn)	0.05GB  
     */
-    CLOUD: 4.05,
+    CLOUD: 4.05, //7.00
 
     /*
-    ns.codingcontract.attempt               10
-    ns.codingcontract.getContractType       5
-    ns.codingcontract.getData               5
+    codingcontract.attempt (fn)	10.00GB
+    codingcontract.getContractType (fn)	5.00GB
+    codingcontract.getData (fn)	5.00GB
+    baseCost (misc)	1.60GB
+    ls (fn)	0.20GB
     */
-    CODING_CONTRACT: 20.0,
+    CODING_CONTRACT: 20.0,  //21.80
 
     /*
     stock.getSymbols    2
@@ -241,14 +266,28 @@ export const RAM = {
     STANEK: 0.0,
 
     /*
+    gang.ascendMember (fn)	4.00GB
+    gang.purchaseEquipment (fn)	4.00GB
+    gang.getChanceToWinClash (fn)	4.00GB
+    gang.getMemberInformation (fn)	2.00GB
+    gang.recruitMember (fn)	2.00GB
+    gang.getAscensionResult (fn)	2.00GB
+    gang.getInstallResult (fn)	2.00GB
+    gang.getGangInformation (fn)	2.00GB
+    gang.setMemberTask (fn)	2.00GB
+    gang.setTerritoryWarfare (fn)	2.00GB
+    baseCost (misc)	1.60GB
+    exec (fn)	1.30GB
+    gang.createGang (fn)	1.00GB
+    hack (fn)	0.10GB
     ???
     */
-    GANG: 25.0,
+    GANG: 25.0, //30.00
 
     /*
 
     */
-    CORPORATION: 0.0,
+    CORPORATION: 0.0,   //1.60
 
     /*
 

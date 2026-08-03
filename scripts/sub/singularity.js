@@ -208,8 +208,8 @@ export class singularity_obj {
     singularity.getAugmentationPrice        2.5
     */
     manage_augments(ns) {
-        //get augments owned
-        var augments_owned = ns.singularity.getOwnedAugmentations(true)
+        //get bought augments
+        var augments_bought = ns.singularity.getOwnedAugmentations(true)
         //get factions
         const factions = ns.getPlayer().factions
         //get best rep
@@ -217,11 +217,9 @@ export class singularity_obj {
         //get best faction
         var best_faction = ""
         //for each faction
-        for  (const faction of factions) {
+        for (const faction of factions) {
             //get rep
             const rep = ns.singularity.getFactionRep(faction)
-
-            //log.info(ns, "Singularity", "Rep: " + rep + " (faction: " + faction + "), best_rep: " + best_rep, true)
             //check if better than what we have
             if (rep > best_rep) {
                 //save rep
@@ -229,34 +227,28 @@ export class singularity_obj {
                 //save faction
                 best_faction = faction
             }
-
-            //augment_to_do = 
-            //get augmnets
-            const augments = ns.singularity.getAugmentationsFromFaction(faction) 
+            const augments = ns.singularity.getAugmentationsFromFaction(faction)
             //for each augment
             for (const augment of augments) {
-                /*/if neuroflux
-                if (augment == "") {
-                    //ignore
-                    continue
-                }*/
-                //if not owned
-                if (!augments_owned.includes(augment)) {
+                //if not owned or is NeuroFlux Governor (can be stacked)
+                if (!augments_bought.includes(augment) || augment == "NeuroFlux Governor") {
                     //log.info(ns, "Singularity", "Found augment '" + augment + "' in faction '" + faction + "'", true)
                     //get the price
                     //var price = ns.singularity.getAugmentationPrice(augment)
                     //try to buy
                     const success = ns.singularity.purchaseAugmentation(faction, augment)
                     //if successfull
-                    if(success) {
+                    if (success) {
                         //log
                         log.success(ns, "Singularity", "Bought augment: '" + augment + "'", true)
                     }
-                }                
+                }
             }
         }
-        //get bought augments
-        var augments_bought = ns.singularity.getOwnedAugmentations(true)
+        //refresh bought augments
+        augments_bought = ns.singularity.getOwnedAugmentations(true)
+        //get augments installed
+        var augments_owned = ns.singularity.getOwnedAugmentations(false)
         //if we have bought at least 5 augments
         if ((augments_bought.length - augments_owned.length) >= 5) {
             //placeholder
@@ -272,7 +264,8 @@ export class singularity_obj {
             //install augments
             ns.singularity.installAugmentations(CONSTANTS.SCRIPT.BOOT)
             //log
-            log.info(ns, "Singularity", "Ready to start install " + (augments_bought.length - augments_owned.length) + " new augments!")
+            log.info(ns, "Singularity", "Ready to start install " + (augments_bought.length - augments_owned
+                .length) + " new augments!")
             //ns.ui.openTail()
             //ns.exit()
         }
@@ -320,9 +313,8 @@ export class singularity_obj {
     Singularity.getFactionFavor 1
     */
     work_for_faction(ns) {
-
         //get augments owned
-        const augments_owned = ns.singularity.getOwnedAugmentations(true)//ns.getResetInfo().ownedAugs
+        const augments_owned = ns.singularity.getOwnedAugmentations(true) //ns.getResetInfo().ownedAugs
         //get factions
         const factions = ns.getPlayer().factions
         //variable to fill
@@ -333,7 +325,7 @@ export class singularity_obj {
             var rep_highest = 0
             //check if we have enough rep for the augments
             //get augmnets
-            const augments = ns.singularity.getAugmentationsFromFaction(faction) 
+            const augments = ns.singularity.getAugmentationsFromFaction(faction)
             //for each augment the faction offers
             for (const augment of augments) {
                 //if neurflux governor
@@ -348,7 +340,7 @@ export class singularity_obj {
                     //if higher than what we have saved
                     if (augment_rep > rep_highest) {
                         //save the rep
-                        rep_highest = augment_rep                       
+                        rep_highest = augment_rep
                     }
                 }
             }
@@ -358,13 +350,13 @@ export class singularity_obj {
             if (rep >= rep_highest) {
                 //go to next
                 continue
-            } 
+            }
             //get favor
-            const favor = ns.singularity.getFactionFavor(faction)            
+            const favor = ns.singularity.getFactionFavor(faction)
             const rep_to_favor = Math.log1p(rep / 25000) / 0.019802627296179712
             const favor_for_donate = 150
             const favor_needed = favor_for_donate - favor - rep_to_favor
-            
+
             //if we need to get more rep or favor
             if (favor_needed > 0) {
                 //set as target faction
@@ -376,14 +368,13 @@ export class singularity_obj {
         //if a target faction is set
         if (target_faction != "") {
             //set to work for faction
-            this.perform_action(ns, work_type.FACTION, target_faction) 
+            this.perform_action(ns, work_type.FACTION, target_faction)
             //indicate sucess
             return true
         }
         //indicate failure
         return false
     }
-
 
 
     work_for_company(ns) {
@@ -434,7 +425,7 @@ export class singularity_obj {
     commitCrime(crime, focus)   5
     */
     //commit crime
-    commit_crime(ns){
+    commit_crime(ns) {
         //save best crime
         var best_crime = "Mug"
         //best score
@@ -446,7 +437,7 @@ export class singularity_obj {
             //get chrime change
             const crime_chance = ns.singularity.getCrimeChance(crime)
             //check for chance
-            if (crime_chance >= 1) {
+            if (crime_chance >= 0.66) {
                 //get crime stats
                 const crime_stats = ns.singularity.getCrimeStats(crime)
                 //calc score (money / time)
@@ -504,7 +495,7 @@ export class singularity_obj {
                         flag_switch_work = (activity != current_work.programName);
                         break
                     case work_type.STUDY:
-                        flag_switch_work = (activity != current_work.classType);                        
+                        flag_switch_work = (activity != current_work.classType);
                         break
                     case work_type.GRAFTING:
                         flag_switch_work = (activity != current_work.augmentation);
@@ -521,18 +512,18 @@ export class singularity_obj {
                 case work_type.FACTION:
                     const faction_work_type = ns.singularity.getFactionWorkTypes(activity)
                     //TODO: improve
-                    ns.singularity.workForFaction(activity, faction_work_type[0])
+                    ns.singularity.workForFaction(activity, faction_work_type[0], true)
                     return
 
                 case work_type.COMPANY:
                     //TODO: manage position and work type
-                    ns.singularity.workForCompany(activity)
+                    ns.singularity.workForCompany(activity, true)
                     return
 
                 case work_type.CRIME:
                     //TODO: manage crime type?
-                    ns.singularity.commitCrime(activity)
-                    return                
+                    ns.singularity.commitCrime(activity, true)
+                    return
 
                 case work_type.STUDY:
                     //get city
@@ -549,29 +540,29 @@ export class singularity_obj {
                     //check for stats
                     switch (activity) {
                         case "hacking":
-                        case "Algorithms": 
-                            ns.singularity.universityCourse(university, "Algorithms", false)
+                        case "Algorithms":
+                            ns.singularity.universityCourse(university, "Algorithms", true)
                             return
 
                         case "str":
-                            ns.singularity.gymWorkout(gym, "str", false)
+                            ns.singularity.gymWorkout(gym, "str", true)
                             return
 
                         case "def":
-                            ns.singularity.gymWorkout(gym, "def", false)
+                            ns.singularity.gymWorkout(gym, "def", true)
                             return
 
                         case "dex":
-                            ns.singularity.gymWorkout(gym, "dex", false)
+                            ns.singularity.gymWorkout(gym, "dex", true)
                             return
 
                         case "agi":
-                            ns.singularity.gymWorkout(gym, "agi", false)
+                            ns.singularity.gymWorkout(gym, "agi", true)
                             return
 
                         case "charisma":
                         case "Leadership":
-                            ns.singularity.universityCourse(university, "Leadership", false)
+                            ns.singularity.universityCourse(university, "Leadership", true)
                             return
 
                         default:
@@ -585,7 +576,7 @@ export class singularity_obj {
 
                 case work_type.GRAFTING:
                     //skip for now
-                    return 
+                    return
 
                 default:
                     log.error(ns, "Singularity", "Uncaught work_type 2: '" + work_type + "'")
@@ -603,21 +594,59 @@ export class singularity_obj {
         //get invites
         const invites = ns.singularity.checkFactionInvitations()
         //log.info(ns, "Singularity", "invites: '" + JSON.stringify(invites) + "'")
-        //for each invite
-        for (const invite of invites) {
-            //get enemies
-            const enemies = ns.singularity.getFactionEnemies(invite)
-            //log.info(ns, "Singularity", "enemies: '" + JSON.stringify(enemies) + "' (" + + ")")
-            //check for no enemies
-            if (enemies.length == 0) {
+        //get augments owned
+        const augments_owned = ns.singularity.getOwnedAugmentations(true) //ns.getResetInfo().ownedAugs
+        //get factions
+        const factions = ns.getPlayer().factions
+        //variable to fill
+        var target_faction = ""
+        //for each faction
+        for (const faction of factions) {
+            //save highest rep needed
+            var rep_highest = 0
+            //check if we have enough rep for the augments
+
+            //for each invite
+            for (const invite of invites) {
+                //get enemies
+                const enemies = ns.singularity.getFactionEnemies(invite)
+                //log.info(ns, "Singularity", "enemies: '" + JSON.stringify(enemies) + "' (" + + ")")
+                //check for no enemies
+                if (enemies.length > 1) {
+                    //set flag to keep track
+                    var flag_augments_remaining = false
+                    //get augmnets
+                    const augments = ns.singularity.getAugmentationsFromFaction(faction)
+                    //for each augment the faction offers
+                    for (const augment of augments) {
+                        //if neurflux governor
+                        if (augment == "NeuroFlux Governor") {
+                            //ignore
+                            continue
+                        }
+                        //if not owned
+                        if (!augments_owned.includes(augment)) {
+                            //set flag
+                            flag_augments_remaining = true
+                            //stop
+                            break
+                        }
+                    }
+                    //if no augments are remaining
+                    if (flag_augments_remaining == false) {
+                        //go to next faction
+                        continue
+                    }
+                }
                 //join faction
                 ns.singularity.joinFaction(invite)
             }
         }
     }
 
-
+//end of object
 }
+
 
 const gyms = {
     "Sector-12": "Powerhouse Gym", //or "Iron Gym"?
@@ -641,18 +670,18 @@ const work_type = {
 }
 
 
-   const focus_type = {
-            MONEY: "money", //How much money is given
-            KARMA: "karma", //Amount of karma lost for successfully committing this crime
-            KILLS: "kills", //How many people die as a result of this crime
-            HACKING: "hacking_exp", //hacking exp gained from crime	
-            STRENGTH: "strength_exp", //strength exp gained from crime
-            DEXTERITY: "dexterity_exp", //dexterity exp gained from crime
-            AGILITY: "agility_exp", //agility exp gained from crime
-            DEFENSE: "defense_exp", //defense exp gained from crime
-            CHARISMA: "charisma_exp", //charisma exp gained from crime
-            INTELLIGENCE: "intelligence_exp" //intelligence exp gained from crime
-        }
+const focus_type = {
+    MONEY: "money", //How much money is given
+    KARMA: "karma", //Amount of karma lost for successfully committing this crime
+    KILLS: "kills", //How many people die as a result of this crime
+    HACKING: "hacking_exp", //hacking exp gained from crime	
+    STRENGTH: "strength_exp", //strength exp gained from crime
+    DEXTERITY: "dexterity_exp", //dexterity exp gained from crime
+    AGILITY: "agility_exp", //agility exp gained from crime
+    DEFENSE: "defense_exp", //defense exp gained from crime
+    CHARISMA: "charisma_exp", //charisma exp gained from crime
+    INTELLIGENCE: "intelligence_exp" //intelligence exp gained from crime
+}
 
 
 /*
