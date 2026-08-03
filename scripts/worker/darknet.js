@@ -77,14 +77,25 @@ function init(ns, hostname_self, threads) {
     ns.disableLog("dnet.probe")
     ns.disableLog("dnet.phishingAttack")
 
-    //TESTING
+    //note: this will crash the game when trying to kill the scripts..
+    //if server restarts (or shuts down)
+    
     ns.atExit(() => {
-        //TEST
-        ns.ui.openTail()
-        //TODO: check spawn delay timing 
-        ns.spawn(CONSTANTS.SCRIPT.WORKER.DARKNET, {threads: threads, spawnDelay: CONSTANTS.TIME.WAIT, preventDuplicates: true}, 
-            hostname_self, threads)
-        })
+        //get logs
+        var logs = ns.getScriptLogs()
+        //get the last log
+        const last_log = logs.pop()
+        //check if restarting
+        const server_restarted = last_log.includes("restarted")
+        //if restarting
+        if (server_restarted) {
+            //try to respawn script
+            ns.spawn(CONSTANTS.SCRIPT.WORKER.DARKNET, {threads: threads, spawnDelay: CONSTANTS.TIME.WAIT, preventDuplicates: true}, 
+                hostname_self, threads)
+        }
+    })
+
+        
 }
 
 

@@ -37,8 +37,11 @@ export const SCRIPT = {
 
 
 export const HANDLE = {                 //SF or BN requirement
+    MAIN: "MAIN",                       //0
+    RAM: "RAM",                         //0
     ROOT: "ROOT",                       //0
     HACK: "HACK",                       //0
+    DARKNET: "DARKNET",                 //0/?
     GO: "GO",                           //0/15
     SINGULARITY: "SINGULARITY",         //4
     INTELLIGENCE: "INTELLIGENCE",       //5
@@ -102,15 +105,16 @@ export const RAM = {
     //main scripts
     /*
     base                1.6
-    ns.getServer        2
-    ns.getResetInfo     1
-    ns.ramOverride      0
-    ns.ui.openTail      0
-    ns.sleep            0
-    ns.disableLog       0
-    ns.atExit           0
     */
-    MAIN: 4.6,
+    MAIN: 1.60,//4.6,
+    /*
+    getServer (fn)	2.00GB
+    baseCost (misc)	1.60GB
+    getResetInfo (fn)	1.00GB
+    killall (fn)	0.50GB
+    getBitNodeMultipliers (fn)	4.00GB
+    */
+    RAM: 5.1,
 
     /*
     getServer (fn)	        2.00GB  -> already covered in main

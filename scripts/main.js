@@ -16,7 +16,7 @@ export async function main(ns) {
     //init ram manager
     var ram_manager = new ram_obj()
     //init ram manager
-    ram_manager.init(ns, CONSTANTS.RAM.MAIN)
+    await ram_manager.init(ns, CONSTANTS.RAM.MAIN)
     //log
     log.info(ns, "Main", "Starting main loop", true)
 
@@ -25,7 +25,7 @@ export async function main(ns) {
         //import functionality
         await ram_manager.import(ns)
         //let the manager manage all functionality
-        await ram_manager.manage(ns)
+        await ram_manager.manage_functionalities(ns)
         //wait a bit (what is the lowest time we can pick?)
         await ns.sleep(CONSTANTS.TIME.WAIT)
     }

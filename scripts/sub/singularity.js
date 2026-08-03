@@ -65,7 +65,7 @@ export class singularity_obj {
     /*
     ls  0.2
     */
-    async init(ns, stanek_available) {
+    init(ns, handles) {
         //disable logging
         ns.disableLog("singularity.installBackdoor")
         ns.disableLog("singularity.purchaseTor")
@@ -79,8 +79,6 @@ export class singularity_obj {
         this.http_worm = executables.includes(CONSTANTS.TOOLS.HACKING.HTTP_WORM)
         this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
         this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
-
-        await this.join_stanek(ns, stanek_available)
 
         //debug
         log.info(ns, "Singularity", "Init complete")
@@ -96,9 +94,9 @@ export class singularity_obj {
     manage_factions 9
     manage_player   15.5
     */
-    manage(ns, programs) {
+    async manage(ns, handles) {
         //test
-
+        await this.join_stanek(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STANEK))
         //upgrade home
         this.upgrade_home(ns)
         //check if we don't own tor
@@ -113,11 +111,11 @@ export class singularity_obj {
         //manage faction (invites)
         this.manage_factions(ns)
         //manage player actions
-        const travel_blocked = this.manage_player(ns, programs.darknet.darknet_started)
+        const travel_blocked = this.manage_player(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.DARKNET))
         //check if we can travel
         if(!travel_blocked) {
             //manage player location
-            this.manage_location(ns, programs.stanek.available)
+            this.manage_location(ns)
         }
         //manage augments
         this.manage_augments(ns)
@@ -295,7 +293,7 @@ export class singularity_obj {
                 //hacking 50, 1e6 money
                 if(!factions_joined.includes("Tian Di Hui")){
                     //check if player is in a correct location
-                    if (player.location != "Chongqing" && player.location != "New Tokyo" && player.location != "Ishima") {
+                    if (player.city != "Chongqing" && player.city != "New Tokyo" && player.city != "Ishima") {
                         //set to chongqing
                         target_city = "Chongqing"
                     }
@@ -304,7 +302,7 @@ export class singularity_obj {
                 //combat 75, karma -18
                 if(!factions_joined.includes("Tetrads")){   
                     //check if player is in a correct location
-                    if (player.location != "Chongqing" && player.location != "New Tokyo" && player.location != "Ishima") {
+                    if (player.city != "Chongqing" && player.city != "New Tokyo" && player.city != "Ishima") {
                         //set to chongqing
                         target_city = "Chongqing"
                     }
@@ -313,7 +311,7 @@ export class singularity_obj {
                 //combat 100, karma -90
                 if(!factions_joined.includes("The Syndicate")){
                     //check if player is in a correct location
-                    if (player.location != "Sector-12" && player.location != "Aevum") {
+                    if (player.city != "Sector-12" && player.city != "Aevum") {
                         //set to sector-12
                         target_city = "Sector-12"
                     }
@@ -322,7 +320,7 @@ export class singularity_obj {
                 //hacking 300, combat 300, kills 5, karma -45
                 if(!factions_joined.includes("The Dark Army")){
                     //check if player is in a correct location
-                    if (player.location != "Chongqing") {
+                    if (player.city != "Chongqing") {
                         //set to chongqing
                         target_city = "Chongqing"
                     }
@@ -335,15 +333,20 @@ export class singularity_obj {
         //if we have a target city
         if (target_city != "") {
             //if we are not in the target city
-            if (player.location != target_city) {
+            if (player.city != target_city) {
                 //travel to city
-                ns.singularity.travelToCity(target_city)
+                //ns.singularity.travelToCity(target_city)
             }
         }
     }
     
 
-    async join_stanek(ns) {
+    async join_stanek(ns, stanek_available) {
+        //if not available
+        if (!stanek_available) {
+            //stop
+            return
+        }
         //get player
         const player = ns.getPlayer()
         //get joined factions
@@ -367,7 +370,7 @@ export class singularity_obj {
             //move to the church
             ns.singularity.goToLocation("Church of the Machine God")
             //wait a little bit
-            ns.sleep(CONSTANTS.TIME.WAIT)
+            await ns.sleep(CONSTANTS.TIME.WAIT)
             //get invites
             const invites = ns.singularity.checkFactionInvitations()
             //if we have the invite we seek
@@ -442,20 +445,20 @@ export class singularity_obj {
             //for each augment
             for (const augment of augments_faction) {
                 //if not owned or is NeuroFlux Governor (can be stacked)
-                if (!augments_bought.includes(augment) || augment == AUGMENT.NFG) {
+                if (!augments_bought.includes(augment) || augment == CONSTANTS.AUGMENT.NFG) {
                     //get the price
                     var price = ns.singularity.getAugmentationPrice(augment)
                     //save the price
-                    augments.set(augment, price)
+                    augments.set(augment, {"faction": faction, "price": price})
                 }
             }
         }
         //sort the augments (on key = highest cost)
-        const augments_sorted = new Map([...augments.entries()].sort((a, b) => b[1] - a[1]))
+        const augments_sorted = new Map([...augments.entries()].sort((a, b) => b[1].price - a[1].price))        
         //for each augment we have saved
-        for (const augment of augments_sorted.keys()) {            
+        for (const augment of augments_sorted.keys()) {    
             //try to buy augment
-            const success = ns.singularity.purchaseAugmentation(best_faction, augment)
+            const success = ns.singularity.purchaseAugmentation(augments_sorted.get(augment).faction, augment)
             //if able to buy most expensive augment
             if (success) {
                 //log
@@ -565,7 +568,7 @@ export class singularity_obj {
             //for each augment the faction offers
             for (const augment of augments) {
                 //if neurflux governor
-                if (augment == AUGMENT.NFG) {
+                if (augment == CONSTANTS.AUGMENT.NFG) {
                     //ignore
                     continue
                 }
@@ -642,7 +645,9 @@ export class singularity_obj {
         //variable to fill
         var target_company = ""
         //for each company faction
-        for (const [faction, info] of company_factions) {
+        for (const faction in company_factions) {
+            //get info
+            const info = company_factions[faction]
             //if faction is already joined
             if (factions_joined.includes(faction)) {
                 //go to next
@@ -872,56 +877,42 @@ export class singularity_obj {
     singularity.getFactionEnemies           3
     */
     manage_factions(ns) {
-        //get invites
-        const invites = ns.singularity.checkFactionInvitations()
-        //log.info(ns, "Singularity", "invites: '" + JSON.stringify(invites) + "'")
         //get augments owned
         const augments_owned = ns.singularity.getOwnedAugmentations(true) //ns.getResetInfo().ownedAugs
-        //get factions
-        const factions = ns.getPlayer().factions
-        //variable to fill
-        var target_faction = ""
-        //for each faction
-        for (const faction of factions) {
-            //save highest rep needed
-            var rep_highest = 0
-            //check if we have enough rep for the augments
-
-            //for each invite
-            for (const invite of invites) {
-                //get enemies
-                const enemies = ns.singularity.getFactionEnemies(invite)
-                //log.info(ns, "Singularity", "enemies: '" + JSON.stringify(enemies) + "' (" + + ")")
-                //check for no enemies
-                if (enemies.length > 1) {
-                    //set flag to keep track
-                    var flag_augments_remaining = false
-                    //get augmnets
-                    const augments = ns.singularity.getAugmentationsFromFaction(faction)
-                    //for each augment the faction offers
-                    for (const augment of augments) {
-                        //if neurflux governor
-                        if (augment == AUGMENT.NFG) {
-                            //ignore
-                            continue
-                        }
-                        //if not owned
-                        if (!augments_owned.includes(augment)) {
-                            //set flag
-                            flag_augments_remaining = true
-                            //stop
-                            break
-                        }
-                    }
-                    //if no augments are remaining
-                    if (flag_augments_remaining == false) {
-                        //go to next faction
+        //for each invite
+        for (const invite of ns.singularity.checkFactionInvitations()) {
+            //get enemies
+            const enemies = ns.singularity.getFactionEnemies(invite)
+            //log.info(ns, "Singularity", "enemies: '" + JSON.stringify(enemies) + "' (" + + ")")
+            //check for no enemies
+            if (enemies.length > 1) {
+                //set flag to keep track
+                var flag_augments_remaining = false
+                //get augmnets
+                const augments = ns.singularity.getAugmentationsFromFaction(invite)
+                //for each augment the faction offers
+                for (const augment of augments) {
+                    //if neurflux governor
+                    if (augment == CONSTANTS.AUGMENT.NFG) {
+                        //ignore
                         continue
                     }
+                    //if not owned
+                    if (!augments_owned.includes(augment)) {
+                        //set flag
+                        flag_augments_remaining = true
+                        //stop
+                        break
+                    }
                 }
-                //join faction
-                ns.singularity.joinFaction(invite)
+                //if no augments are remaining
+                if (flag_augments_remaining == false) {
+                    //go to next faction
+                    continue
+                }
             }
+            //join faction
+            ns.singularity.joinFaction(invite)
         }
     }
 

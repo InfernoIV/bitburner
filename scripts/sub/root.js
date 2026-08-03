@@ -54,7 +54,7 @@ export class root_obj {
 
 
     /** @param {NS} ns */
-    async manage(ns, functionality_available) {
+    async manage(ns, handles) {
         //copy of list of servers found
         const servers = this.scan_servers(ns)
         //get number of hacking tools
@@ -112,7 +112,7 @@ export class root_obj {
             //if it was already rooted or we have rooted it just now
             if (server.hasAdminRights || flag_server_rooted) {
                 //check if we need to backdoor and we have singularity to backdoor
-                if (!server.backdoorInstalled && functionality_available.keys().includes(CONSTANTS.HANDLE.SINGULARITY)) {
+                if (!server.backdoorInstalled && handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY)) {
                     //backdoor the server
                     await this.backdoor_server(ns, hostname)
                 }

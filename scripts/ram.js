@@ -62,19 +62,23 @@ import {
 export class ram_obj {
     constructor() {
         //keeps track of registered handles
-        handles = {}
+        this.handles = {}
         //keep track of ram usage
-        ram_used = 0
+        this.ram_used = 0
         //keep track of what claimed what
-        registration = new Map()       
+        this.registration = new Map()       
     }
 
 
     //sets the basic information
-    init(ns, initial_ram_cost) {
+    async init(ns) {
         //ns.disableLog("")
         //save initial ram cost
-        this.ram_used = initial_ram_cost
+        this.ram_used = Math.ceil((CONSTANTS.RAM.MAIN + CONSTANTS.RAM.RAM)*100) / 100
+        //allocate ram
+        ns.ramOverride(this.ram_used)
+        //log
+        log.info(ns, "Ram", "Starting with RAM: " + this.ram_used, true)
         //get reset info
         const reset_information = ns.getResetInfo()
         //get source files
@@ -111,8 +115,8 @@ export class ram_obj {
         }
         //check if we have intelligence to fill bitnode multipliers
         if (this.get_source_file_level(5) > 0) {
-            //adjust ram (+4 GB)
-            if (this.register_functionality(ns, CONSTANTS.HANDLE.INTELLIGENCE, {}, 4)) {
+            //register handle
+            if (await this.register_handle(ns, CONSTANTS.HANDLE.INTELLIGENCE, {}, 4)) {
                 //get bitnode multipliers
                 this.bitnode_multipliers = ns.getBitNodeMultipliers()
             }
@@ -123,7 +127,7 @@ export class ram_obj {
     //function that kicks off all other manage functions
     async manage_functionalities(ns) {
         //for each functionality
-        for (const handle of this.handles) {
+        for (const handle in this.handles) {
             //check if it has an manage function
             if (typeof this.handles[handle].manage === "function") { 
                 //manage the functionality
@@ -135,8 +139,10 @@ export class ram_obj {
 
     //function that registers a class to init and manage (assumes the object has both functions!)
     async register_handle(ns, handle, object, sf_required = 0, sf_level_required = 1, dependency = "") {
+        //log.info(ns, "Ram", "Registering handle: '" + handle + "' => '" + JSON.stringify(object) + "'", true)
         //check if we already have this functionality handles
         if (this.registration.has(handle)) {
+            //log.info(ns, "Ram", "Handle '" + + "' was already registered", true)
             //stop
             return true
         }
@@ -149,16 +155,21 @@ export class ram_obj {
             }
         }
         //check if we can run this
-        if (get_source_file_level(sf_required) < sf_level_required) {
-            //not enough levels, stop
-            return false
+        if (sf_required > 0) {
+            const level = this.get_source_file_level(sf_required)
+            if(level < sf_level_required) {
+                //log.info(ns, "Ram", "SF " + sf_required + " has too little level: " + level + ", need: " + sf_level_required, true)
+                //not enough levels, stop
+                return false
+            }
         }
         //get ram cost
-        const ram_cost = CONSTANTS.RAM[functionality_name]
+        const ram_cost = CONSTANTS.RAM[handle]
         //get ram left
         const ram_max = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
         //check if we can register
-        if ((ram_used + ram_cost) > ram_max) {
+        if ((this.ram_used + ram_cost) > ram_max) {
+
             //not enough ram, stop
             return false
         } 
@@ -166,19 +177,19 @@ export class ram_obj {
         ns.killall(CONSTANTS.SERVER.HOME, true)
 
          //log
-        log.success(ns, "Ram", "Registered handle '" + functionality_name + "' for " + ram_used + " + " + ram_cost + " = " + (ram_used + ram_cost) +  " / " + ram_max + " GB", true)
+        log.success(ns, "Ram", "Registered handle '" + handle + "' for " + this.ram_used + " + " + ram_cost + " = " + (this.ram_used + ram_cost) +  " / " + ram_max + " GB", true)
         //update ram
         this.ram_used += ram_cost
         //apply ram
         ns.ramOverride(this.ram_used)
         //register object
-        this.handles[functionality_name] = functionality_object
+        this.handles[handle] = object
         //register in registry as well
-        this.registration.set(functionality_name, ram_cost)
+        this.registration.set(handle, ram_cost)
         //check if it has an init function
-        if (typeof this.handles[functionality_name].init === "function") { 
+        if (typeof this.handles[handle].init === "function") { 
             //init object
-            await this.handles[functionality_name].init(ns, this.handles)
+            await this.handles[handle].init(ns, this.handles)
         }
         
         //start share (again)
@@ -209,35 +220,40 @@ export class ram_obj {
 
     //function that manages the imports (in this order)
     async import(ns) {
-        //register each handle and return if not successfull (e.g. no ram)
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.ROOT, new root_obj())) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())) return
-        
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4)) return
-        /*
-         //check if we have beaten BN15
-        const tor_owned = owned_source_files.hasOwnProperty(15)
-        //if we have SF15, and therefore own TOR automatically
-        if (tor_owned) {
-            //lower the ram costs, since the function won't be used
-            ram_needed -= 2.0
+        //loop for easy breaking
+        while(true) {
+            //register each handle and return if not successfull (e.g. no ram)
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.ROOT, new root_obj())) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())) break
+            
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4)) break
+            /*
+            //check if we have beaten BN15
+            const tor_owned = owned_source_files.hasOwnProperty(15)
+            //if we have SF15, and therefore own TOR automatically
+            if (tor_owned) {
+                //lower the ram costs, since the function won't be used
+                ram_needed -= 2.0
+            }
+                */
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STANEK, new stanek_obj(), 13)) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO_ANALYSIS, {}, 0, 0, CONSTANTS.HANDLE.GO)) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO_CHEAT, {}, 14, 2, CONSTANTS.HANDLE.GO_ANALYSIS)) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.CODING_CONTRACT, new coding_contract_obj())) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STOCK, new stock_obj())) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj())) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 6) || 
+                !await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 7) ) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GANG, new gang_obj(), 2)) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.HACKNET, new hacknet_obj(), 9)) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.CORPORATION, new corporation_obj(), 3)) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GRAFTING, new grafting_obj(), 10)) break
+            break
         }
-            */
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.STANEK, new stanek_obj(), 13)) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO_ANALYSIS, {}, 0, 0, CONSTANTS.HANDLE.GO)) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO_CHEAT, {}, 14, 2, CONSTANTS.HANDLE.GO_ANALYSIS)) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.CODING_CONTRACT, new coding_contract_obj())) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.STOCK, new stock_obj())) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj())) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 6) || 
-            !await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 7) ) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.GANG, new gang_obj(), 2)) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.HACKNET, new hacknet_obj(), 9)) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.CORPORATION, new corporation_obj(), 3)) return
-        if (!await this.register_handle(ns, CONSTANTS.HANDLE.GRAFTING, new grafting_obj(), 10)) return
+        //log.info(ns, "Ram", "Import complete: '" + [...this.registration.entries()] + "'", true)
     }
 }

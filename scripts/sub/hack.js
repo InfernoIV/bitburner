@@ -39,7 +39,7 @@ export class hack_obj {
             return
         }
         //update the target, if needed (global variable)
-        this.find_target(ns, handles.root.servers_money)
+        this.find_target(ns, handles[CONSTANTS.HANDLE.ROOT].servers_money)
         //check if we HAVE a target
         if (this.hack_target == "") {
             //debug
@@ -48,7 +48,7 @@ export class hack_obj {
             this.time_of_next_check = Date.now() + CONSTANTS.TIME.SAFETY
         } else {
             //get the executing servers
-            var execute_servers = handles.root.servers_ram
+            var execute_servers = handles[CONSTANTS.HANDLE.ROOT].servers_ram
             //re-set the wait time, to be set later
             var time_wait = 0
             //get server data
