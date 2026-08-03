@@ -61,8 +61,6 @@ import {
 } from "scripts/sub/corporation.js"
 
 
-//import { statusRegistry, showComponentStatusMenus } from "scripts/sub/ui_ai.js"
-
 /** @param {NS} ns */
 export async function main(ns) {
     //keep track of ram
@@ -134,7 +132,7 @@ export async function main(ns) {
                 //GoPower
             //15: darknet
                 //DarknetMoneyMultiplier
-        }
+        },
     }
     //ram to start
     var previous_ram = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
@@ -322,6 +320,37 @@ async function manage_imports(ns, ram_in_use, programs) {
         }
     }
 
+    //Stanek
+    //StaneksGiftExtraSize can be -99
+    if ((current_node == 13 || owned_source_files.hasOwnProperty(13)) && programs.bitnode_multipliers.StaneksGiftExtraSize > -99 && !programs.stanek.available) {
+        //check if we can join using singularity
+        if (programs.singularity.available) {
+            //join stanek
+            if (await programs.singularity.join_stanek(ns)) {
+                //log
+                log.success(ns, "Stanek", "Joined Church of the Machine God", true)
+            //failed to join
+            } else {
+                //log
+                log.warning(ns, "Stanek", "Failed to join Church of the Machine God", true)
+            }
+        }
+        //check ram
+        if ((ram_in_use + CONSTANTS.RAM.STANEK) < max_ram) {
+            //log
+            log_ram(ns, "Stanek", ram_in_use, CONSTANTS.RAM.STANEK, max_ram)
+            //up the ram    
+            ram_in_use += CONSTANTS.RAM.STANEK
+            //change the RAM
+            ns.ramOverride(ram_in_use)
+            //import scripts
+            programs.stanek = new stanek_obj()
+            //init
+            programs.stanek.init(ns) //boost
+        }
+    }
+
+
     //Sleeve: faster automation
     if ((current_node == 10 || owned_source_files.hasOwnProperty(10)) && !programs.sleeve.available) { 
         //check ram
@@ -497,24 +526,6 @@ async function manage_imports(ns, ram_in_use, programs) {
             programs.bladeburner = bladeburner_obj()
             //init
             programs.bladeburner.init(ns)
-        }
-    }
-
-    //Stanek
-    //StaneksGiftExtraSize can be -99
-    if ((current_node == 13 || owned_source_files.hasOwnProperty(13)) && programs.bitnode_multipliers.StaneksGiftExtraSize > -99 && !programs.stanek.available) {
-        //check ram
-        if ((ram_in_use + CONSTANTS.RAM.STANEK) < max_ram) {
-            //log
-            log_ram(ns, "Stanek", ram_in_use, CONSTANTS.RAM.STANEK, max_ram)
-            //up the ram    
-            ram_in_use += CONSTANTS.RAM.STANEK
-            //change the RAM
-            ns.ramOverride(ram_in_use)
-            //import scripts
-            programs.stanek = new stanek_obj()
-            //init
-            programs.stanek.init(ns) //boost
         }
     }
 

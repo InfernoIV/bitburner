@@ -47,6 +47,9 @@ export const STATE = {
     }
 }
 
+export const AUGMENT = {
+    NFG: "NeuroFlux Governor",
+}
 
 export const TOOLS = {
     HACKING: {
@@ -145,7 +148,7 @@ export const RAM = {
     singularity.getAugmentationPrice        2.5
 
     */
-    SINGULARITY: 55.0,
+    SINGULARITY: 63.0,
 
     /*
 

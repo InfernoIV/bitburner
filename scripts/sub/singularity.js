@@ -10,6 +10,41 @@ import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
 
 
+const gyms = {
+    "Sector-12": "Powerhouse Gym", //or "Iron Gym"?
+    "Aevum": "Crush Fitness Gym", //or "Snap Fitness Gym"?
+    "Volhaven": "Millenium Fitness Gym",
+}
+
+const universities = {
+    "Sector-12": "Rothman University",
+    "Aevum": "Summit University",
+    "Volhaven": "ZB Institute of Technology",
+}
+
+const work_type = {
+    FACTION: "FACTION",
+    COMPANY: "COMPANY",
+    CRIME: "CRIME",
+    CREATE_PROGRAM: "CREATE_PROGRAM",
+    STUDY: "CLASS",
+    GRAFTING: "GRAFTING",
+}
+
+
+const focus_type = {
+    MONEY: "money", //How much money is given
+    KARMA: "karma", //Amount of karma lost for successfully committing this crime
+    KILLS: "kills", //How many people die as a result of this crime
+    HACKING: "hacking_exp", //hacking exp gained from crime	
+    STRENGTH: "strength_exp", //strength exp gained from crime
+    DEXTERITY: "dexterity_exp", //dexterity exp gained from crime
+    AGILITY: "agility_exp", //agility exp gained from crime
+    DEFENSE: "defense_exp", //defense exp gained from crime
+    CHARISMA: "charisma_exp", //charisma exp gained from crime
+    INTELLIGENCE: "intelligence_exp" //intelligence exp gained from crime
+}
+
 export class singularity_obj {
     constructor() {
         this.available = true
@@ -22,12 +57,15 @@ export class singularity_obj {
         this.sf_12_mult = 0.5
         //minimum skill
         this.skill_min = 50
+        //minimum augments for reset
+        this.augments_for_reset = 5
     }
+
 
     /*
     ls  0.2
     */
-    init(ns) {
+    async init(ns, stanek_available) {
         //disable logging
         ns.disableLog("singularity.installBackdoor")
         ns.disableLog("singularity.purchaseTor")
@@ -41,6 +79,9 @@ export class singularity_obj {
         this.http_worm = executables.includes(CONSTANTS.TOOLS.HACKING.HTTP_WORM)
         this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
         this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
+
+        await this.join_stanek(ns, stanek_available)
+
         //debug
         log.info(ns, "Singularity", "Init complete")
     }
@@ -71,11 +112,17 @@ export class singularity_obj {
         }
         //manage faction (invites)
         this.manage_factions(ns)
-        //log.info(ns, "Singularity", "Programs: '" + JSON.stringify(programs) + "'", true)
         //manage player actions
-        this.manage_player(ns, programs.darknet.darknet_started)
+        const travel_blocked = this.manage_player(ns, programs.darknet.darknet_started)
+        //check if we can travel
+        if(!travel_blocked) {
+            //manage player location
+            this.manage_location(ns, programs.stanek.available)
+        }
         //manage augments
         this.manage_augments(ns)
+        //install augments
+        this.install_augments(ns)
     }
 
 
@@ -150,7 +197,6 @@ export class singularity_obj {
                 //set flag
                 this.sql_inject = true
             }
-
         }
     }
 
@@ -173,21 +219,195 @@ export class singularity_obj {
 
 
     /*
-
+    singularity.travelToCity    
+    singularity.goToLocation    5
     */
+    //function that manages the travelling of the player to unlock factions
+    manage_location(ns) {
+        //get player
+        const player = ns.getPlayer()
+        //get factions
+        const factions_joined = player.factions
+        //set target city
+        var target_city = ""
+        
+        //TODO: how to manage with infiltrations?
+
+       
+
+        //get augments
+        const augments_owned = ns.singularity.getOwnedAugmentations(true)
+       
+
+        //city factions
+        //loop for ease of breaking
+        while(true) {
+            //if sector 12 has not been joined and there are still augments left    (15e6)
+            if (!factions_joined.includes("Sector-12") && this.get_augments_left(ns, "Sector-12").length > 0) {
+                //set target city
+                target_city = "Sector-12"
+                //stop looking
+                break                
+            }
+            //if aevum has not been joined and there are still augments left    (20e6)
+            if (!factions_joined.includes("Aevum") && this.get_augments_left(ns, "Aevum").length > 0) {
+                //set target city
+                target_city = "Aevum"
+                //stop looking
+                break
+            }
+            //if ishma has not been joined and there are still augments left    (20e6)
+            if (!factions_joined.includes("Ishima") && this.get_augments_left(ns, "Ishima").length > 0 && !factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum")) {
+                //set target city
+                target_city = "Ishima"
+                //stop looking
+                break
+            }
+            //if chongqing has not been joined and there are still augments left    (20e6)
+            if (!factions_joined.includes("Chongqing") && this.get_augments_left(ns, "Chongqing").length > 0 && !factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum")) {
+                //set target city
+                target_city = "Chongqing"
+                //stop looking
+                break
+            }
+            //if new tokyo has not been joined and there are still augments left    (20e6)
+            if (!factions_joined.includes("New Tokyo") && this.get_augments_left(ns, "New Tokyo").length > 0 && !factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum")) {
+                //set target city
+                target_city = "New Tokyo"
+                //stop looking
+                break
+            }            
+            //if volhaven has not been joined and there are still augments left (50e6)
+            if (!factions_joined.includes("Volhaven") && this.get_augments_left(ns, "Volhaven").length > 0 && !factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum") && !factions_joined.includes("Ishima") && !factions_joined.includes("Chongqing") && !factions_joined.includes("New Tokyo")) {
+                //set target city
+                target_city = "Volhaven"
+                //stop looking
+                break
+            }
+            //exit loop
+            break
+        }
+        
+        //if we don't have a target city (set for a city faction)
+        if (target_city == "") {
+            //loop for ease of breaking
+            while(true) {
+                //hacking 50, 1e6 money
+                if(!factions_joined.includes("Tian Di Hui")){
+                    //check if player is in a correct location
+                    if (player.location != "Chongqing" && player.location != "New Tokyo" && player.location != "Ishima") {
+                        //set to chongqing
+                        target_city = "Chongqing"
+                    }
+                    break
+                }
+                //combat 75, karma -18
+                if(!factions_joined.includes("Tetrads")){   
+                    //check if player is in a correct location
+                    if (player.location != "Chongqing" && player.location != "New Tokyo" && player.location != "Ishima") {
+                        //set to chongqing
+                        target_city = "Chongqing"
+                    }
+                    break
+                }
+                //combat 100, karma -90
+                if(!factions_joined.includes("The Syndicate")){
+                    //check if player is in a correct location
+                    if (player.location != "Sector-12" && player.location != "Aevum") {
+                        //set to sector-12
+                        target_city = "Sector-12"
+                    }
+                    break
+                }
+                //hacking 300, combat 300, kills 5, karma -45
+                if(!factions_joined.includes("The Dark Army")){
+                    //check if player is in a correct location
+                    if (player.location != "Chongqing") {
+                        //set to chongqing
+                        target_city = "Chongqing"
+                    }
+                    break
+                }
+                //exit loop
+                break
+            }
+        }
+        //if we have a target city
+        if (target_city != "") {
+            //if we are not in the target city
+            if (player.location != target_city) {
+                //travel to city
+                ns.singularity.travelToCity(target_city)
+            }
+        }
+    }
+    
+
+    async join_stanek(ns) {
+        //get player
+        const player = ns.getPlayer()
+        //get joined factions
+        const factions_joined = player.factions
+        //church of the machine god in chongqing with SF13(.1) and augmentations 0
+        if (factions_joined.includes("Church of the Machine God")) {
+            //success
+            return true
+        //not joined
+        } else {    
+            //set target city
+            const target_city = "Chongqing"
+            //if we are not in the target city
+            if (player.location != target_city) {
+                //if travel to city failed
+                if(!ns.singularity.travelToCity(target_city)) {
+                    //stop
+                    return false
+                }
+            }
+            //move to the church
+            ns.singularity.goToLocation("Church of the Machine God")
+            //wait a little bit
+            ns.sleep(CONSTANTS.TIME.WAIT)
+            //get invites
+            const invites = ns.singularity.checkFactionInvitations()
+            //if we have the invite we seek
+            if (invites.includes("Church of the Machine God")) {
+                //join faction
+                return ns.singularity.joinFaction("Church of the Machine God")
+            }
+        }        
+        //stop as failsafe if it fails
+        return false
+    }
+    
+
+
+    //function that returns the augments that are still left
+    get_augments_left(ns, faction) {
+        //get augments from faction
+        const augments = ns.singularity.getAugmentationsFromFaction(faction)
+        //get augments owned
+        const augments_owned = ns.singularity.getOwnedAugmentations(true)
+        //get augments left
+        const augments_left = augments.filter(augment => !augments_owned.includes(augment))
+        //return augments left
+        return augments_left
+    }
+
+    //function that manages the player (studying, working for factions, working for companies, committing crimes)
     manage_player(ns, darknet_started) {
         //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
-        if (this.study(ns)) return
+        if (this.study(ns)) return true
         //get money
         if (!darknet_started) {
             this.commit_crime(ns)
-            return
+            return false
         }
 
-        if (this.work_for_faction(ns)) return
-        if (this.work_for_company(ns)) return
+        if (this.work_for_faction(ns)) return false
+        if (this.work_for_company(ns)) return false
         this.commit_crime(ns)
-
+        return false
         /*
         bitnode multipliers can be 
         CompanyWorkMoney: 0,
@@ -207,67 +427,83 @@ export class singularity_obj {
     singularity.installAugmentations        5
     singularity.getAugmentationPrice        2.5
     */
+    //function that manages augments (buying the most expensive one first before going to the next)    
     manage_augments(ns) {
+        //create a list of augments and their prices
+        var augments = new Map()
         //get bought augments
         var augments_bought = ns.singularity.getOwnedAugmentations(true)
         //get factions
         const factions = ns.getPlayer().factions
-        //get best rep
-        var best_rep = 0
-        //get best faction
-        var best_faction = ""
         //for each faction
         for (const faction of factions) {
-            //get rep
-            const rep = ns.singularity.getFactionRep(faction)
-            //check if better than what we have
-            if (rep > best_rep) {
-                //save rep
-                best_rep = rep
-                //save faction
-                best_faction = faction
-            }
-            const augments = ns.singularity.getAugmentationsFromFaction(faction)
+            //get augments
+            const augments_faction = ns.singularity.getAugmentationsFromFaction(faction)
             //for each augment
-            for (const augment of augments) {
+            for (const augment of augments_faction) {
                 //if not owned or is NeuroFlux Governor (can be stacked)
-                if (!augments_bought.includes(augment) || augment == "NeuroFlux Governor") {
-                    //log.info(ns, "Singularity", "Found augment '" + augment + "' in faction '" + faction + "'", true)
+                if (!augments_bought.includes(augment) || augment == AUGMENT.NFG) {
                     //get the price
-                    //var price = ns.singularity.getAugmentationPrice(augment)
-                    //try to buy
-                    const success = ns.singularity.purchaseAugmentation(faction, augment)
-                    //if successfull
-                    if (success) {
-                        //log
-                        log.success(ns, "Singularity", "Bought augment: '" + augment + "'", true)
-                    }
+                    var price = ns.singularity.getAugmentationPrice(augment)
+                    //save the price
+                    augments.set(augment, price)
                 }
             }
         }
+        //sort the augments (on key = highest cost)
+        const augments_sorted = new Map([...augments.entries()].sort((a, b) => b[1] - a[1]))
+        //for each augment we have saved
+        for (const augment of augments_sorted.keys()) {            
+            //try to buy augment
+            const success = ns.singularity.purchaseAugmentation(best_faction, augment)
+            //if able to buy most expensive augment
+            if (success) {
+                //log
+                log.success(ns, "Singularity", "Bought augment: '" + augment + "'", true)
+            //failed to buy
+            } else {
+                //stop
+                return
+            }
+        }
+    }
+
+
+    //function that checks if we want to install augments
+    install_augments(ns) {
         //refresh bought augments
-        augments_bought = ns.singularity.getOwnedAugmentations(true)
+        var augments_bought = ns.singularity.getOwnedAugmentations(true)
         //get augments installed
         var augments_owned = ns.singularity.getOwnedAugmentations(false)
         //if we have bought at least 5 augments
-        if ((augments_bought.length - augments_owned.length) >= 5) {
+        if ((augments_bought.length - augments_owned.length) >= this.augments_for_reset) {
+            //get factions
+            const factions = ns.getPlayer().factions
+            //get best rep
+            var best_rep = 0
+            //get best faction
+            var best_faction = ""
+            //for each faction
+            for (const faction of factions) {
+                //get rep
+                const rep = ns.singularity.getFactionRep(faction)
+                //check if better than what we have
+                if (rep > best_rep) {
+                    //save rep
+                    best_rep = rep
+                    //save faction
+                    best_faction = faction
+                }
+            }
             //placeholder
             var success = true
             //keep trying
             while (success) {
                 //try to buy NFG
-                success = ns.singularity.purchaseAugmentation(best_faction, "NeuroFlux Governor")
+                success = ns.singularity.purchaseAugmentation(best_faction, AUGMENT.NFG)
             }
-            //update
-            augments_owned = ns.singularity.getOwnedAugmentations(false)
-            augments_bought = ns.singularity.getOwnedAugmentations(true)
             //install augments
             ns.singularity.installAugmentations(CONSTANTS.SCRIPT.BOOT)
-            //log
-            log.info(ns, "Singularity", "Ready to start install " + (augments_bought.length - augments_owned
-                .length) + " new augments!")
-            //ns.ui.openTail()
-            //ns.exit()
         }
     }
 
@@ -314,7 +550,7 @@ export class singularity_obj {
     */
     work_for_faction(ns) {
         //get augments owned
-        const augments_owned = ns.singularity.getOwnedAugmentations(true) //ns.getResetInfo().ownedAugs
+        const augments_owned = ns.singularity.getOwnedAugmentations(true)
         //get factions
         const factions = ns.getPlayer().factions
         //variable to fill
@@ -329,7 +565,7 @@ export class singularity_obj {
             //for each augment the faction offers
             for (const augment of augments) {
                 //if neurflux governor
-                if (augment == "NeuroFlux Governor") {
+                if (augment == AUGMENT.NFG) {
                     //ignore
                     continue
                 }
@@ -377,31 +613,49 @@ export class singularity_obj {
     }
 
 
+    //function that determines which company to work for
+    //company work is improved by SF11 (if you have at least 1), SF15 (if you have at least 2)
+    //jobStatReqOffset: lower is better
+    //exp & money multiplier: higher is better
+    //TODO: do we need to be in the city to apply for the job? e.g. Backman & Associates is in Aevum, but we are in Sector-12, can we apply for the job?
     work_for_company(ns) {
-        //get rep needed for faction
-        //const rep_needed = 400000
-        //faction name, company name
-        const company_factions = {
-            "ECorp": "ECorp",
-            "MegaCorp": "MegaCorp",
-            "Bachman & Associates": "Bachman & Associates",
-            "Blade Industries": "Blade Industries",
-            "NWO": "NWO",
-            "Clarke Incorporated": "Clarke Incorporated",
-            "OmniTek Incorporated": "OmniTek Incorporated",
-            "Four Sigma": "Four Sigma",
-            "KuaiGong International": "KuaiGong International",
-            "Fulcrum Secret Technologies": "Fulcrum Technologies",
+        //faction name, company name, server name
+        const company_factions = {        
+            //jobStatReqOffset: 224            
+            "Blade Industries": { company: "Blade Industries", hostname: "blade" },                             //exp & money multiplier: 2.75      hacking: 900 <-> 1200 (5 ports) 
+            "Bachman & Associates": { company: "Bachman & Associates", hostname: "b-and-a" },                   //exp & money multiplier: 2.6       hacking: 900 <-> 1150 (5 ports)     
+            "Four Sigma": { company: "Four Sigma", hostname: "4sigma" },                                        //exp & money multiplier: 2.5       hacking: 900 <-> 1250 (5 ports)
+            "OmniTek Incorporated": { company: "OmniTek Incorporated", hostname: "omnitek" },                   //exp & money multiplier: 2.25      hacking: 900 <-> 1100 (5 ports)
+            "Clarke Incorporated": { company: "Clarke Incorporated", hostname: "clarkinc" },                    //exp & money multiplier: 2.25      hacking: 950 <-> 1250 (5 ports)
+            "Fulcrum Secret Technologies": { company: "Fulcrum Secret Technologies", hostname: "fulcrumtech" }, //exp & money multiplier: 2         hacking: 950 <-> 1250 (5 ports)
+            "KuaiGong International": { company: "KuaiGong International", hostname: "kuai-gong" },             //exp & money multiplier: 2         hacking: 950 <-> 1300 (5 ports)
+            //jobStatReqOffset: 249
+            "NWO": { company: "NWO", hostname: "nwo" },                                                         //exp & money multiplier: 2.75      hacking: 950 <-> 1300 (5 ports)  
+            "ECorp": { company: "ECorp", hostname: "ecorp" },                                                   //exp & money multiplier: 3         hacking: 1050 <-> 1400 (5 ports)
+            "MegaCorp": { company: "MegaCorp", hostname: "megacorp" },                                          //exp & money multiplier: 3         hacking: 1100 <-> 1350 (5 ports)
+            
         }
+        //set the required reputation to 400k
+        const company_reputation_needed_for_faction = 400000
         //get factions
         const factions_joined = ns.getPlayer().factions
         //variable to fill
         var target_company = ""
-        /*
         //for each company faction
-        for (const [faction, company] of company_factions) {
-            //if not yet joined
-            if (!faction in factions_joined) {
+        for (const [faction, info] of company_factions) {
+            //if faction is already joined
+            if (factions_joined.includes(faction)) {
+                //go to next
+                continue
+            }
+            //check if the company server is backdoored
+            const backdoor_installed = ns.getServer(info.hostname).backdoorInstalled
+            //calc the rep needed (lowered when backdoor is installed)
+            const rep_needed = backdoor_installed ? company_reputation_needed_for_faction * 0.75 : company_reputation_needed_for_faction
+            //get company
+            const company = info.company
+            //if the company reputation is not enough 
+            if (ns.singularity.getCompanyRep(company) < rep_needed) {
                 //set as target
                 target_company = company
                 //stop
@@ -411,13 +665,14 @@ export class singularity_obj {
         //if there is an company set
         if (target_company != "") {
             //work for company
-            perform_action(ns, work_type.COMPANY, target_company)
+            this.perform_action(ns, work_type.COMPANY, target_company)
             //indicate success
             return true
-        }*/
+        }
         //indicate failure
         return false
     }
+
 
     /*
     getCrimeChance(crime)       5
@@ -454,6 +709,8 @@ export class singularity_obj {
         //default to mug for now
         this.perform_action(ns, work_type.CRIME, best_crime)
     }
+
+
     /*
     singularity.getCurrentWork      0.5
     singularity.commitCrime         5
@@ -461,9 +718,13 @@ export class singularity_obj {
     Singularity.gymWorkout          2
     singularity.workForFaction      3
     singularity.workForCompany      3
+    singularity.applyToCompany      3
     singularity.getFactionWorkTypes 1
-    16.5
+    19.5
     */
+   /*
+   function that tries to perform the action, if not already performing it (also guarding if work shouldn't be switched (e.g. grafting))
+   */
     perform_action(ns, type, activity) {
         //flag to keep track if we need to switch
         var flag_switch_work = false
@@ -485,21 +746,27 @@ export class singularity_obj {
                     case work_type.FACTION:
                         flag_switch_work = (activity != current_work.factionName);
                         break
+
                     case work_type.COMPANY:
                         flag_switch_work = (activity != current_work.companyName);
                         break
+
                     case work_type.CRIME:
                         flag_switch_work = (activity != current_work.crimeType);
                         break
+
                     case work_type.CREATE_PROGRAM:
                         flag_switch_work = (activity != current_work.programName);
                         break
+
                     case work_type.STUDY:
                         flag_switch_work = (activity != current_work.classType);
                         break
+
                     case work_type.GRAFTING:
                         flag_switch_work = (activity != current_work.augmentation);
                         break
+
                     default:
                         log.error(ns, "Singularity", "Uncaught work_type 1: '" + work_type + "'")
                 }
@@ -510,19 +777,33 @@ export class singularity_obj {
             //depending on the type
             switch (type) {
                 case work_type.FACTION:
+                    //get faction work types
                     const faction_work_type = ns.singularity.getFactionWorkTypes(activity)
-                    //TODO: improve
+                    //TODO: improve by checking which work type is best for the player (e.g. hacking, combat, etc.)
                     ns.singularity.workForFaction(activity, faction_work_type[0], true)
                     return
 
-                case work_type.COMPANY:
-                    //TODO: manage position and work type
+                case work_type.COMPANY:                
+                    //determine job field
+                    var jobfield = "Software" //Software (Hacking 85%, Char 15%) -> CTO (Chief Technology Officer)
+                    //get player stats
+                    const player_stats = ns.getPlayer().skills
+                    //if charisma is higher than hacking, then go for business instead: Business (Cha 90%, Hacking 10%) -> CEO (Chief Executive Officer)
+                    if (player_stats.charisma > player_stats.hacking) {
+                        //set to business
+                        jobfield = "Business"
+                    }
+                    //apply to company or try to get promotion
+                    ns.singularity.applyToCompany(activity, jobfield)
+                    //work for company
                     ns.singularity.workForCompany(activity, true)
+                    //stop
                     return
 
                 case work_type.CRIME:
-                    //TODO: manage crime type?
+                    //commit crime (calc for best crime has already happened)
                     ns.singularity.commitCrime(activity, true)
+                    //stop
                     return
 
                 case work_type.STUDY:
@@ -582,8 +863,8 @@ export class singularity_obj {
                     log.error(ns, "Singularity", "Uncaught work_type 2: '" + work_type + "'")
             }
         }
-
     }
+
 
     /*
     singularity.checkFactionInvitations     3
@@ -620,7 +901,7 @@ export class singularity_obj {
                     //for each augment the faction offers
                     for (const augment of augments) {
                         //if neurflux governor
-                        if (augment == "NeuroFlux Governor") {
+                        if (augment == AUGMENT.NFG) {
                             //ignore
                             continue
                         }
@@ -644,44 +925,9 @@ export class singularity_obj {
         }
     }
 
-//end of object
+    //end of object
 }
 
-
-const gyms = {
-    "Sector-12": "Powerhouse Gym", //or "Iron Gym"?
-    "Aevum": "Crush Fitness Gym", //or "Snap Fitness Gym"?
-    "Volhaven": "Millenium Fitness Gym",
-}
-
-const universities = {
-    "Sector-12": "Rothman University",
-    "Aevum": "Summit University",
-    "Volhaven": "ZB Institute of Technology",
-}
-
-const work_type = {
-    FACTION: "FACTION",
-    COMPANY: "COMPANY",
-    CRIME: "CRIME",
-    CREATE_PROGRAM: "CREATE_PROGRAM",
-    STUDY: "CLASS",
-    GRAFTING: "GRAFTING",
-}
-
-
-const focus_type = {
-    MONEY: "money", //How much money is given
-    KARMA: "karma", //Amount of karma lost for successfully committing this crime
-    KILLS: "kills", //How many people die as a result of this crime
-    HACKING: "hacking_exp", //hacking exp gained from crime	
-    STRENGTH: "strength_exp", //strength exp gained from crime
-    DEXTERITY: "dexterity_exp", //dexterity exp gained from crime
-    AGILITY: "agility_exp", //agility exp gained from crime
-    DEFENSE: "defense_exp", //defense exp gained from crime
-    CHARISMA: "charisma_exp", //charisma exp gained from crime
-    INTELLIGENCE: "intelligence_exp" //intelligence exp gained from crime
-}
 
 
 /*
