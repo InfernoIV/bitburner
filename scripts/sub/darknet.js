@@ -59,7 +59,7 @@ export class darknet_obj {
             result = ns.exec(CONSTANTS.SCRIPT.WORKER.DARKNET, CONSTANTS.SERVER.DARKWEB, {
                 preventDuplicates: true,
                 threads: threads,
-            }, CONSTANTS.SERVER.DARKWEB)
+            }, CONSTANTS.SERVER.DARKWEB, threads)
             //check if ok
             if (result == false) {
                 //debug

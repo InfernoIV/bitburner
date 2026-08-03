@@ -354,7 +354,9 @@ export const RAM = {
         ls (fn)	0.20GB
         dnet.getServerDetails (fn)	0.10GB
         dnet.unleashStormSeed (fn)	0.10GB
+
+        //TESTING: spawn
         */
-        DARKNET: 13.4,
+        DARKNET: 15.4//13.4,
     },
 }

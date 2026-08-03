@@ -38,10 +38,12 @@ ns.dnet.setStasisLink()             12 GB
         influence stock
 */
 export async function main(ns) {
-    //initialize
-    init(ns)
     //get hostname
     const hostname_self = ns.args[0]
+    const threads = ns.args[1]
+    //initialize
+    init(ns, hostname_self, threads)
+    
     var lab_checked = false
     //endless work
     while (true) {
@@ -67,13 +69,22 @@ export async function main(ns) {
 
 
 //disable logging
-function init(ns) {
+function init(ns, hostname_self, threads) {
     ns.disableLog("disableLog")
     ns.disableLog("sleep")
     //ns.disableLog("scp")
     //ns.disableLog("exec")
     ns.disableLog("dnet.probe")
     ns.disableLog("dnet.phishingAttack")
+
+    //TESTING
+    ns.atExit(() => {
+        //TEST
+        ns.ui.openTail()
+        //TODO: check spawn delay timing 
+        ns.spawn(CONSTANTS.SCRIPT.WORKER.DARKNET, {threads: threads, spawnDelay: CONSTANTS.TIME.WAIT, preventDuplicates: true}, 
+            hostname_self, threads)
+        })
 }
 
 
@@ -856,16 +867,13 @@ async function start_worker(ns, hostname) {
     result = ns.exec(CONSTANTS.SCRIPT.WORKER.DARKNET, hostname, {
         preventDuplicates: true,
         threads: threads,
-    }, hostname)
+    }, hostname, threads)
     //check if ok
     if (result == false) {
         ns.ui.openTail()
         //debug
         log.warning(ns, ns.pid, "Failed to start worker (" + CONSTANTS.RAM.WORKER.DARKNET + " x " + threads + " = " + (CONSTANTS.RAM.WORKER.DARKNET * threads) + ") on '" + hostname + "' => " + JSON
             .stringify(server_info), true)
-
-        //stop
-        ns.exit()
         //stop
         return
     }
