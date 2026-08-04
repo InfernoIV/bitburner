@@ -223,37 +223,567 @@ export class ram_obj {
         //loop for easy breaking
         while(true) {
             //register each handle and return if not successfull (e.g. no ram)
+            //indicate if stanek is available to join asap
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STANEK_AVAILABLE, {}, 13)) break
+            
+            
+            //AUTOMATION
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4)) break
+            //if darknet is available, we save 2 GBs (on singularity)
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET_AVAILABLE, {}, 15, 1, CONSTANTS.HANDLE.SINGULARITY)) break
+            //IMPROVE AUTOMATION
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)) break
+            
+            //BASE
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.ROOT, new root_obj())) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())) break
             
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4)) break
-            /*
-            //check if we have beaten BN15
-            const tor_owned = owned_source_files.hasOwnProperty(15)
-            //if we have SF15, and therefore own TOR automatically
-            if (tor_owned) {
-                //lower the ram costs, since the function won't be used
-                ram_needed -= 2.0
-            }
-                */
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STANEK, new stanek_obj(), 13)) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)) break
+
+            //GO
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO_ANALYSIS, {}, 0, 0, CONSTANTS.HANDLE.GO)) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO_CHEAT, {}, 14, 2, CONSTANTS.HANDLE.GO_ANALYSIS)) break
+
+            //EXTEND SINGULARITY
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 6, 1, CONSTANTS.HANDLE.SINGULARITY) || 
+                !await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 7, 1, CONSTANTS.HANDLE.SINGULARITY) ) break
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GRAFTING, new grafting_obj(), 10, 1, CONSTANTS.HANDLE.SINGULARITY)) break
+            
+            //EXTEND FUNCTIONALITY
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STANEK, new stanek_obj(), 13)) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.CODING_CONTRACT, new coding_contract_obj())) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.STOCK, new stock_obj())) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj())) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 6) || 
-                !await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 7) ) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.GANG, new gang_obj(), 2)) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.HACKNET, new hacknet_obj(), 9)) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.CORPORATION, new corporation_obj(), 3)) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GRAFTING, new grafting_obj(), 10)) break
+            
             break
         }
         //log.info(ns, "Ram", "Import complete: '" + [...this.registration.entries()] + "'", true)
     }
 }
+
+/*
+https://github.com/bitburner-official/bitburner-src/blob/dev/src/Netscript/RamCostGenerator.ts
+
+export const RamCostConstants = {
+  Base: 1.6,
+  Dom: 25,
+  CorporationInfo: 10,
+  CorporationAction: 20,
+  Max: 1024,
+  Hack: 0.1,
+  HackAnalyze: 1,
+  Grow: 0.15,
+  GrowthAnalyze: 1,
+  Weaken: 0.15,
+  WeakenAnalyze: 1,
+  Scan: 0.2,
+  RecentScripts: 0.2,
+  PortProgram: 0.05,
+  Run: 1.0,
+  Exec: 1.3,
+  Spawn: 2.0,
+  Scp: 0.6,
+  Kill: 0.5,
+  HasRootAccess: 0.05,
+  GetHostname: 0.05,
+  GetHackingLevel: 0.05,
+  GetServer: 0.1,
+  GetServerMaxRam: 0.05,
+  GetServerUsedRam: 0.05,
+  FileExists: 0.1,
+  IsRunning: 0.1,
+  Hacknet: 0.5,
+  HNUpgLevel: 0.4,
+  HNUpgRam: 0.6,
+  HNUpgCore: 0.8,
+  GetStock: 2.0,
+  BuySellStock: 2.5,
+  Round: 0.05,
+  ArbScript: 1.0,
+  GetScript: 0.1,
+  GetRunningScript: 0.3,
+  GetHackTime: 0.05,
+  GetFavorToDonate: 0.1,
+  CodingContractBase: 10,
+  SleeveBase: 4,
+  ClearTerminalCost: 0.2,
+  GetMoneySourcesCost: 1.0,
+
+  SingularityFn1: 2,
+  SingularityFn2: 3,
+  SingularityFn3: 5,
+
+  GangApiBase: 4,
+
+  BladeburnerApiBase: 4,
+
+  StanekWidth: 0.4,
+  StanekHeight: 0.4,
+  StanekCharge: 0.4,
+  StanekFragmentDefinitions: 0,
+  StanekPlacedFragments: 5,
+  StanekClear: 0,
+  StanekCanPlace: 0.5,
+  StanekPlace: 5,
+  StanekFragmentAt: 2,
+  StanekDeleteAt: 0.15,
+  StanekAcceptGift: 2,
+
+  InfiltrationCalculateDifficulty: 2.5,
+  InfiltrationCalculateRewards: 2.5,
+  InfiltrationGetInfiltrations: 15,
+
+  CycleTiming: 0,
+} as const;
+
+// Hacknet API
+const hacknet = {
+  numNodes: RamCostConstants.Hacknet,
+  purchaseNode: RamCostConstants.Hacknet,
+  getPurchaseNodeCost: RamCostConstants.Hacknet,
+  getNodeStats: RamCostConstants.Hacknet,
+  upgradeLevel: RamCostConstants.Hacknet,
+  upgradeRam: RamCostConstants.Hacknet,
+  upgradeCore: RamCostConstants.Hacknet,
+  upgradeCache: RamCostConstants.Hacknet,
+  getLevelUpgradeCost: RamCostConstants.Hacknet,
+  getRamUpgradeCost: RamCostConstants.Hacknet,
+  getCoreUpgradeCost: RamCostConstants.Hacknet,
+  getCacheUpgradeCost: RamCostConstants.Hacknet,
+  numHashes: RamCostConstants.Hacknet,
+  hashCost: RamCostConstants.Hacknet,
+  spendHashes: RamCostConstants.Hacknet,
+  maxNumNodes: RamCostConstants.Hacknet,
+  hashCapacity: RamCostConstants.Hacknet,
+  getHashUpgrades: RamCostConstants.Hacknet,
+  getHashUpgradeLevel: RamCostConstants.Hacknet,
+  getStudyMult: RamCostConstants.Hacknet,
+  getTrainingMult: RamCostConstants.Hacknet,
+} as const;
+
+// Stock API
+const stock = {
+  getConstants: 0,
+  hasWseAccount: 0.05,
+  hasTixApiAccess: 0.05,
+  has4SData: 0.05,
+  has4SDataTixApi: 0.05,
+  getBonusTime: 0,
+  nextUpdate: RamCostConstants.CycleTiming,
+  getSymbols: RamCostConstants.GetStock,
+  getPrice: RamCostConstants.GetStock,
+  getOrganization: RamCostConstants.GetStock,
+  getAskPrice: RamCostConstants.GetStock,
+  getBidPrice: RamCostConstants.GetStock,
+  getPosition: RamCostConstants.GetStock,
+  getMaxShares: RamCostConstants.GetStock,
+  getPurchaseCost: RamCostConstants.GetStock,
+  getSaleGain: RamCostConstants.GetStock,
+  buyStock: RamCostConstants.BuySellStock,
+  sellStock: RamCostConstants.BuySellStock,
+  buyShort: RamCostConstants.BuySellStock,
+  sellShort: RamCostConstants.BuySellStock,
+  placeOrder: RamCostConstants.BuySellStock,
+  cancelOrder: RamCostConstants.BuySellStock,
+  getOrders: RamCostConstants.BuySellStock,
+  getVolatility: RamCostConstants.BuySellStock,
+  getForecast: RamCostConstants.BuySellStock,
+  purchase4SMarketData: RamCostConstants.BuySellStock,
+  purchase4SMarketDataTixApi: RamCostConstants.BuySellStock,
+  purchaseWseAccount: RamCostConstants.BuySellStock,
+  purchaseTixApi: RamCostConstants.BuySellStock,
+} as const;
+
+// Singularity API
+const singularity = {
+  universityCourse: SF4Cost(RamCostConstants.SingularityFn1),
+  gymWorkout: SF4Cost(RamCostConstants.SingularityFn1),
+  travelToCity: SF4Cost(RamCostConstants.SingularityFn1),
+  goToLocation: SF4Cost(RamCostConstants.SingularityFn3),
+  purchaseTor: SF4Cost(RamCostConstants.SingularityFn1),
+  purchaseProgram: SF4Cost(RamCostConstants.SingularityFn1),
+  getCurrentServer: SF4Cost(RamCostConstants.SingularityFn1),
+  getCompanyPositionInfo: SF4Cost(RamCostConstants.SingularityFn1),
+  getCompanyPositions: SF4Cost(RamCostConstants.SingularityFn1),
+  cat: SF4Cost(RamCostConstants.SingularityFn1 / 4),
+  connect: SF4Cost(RamCostConstants.SingularityFn1),
+  manualHack: SF4Cost(RamCostConstants.SingularityFn1),
+  installBackdoor: SF4Cost(RamCostConstants.SingularityFn1),
+  getDarkwebProgramCost: SF4Cost(RamCostConstants.SingularityFn1 / 4),
+  getDarkwebPrograms: SF4Cost(RamCostConstants.SingularityFn1 / 4),
+  hospitalize: SF4Cost(RamCostConstants.SingularityFn1 / 4),
+  isBusy: SF4Cost(RamCostConstants.SingularityFn1 / 4),
+  stopAction: SF4Cost(RamCostConstants.SingularityFn1 / 2),
+  upgradeHomeRam: SF4Cost(RamCostConstants.SingularityFn2),
+  upgradeHomeCores: SF4Cost(RamCostConstants.SingularityFn2),
+  getUpgradeHomeRamCost: SF4Cost(RamCostConstants.SingularityFn2 / 2),
+  getUpgradeHomeCoresCost: SF4Cost(RamCostConstants.SingularityFn2 / 2),
+  workForCompany: SF4Cost(RamCostConstants.SingularityFn2),
+  applyToCompany: SF4Cost(RamCostConstants.SingularityFn2),
+  quitJob: SF4Cost(RamCostConstants.SingularityFn2),
+  getCompanyRep: SF4Cost(RamCostConstants.SingularityFn2 / 3),
+  getCompanyFavor: SF4Cost(RamCostConstants.SingularityFn2 / 3),
+  getCompanyFavorGain: SF4Cost(RamCostConstants.SingularityFn2 / 4),
+  getFactionInviteRequirements: SF4Cost(RamCostConstants.SingularityFn2),
+  getFactionEnemies: SF4Cost(RamCostConstants.SingularityFn2),
+  checkFactionInvitations: SF4Cost(RamCostConstants.SingularityFn2),
+  joinFaction: SF4Cost(RamCostConstants.SingularityFn2),
+  workForFaction: SF4Cost(RamCostConstants.SingularityFn2),
+  getFactionWorkTypes: SF4Cost(RamCostConstants.SingularityFn2 / 3),
+  getFactionRep: SF4Cost(RamCostConstants.SingularityFn2 / 3),
+  getFactionFavor: SF4Cost(RamCostConstants.SingularityFn2 / 3),
+  getFactionFavorGain: SF4Cost(RamCostConstants.SingularityFn2 / 4),
+  donateToFaction: SF4Cost(RamCostConstants.SingularityFn3),
+  createProgram: SF4Cost(RamCostConstants.SingularityFn3),
+  getHackingLevelRequirementOfProgram: SF4Cost(RamCostConstants.SingularityFn3),
+  commitCrime: SF4Cost(RamCostConstants.SingularityFn3),
+  getCrimeChance: SF4Cost(RamCostConstants.SingularityFn3),
+  getCrimeStats: SF4Cost(RamCostConstants.SingularityFn3),
+  getOwnedAugmentations: SF4Cost(RamCostConstants.SingularityFn3),
+  getOwnedSourceFiles: SF4Cost(RamCostConstants.SingularityFn3),
+  getAugmentationFactions: SF4Cost(RamCostConstants.SingularityFn3),
+  getAugmentationsFromFaction: SF4Cost(RamCostConstants.SingularityFn3),
+  getAugmentationPrereq: SF4Cost(RamCostConstants.SingularityFn3),
+  getAugmentationPrice: SF4Cost(RamCostConstants.SingularityFn3 / 2),
+  getAugmentationBasePrice: SF4Cost(RamCostConstants.SingularityFn3 / 2),
+  getAugmentationRepReq: SF4Cost(RamCostConstants.SingularityFn3 / 2),
+  getAugmentationStats: SF4Cost(RamCostConstants.SingularityFn3),
+  purchaseAugmentation: SF4Cost(RamCostConstants.SingularityFn3),
+  softReset: SF4Cost(RamCostConstants.SingularityFn3),
+  installAugmentations: SF4Cost(RamCostConstants.SingularityFn3),
+  isFocused: SF4Cost(0.1),
+  setFocus: SF4Cost(0.1),
+  getSaveData: SF4Cost(RamCostConstants.SingularityFn1 / 2),
+  exportGame: SF4Cost(RamCostConstants.SingularityFn1 / 2),
+  exportGameBonus: SF4Cost(RamCostConstants.SingularityFn1 / 4),
+  hasExportGameBonus: SF4Cost(RamCostConstants.SingularityFn1 / 4),
+  b1tflum3: SF4Cost(16),
+  destroyW0r1dD43m0n: SF4Cost(32),
+  getCurrentWork: SF4Cost(0.5),
+  getUnlockedAchievements: SF4Cost(RamCostConstants.SingularityFn3),
+} as const;
+
+const cloud = {
+  getServerLimit: 0.05,
+  getRamLimit: 0.05,
+  getServerCost: 0.25,
+  getServerUpgradeCost: 0.1,
+  getServerNames: 1.05,
+  upgradeServer: 0.25,
+  renameServer: 0,
+  purchaseServer: 2.25,
+  deleteServer: 2.25,
+} as const;
+
+// Darknet API
+const dnet = {
+  authenticate: 0.4,
+  connectToSession: 0.05,
+  freezeServer: 2,
+  heartbleed: 0.6,
+  openCache: 2,
+  probe: RamCostConstants.Scan,
+  setStasisLink: 12,
+  getStasisLinkLimit: 0,
+  getStasisLinkedServers: 0,
+  getServer: 2,
+  getServerDetails: RamCostConstants.GetServer,
+  induceServerMigration: 4,
+  unleashStormSeed: 0.1,
+  isDarknetServer: RamCostConstants.GetServer,
+  memoryReallocation: 1,
+  getBlockedRam: 0,
+  getDepth: RamCostConstants.GetServer,
+  promoteStock: 2,
+  phishingAttack: 2,
+  getDarknetInstability: 0,
+  nextMutation: RamCostConstants.CycleTiming,
+  getServerRequiredCharismaLevel: RamCostConstants.GetServer,
+  labreport: 0,
+  labradar: 0,
+} as const;
+
+const format = {
+  number: 0,
+  ram: 0,
+  percent: 0,
+  time: 0,
+  money: 0,
+} as const;
+
+// Gang API
+const gang = {
+  createGang: RamCostConstants.GangApiBase / 4,
+  inGang: 0,
+  getMemberNames: RamCostConstants.GangApiBase / 4,
+  renameMember: 0,
+  getGangInformation: RamCostConstants.GangApiBase / 2,
+  getAllGangInformation: RamCostConstants.GangApiBase / 2,
+  getMemberInformation: RamCostConstants.GangApiBase / 2,
+  canRecruitMember: RamCostConstants.GangApiBase / 4,
+  getRecruitsAvailable: RamCostConstants.GangApiBase / 4,
+  respectForNextRecruit: RamCostConstants.GangApiBase / 4,
+  recruitMember: RamCostConstants.GangApiBase / 2,
+  getTaskNames: 0,
+  getTaskStats: RamCostConstants.GangApiBase / 4,
+  setMemberTask: RamCostConstants.GangApiBase / 2,
+  getEquipmentNames: 0,
+  getEquipmentCost: RamCostConstants.GangApiBase / 2,
+  getEquipmentType: RamCostConstants.GangApiBase / 2,
+  getEquipmentStats: RamCostConstants.GangApiBase / 2,
+  purchaseEquipment: RamCostConstants.GangApiBase,
+  ascendMember: RamCostConstants.GangApiBase,
+  getAscensionResult: RamCostConstants.GangApiBase / 2,
+  getInstallResult: RamCostConstants.GangApiBase / 2,
+  setTerritoryWarfare: RamCostConstants.GangApiBase / 2,
+  getChanceToWinClash: RamCostConstants.GangApiBase,
+  getBonusTime: 0,
+  nextUpdate: RamCostConstants.CycleTiming,
+} as const;
+
+// Go API
+const go = {
+  makeMove: 4,
+  passTurn: 0,
+  getBoardState: 4,
+  getMoveHistory: 0,
+  getCurrentPlayer: 0,
+  getGameState: 0,
+  getOpponent: 0,
+  opponentNextTurn: 0,
+  resetBoardState: 0,
+  analysis: {
+    getValidMoves: 8,
+    getChains: 16,
+    getLiberties: 16,
+    getControlledEmptyNodes: 16,
+    getStats: 0,
+    resetStats: 0,
+    setTestingBoardState: 4,
+    highlightPoint: 0,
+    clearPointHighlight: 0,
+    clearAllPointHighlights: 0,
+  },
+  cheat: {
+    getCheatSuccessChance: 1,
+    getCheatCount: 1,
+    removeRouter: 8,
+    playTwoMoves: 8,
+    repairOfflineNode: 8,
+    destroyNode: 8,
+  },
+} as const;
+
+// Bladeburner API
+const bladeburner = {
+  inBladeburner: 0,
+  getContractNames: 0,
+  getOperationNames: 0,
+  getBlackOpNames: 0,
+  getNextBlackOp: RamCostConstants.BladeburnerApiBase / 2,
+  getBlackOpRank: RamCostConstants.BladeburnerApiBase / 2,
+  getGeneralActionNames: 0,
+  getSkillNames: 0,
+  startAction: RamCostConstants.BladeburnerApiBase,
+  stopBladeburnerAction: RamCostConstants.BladeburnerApiBase / 2,
+  getCurrentAction: RamCostConstants.BladeburnerApiBase / 4,
+  getActionTime: RamCostConstants.BladeburnerApiBase,
+  getActionCurrentTime: RamCostConstants.BladeburnerApiBase,
+  getActionEstimatedSuccessChance: RamCostConstants.BladeburnerApiBase,
+  getActionRepGain: RamCostConstants.BladeburnerApiBase,
+  getActionRankGain: RamCostConstants.BladeburnerApiBase,
+  getActionRankLoss: RamCostConstants.BladeburnerApiBase,
+  getActionCountRemaining: RamCostConstants.BladeburnerApiBase,
+  getActionMaxLevel: RamCostConstants.BladeburnerApiBase,
+  getActionCurrentLevel: RamCostConstants.BladeburnerApiBase,
+  getActionAutolevel: RamCostConstants.BladeburnerApiBase,
+  getActionSuccesses: RamCostConstants.BladeburnerApiBase,
+  setActionAutolevel: RamCostConstants.BladeburnerApiBase,
+  setActionLevel: RamCostConstants.BladeburnerApiBase,
+  getRank: RamCostConstants.BladeburnerApiBase,
+  getSkillPoints: RamCostConstants.BladeburnerApiBase,
+  getSkillLevel: RamCostConstants.BladeburnerApiBase,
+  getSkillUpgradeCost: RamCostConstants.BladeburnerApiBase,
+  upgradeSkill: RamCostConstants.BladeburnerApiBase,
+  getTeamSize: RamCostConstants.BladeburnerApiBase,
+  setTeamSize: RamCostConstants.BladeburnerApiBase,
+  getCityEstimatedPopulation: RamCostConstants.BladeburnerApiBase,
+  getCityCommunities: RamCostConstants.BladeburnerApiBase,
+  getCityChaos: RamCostConstants.BladeburnerApiBase,
+  getCity: RamCostConstants.BladeburnerApiBase,
+  switchCity: RamCostConstants.BladeburnerApiBase,
+  getStamina: RamCostConstants.BladeburnerApiBase,
+  joinBladeburnerFaction: RamCostConstants.BladeburnerApiBase,
+  joinBladeburnerDivision: RamCostConstants.BladeburnerApiBase,
+  getBonusTime: 0,
+  nextUpdate: RamCostConstants.CycleTiming,
+} as const;
+
+const infiltration = {
+  getPossibleLocations: 0,
+  getInfiltration: RamCostConstants.InfiltrationGetInfiltrations,
+} as const;
+
+// Coding Contract API
+const codingcontract = {
+  attempt: RamCostConstants.CodingContractBase,
+  getContractType: RamCostConstants.CodingContractBase / 2,
+  getData: RamCostConstants.CodingContractBase / 2,
+  getContract: RamCostConstants.CodingContractBase * (3 / 2),
+  getDescription: RamCostConstants.CodingContractBase / 2,
+  getNumTriesRemaining: RamCostConstants.CodingContractBase / 5,
+  createDummyContract: RamCostConstants.CodingContractBase / 5,
+  getContractTypes: 0,
+} as const;
+
+// Duplicate Sleeve API
+const sleeve = {
+  getNumSleeves: RamCostConstants.SleeveBase,
+  setToIdle: RamCostConstants.SleeveBase,
+  setToShockRecovery: RamCostConstants.SleeveBase,
+  setToSynchronize: RamCostConstants.SleeveBase,
+  setToCommitCrime: RamCostConstants.SleeveBase,
+  setToUniversityCourse: RamCostConstants.SleeveBase,
+  travel: RamCostConstants.SleeveBase,
+  setToCompanyWork: RamCostConstants.SleeveBase,
+  setToFactionWork: RamCostConstants.SleeveBase,
+  setToGymWorkout: RamCostConstants.SleeveBase,
+  getTask: RamCostConstants.SleeveBase,
+  getSleeve: RamCostConstants.SleeveBase,
+  getSleeveAugmentations: RamCostConstants.SleeveBase,
+  getSleevePurchasableAugs: RamCostConstants.SleeveBase,
+  purchaseSleeveAug: RamCostConstants.SleeveBase,
+  setToBladeburnerAction: RamCostConstants.SleeveBase,
+  getSleeveAugmentationPrice: RamCostConstants.SleeveBase,
+  getSleeveAugmentationRepReq: RamCostConstants.SleeveBase,
+  purchaseSleeve: RamCostConstants.SleeveBase,
+  upgradeMemory: RamCostConstants.SleeveBase,
+  getSleeveCost: RamCostConstants.SleeveBase,
+  getMemoryUpgradeCost: RamCostConstants.SleeveBase,
+} as const;
+
+// Stanek API
+const stanek = {
+  giftWidth: RamCostConstants.StanekWidth,
+  giftHeight: RamCostConstants.StanekHeight,
+  chargeFragment: RamCostConstants.StanekCharge,
+  fragmentDefinitions: RamCostConstants.StanekFragmentDefinitions,
+  activeFragments: RamCostConstants.StanekPlacedFragments,
+  clearGift: RamCostConstants.StanekClear,
+  canPlaceFragment: RamCostConstants.StanekCanPlace,
+  placeFragment: RamCostConstants.StanekPlace,
+  getFragment: RamCostConstants.StanekFragmentAt,
+  removeFragment: RamCostConstants.StanekDeleteAt,
+  acceptGift: RamCostConstants.StanekAcceptGift,
+} as const;
+
+// UI API
+const ui = {
+  openTail: 0,
+  renderTail: 0,
+  moveTail: 0,
+  resizeTail: 0,
+  closeTail: 0,
+  setTailTitle: 0,
+  setTailFontSize: 0,
+  setTailMinimized: 0,
+  getTheme: 0,
+  setTheme: 0,
+  resetTheme: 0,
+  getStyles: 0,
+  setStyles: 0,
+  resetStyles: 0,
+  getGameInfo: 0,
+  clearTerminal: 0,
+  openCodeEditor: 0,
+  windowSize: 0,
+  alias: 0,
+  unalias: 0,
+  getAllAliases: 0,
+  renderPage: 0,
+  createConnectLink: 5,
+} as const;
+
+// Grafting API
+const grafting = {
+  getAugmentationGraftPrice: 3.75,
+  getAugmentationGraftTime: 3.75,
+  getGraftableAugmentations: 5,
+  graftAugmentation: 7.5,
+  waitForOngoingGrafting: 0,
+} as const;
+
+const corporation = {
+  hasCorporation: 0,
+  canCreateCorporation: 0,
+  createCorporation: RamCostConstants.CorporationAction,
+  hasUnlock: RamCostConstants.CorporationInfo,
+  getUnlockCost: RamCostConstants.CorporationInfo,
+  getUpgradeLevel: RamCostConstants.CorporationInfo,
+  getUpgradeLevelCost: RamCostConstants.CorporationInfo,
+  getInvestmentOffer: RamCostConstants.CorporationInfo,
+  getConstants: 0,
+  getIndustryData: RamCostConstants.CorporationInfo,
+  getMaterialData: RamCostConstants.CorporationInfo,
+  acceptInvestmentOffer: RamCostConstants.CorporationAction,
+  goPublic: RamCostConstants.CorporationAction,
+  bribe: RamCostConstants.CorporationAction,
+  getCorporation: RamCostConstants.CorporationInfo,
+  getDivision: RamCostConstants.CorporationInfo,
+  expandIndustry: RamCostConstants.CorporationAction,
+  expandCity: RamCostConstants.CorporationAction,
+  purchaseUnlock: RamCostConstants.CorporationAction,
+  levelUpgrade: RamCostConstants.CorporationAction,
+  issueDividends: RamCostConstants.CorporationAction,
+  issueNewShares: RamCostConstants.CorporationAction,
+  buyBackShares: RamCostConstants.CorporationAction,
+  sellShares: RamCostConstants.CorporationAction,
+  getBonusTime: 0,
+  nextUpdate: RamCostConstants.CycleTiming,
+  sellDivision: RamCostConstants.CorporationAction,
+  // Warehouse API
+  sellMaterial: RamCostConstants.CorporationAction,
+  sellProduct: RamCostConstants.CorporationAction,
+  discontinueProduct: RamCostConstants.CorporationAction,
+  setSmartSupply: RamCostConstants.CorporationAction,
+  setSmartSupplyOption: RamCostConstants.CorporationAction,
+  buyMaterial: RamCostConstants.CorporationAction,
+  bulkPurchase: RamCostConstants.CorporationAction,
+  getWarehouse: RamCostConstants.CorporationInfo,
+  getProduct: RamCostConstants.CorporationInfo,
+  getMaterial: RamCostConstants.CorporationInfo,
+  setMaterialMarketTA1: RamCostConstants.CorporationAction,
+  setMaterialMarketTA2: RamCostConstants.CorporationAction,
+  setProductMarketTA1: RamCostConstants.CorporationAction,
+  setProductMarketTA2: RamCostConstants.CorporationAction,
+  exportMaterial: RamCostConstants.CorporationAction,
+  cancelExportMaterial: RamCostConstants.CorporationAction,
+  purchaseWarehouse: RamCostConstants.CorporationAction,
+  upgradeWarehouse: RamCostConstants.CorporationAction,
+  makeProduct: RamCostConstants.CorporationAction,
+  limitMaterialProduction: RamCostConstants.CorporationAction,
+  limitProductProduction: RamCostConstants.CorporationAction,
+  getUpgradeWarehouseCost: RamCostConstants.CorporationInfo,
+  hasWarehouse: RamCostConstants.CorporationInfo,
+  // Warehouse API
+  hireEmployee: RamCostConstants.CorporationAction,
+  upgradeOfficeSize: RamCostConstants.CorporationAction,
+  throwParty: RamCostConstants.CorporationAction,
+  buyTea: RamCostConstants.CorporationAction,
+  hireAdVert: RamCostConstants.CorporationAction,
+  research: RamCostConstants.CorporationAction,
+  getOffice: RamCostConstants.CorporationInfo,
+  getHireAdVertCost: RamCostConstants.CorporationInfo,
+  getHireAdVertCount: RamCostConstants.CorporationInfo,
+  getResearchCost: RamCostConstants.CorporationInfo,
+  hasResearched: RamCostConstants.CorporationInfo,
+  setJobAssignment: RamCostConstants.CorporationAction,
+  getOfficeSizeUpgradeCost: RamCostConstants.CorporationInfo,
+} as const;
+ 
+ */
