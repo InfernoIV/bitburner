@@ -36,27 +36,28 @@ export const SCRIPT = {
 }
 
 
-export const HANDLE = {                 //SF or BN requirement
-    MAIN: "MAIN",                       //0
-    RAM: "RAM",                         //0
-    ROOT: "ROOT",                       //0
-    HACK: "HACK",                       //0
-    DARKNET: "DARKNET",                 //0/?
-    GO: "GO",                           //0/15
-    SINGULARITY: "SINGULARITY",         //4
-    INTELLIGENCE: "INTELLIGENCE",       //5
-    STANEK: "STANEK",                   //13
-    SLEEVE: "SLEEVE",                   //10
-    GO_ANALYSIS: "GO_ANALYSIS",         //0
-    GO_CHEAT: "GO_CHEAT",               //
-    CODING_CONTRACT: "CODING_CONTRACT", //0
-    STOCK: "STOCK",                     //0
-    INFILTRATION: "INFILTRATION",       //0
-    BLADEBURNER: "BLADEBURNER",         //6/7
-    GANG: "GANG",                       //2
-    HACKNET: "HACKNET",                 //9
-    CORPORATION: "CORPORATION",         //3
-    GRAFTING: "GRAFTING",               //10
+export const HANDLE = {                     //SF or BN requirement
+    MAIN: "MAIN",                           //0
+    RAM: "RAM",                             //0
+    ROOT: "ROOT",                           //0
+    HACK: "HACK",                           //0
+    DARKNET: "DARKNET",                     //0/?
+    GO: "GO",                               //0/15
+    SINGULARITY: "SINGULARITY",             //4
+    INTELLIGENCE: "INTELLIGENCE",           //5
+    STANEK_AVAILABLE: "STANEK_AVAILABLE",   //13
+    STANEK: "STANEK",                       //13
+    SLEEVE: "SLEEVE",                       //10
+    GO_ANALYSIS: "GO_ANALYSIS",             //0
+    GO_CHEAT: "GO_CHEAT",                   //14.2
+    CODING_CONTRACT: "CODING_CONTRACT",     //0
+    STOCK: "STOCK",                         //0
+    INFILTRATION: "INFILTRATION",           //0
+    BLADEBURNER: "BLADEBURNER",             //6/7
+    GANG: "GANG",                           //2
+    HACKNET: "HACKNET",                     //9
+    CORPORATION: "CORPORATION",             //3
+    GRAFTING: "GRAFTING",                   //10
 }
 
 
@@ -133,23 +134,32 @@ export const RAM = {
     ROOT: 1.35,
 
     /*
-    getServer (fn)	        2.00GB  -> already covered in main
-    baseCost (misc)	        1.60GB -> already covered in main
+    getServer (fn)	        2.00GB -> already covered in main
     exec (fn)	            1.30GB
     hackAnalyzeChance (fn)	1.00GB
-    scp (fn)	            0.60GB    -> already covered in root
+    scp (fn)	            0.60GB -> already covered in root
+    getHackingLevel (fn)	0.05GB  -> already covered in root
     getHackTime (fn)	    0.05GB
     getWeakenTime (fn)	    0.05GB
     getGrowTime (fn)	    0.05GB
-    getHackingLevel (fn)	0.05GB  -> already covered in root
     ns.formulas             0
     */
     HACK: 2.45,
 
     /*
     ns.getBitNodeMultipliers()  4
+    - ns.hackAnalyze            1 
+    + ns.hackAnalyzeSecurity    1
+    + ns.growthAnalyzeSecurity  1     
+    ns.formulas.hackTime    0
+    ns.formulas.weakenTime  0
+    ns.formulas.growTime    0
+    
+    - ns.getHackTime      0.05
+    - ns.getGrowTime      0.05
+    - ns.getWeakenTime    0.05   
     */
-    INTELLIGENCE: 4.0,
+    INTELLIGENCE: 5.85,
 
     /*
     ns.singularity.connect              1   (but implemented in root)
@@ -173,6 +183,11 @@ export const RAM = {
     */
     SLEEVE: 0.0,
 
+
+    /*
+    If darknet is available, we don't have to buy TOR: saving 2 GB
+    */
+    DARKNET_AVAILABLE: -2.0,
     /*
     ns.exec             done by hack
     ns.ls               done by root
@@ -279,6 +294,12 @@ export const RAM = {
 
     */
     BLADEBURNER: 0.0,
+
+
+    /*
+    just to indicate stanek is unlocked, so that we join it asap)
+    */
+    STANEK_AVAILABLE: 0.0,
 
     //boost
     /*

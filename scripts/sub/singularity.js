@@ -88,32 +88,32 @@ export class singularity_obj {
     /*
     singularity.connect 2   -> used by root
     manage          0
-    upgrade_home    3
+    upgrade_home    33
     manage_tor      2  
     manage_tools    2
     manage_factions 9
     manage_player   15.5
     */
     async manage(ns, handles) {
-        //test
-        await this.join_stanek(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STANEK))
         //upgrade home
         this.upgrade_home(ns)
         //check if we don't own tor
         if (!this.tor_owned) {
             //try to buy tor
-            this.manage_tor(ns)
+            this.manage_tor(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.DARKNET_AVAILABLE))
             //tor owned
         } else {
             //buy tools from tor
             this.manage_tools(ns)
         }
-        //manage faction (invites)
+        //manage (joining of) faction (invites)
         this.manage_factions(ns)
         //manage player actions
-        const travel_blocked = this.manage_player(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.DARKNET))
+        const travel_blocked = this.manage_player(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.DARKNET), handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
         //check if we can travel
         if(!travel_blocked) {
+            //test
+            await this.join_stanek(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STANEK_AVAILABLE))
             //manage player location
             this.manage_location(ns)
         }
@@ -128,9 +128,16 @@ export class singularity_obj {
     singularity.purchaseTor     2
     */
     //function that buys tor
-    manage_tor(ns) {
+    manage_tor(ns, darknet_available) {
+        //check if it is permanently obtained
+        if (darknet_available) {
+            //set flag
+            this.tor_owned = true
+            //darknet is available as well
+            this.darknet = true
+
         //if we can buy / have bought TOR
-        if (ns.singularity.purchaseTor()) {
+        } else if (ns.singularity.purchaseTor()) {
             //set flag
             this.tor_owned = true
         }
@@ -349,10 +356,8 @@ export class singularity_obj {
         }
         //get player
         const player = ns.getPlayer()
-        //get joined factions
-        const factions_joined = player.factions
         //church of the machine god in chongqing with SF13(.1) and augmentations 0
-        if (factions_joined.includes("Church of the Machine God")) {
+        if (player.factions.includes("Church of the Machine God")) {
             //success
             return true
         //not joined
@@ -398,17 +403,21 @@ export class singularity_obj {
     }
 
     //function that manages the player (studying, working for factions, working for companies, committing crimes)
-    manage_player(ns, darknet_started) {
+    manage_player(ns, darknet_started, formulas_available) {
         //work towards gang: 30 combat (str, def, dex, con) to unlock Slum Snakes, or ?? hacking + ?? tooling to unlock NiteSec
         if (this.study(ns)) return true
-        //get money
-        if (!darknet_started) {
+        //if darknet has not been started / obtainted
+        if (this.darknet == false) {
+            //get money
             this.commit_crime(ns)
+            //stop
             return false
         }
-
-        if (this.work_for_faction(ns)) return false
-        if (this.work_for_company(ns)) return false
+        //work for faction (if available)
+        if (this.work_for_faction(ns, formulas_available)) return false
+        //work for company (if available)
+        if (this.work_for_company(ns, formulas_available)) return false
+        //get money
         this.commit_crime(ns)
         return false
         /*
@@ -519,39 +528,32 @@ export class singularity_obj {
         const skills = ns.getPlayer().skills
         //hacking < combat < charisma
         if (skills.hacking < this.skill_min) {
-            this.perform_action(ns, work_type.STUDY, "Algorithms")
-            return true
+            return this.perform_action(ns, work_type.STUDY, "Algorithms")
 
         } else if (skills.strength < this.skill_min) {
-            this.perform_action(ns, work_type.STUDY, "str")
-            return true
+            return this.perform_action(ns, work_type.STUDY, "str")
 
         } else if (skills.defense < this.skill_min) {
-            this.perform_action(ns, work_type.STUDY, "def")
-            return true
+            return this.perform_action(ns, work_type.STUDY, "def")
 
         } else if (skills.dexterity < this.skill_min) {
-            this.perform_action(ns, work_type.STUDY, "dex")
-            return true
+            return this.perform_action(ns, work_type.STUDY, "dex")
 
         } else if (skills.agility < this.skill_min) {
-            this.perform_action(ns, work_type.STUDY, "agi")
-            return true
+            return this.perform_action(ns, work_type.STUDY, "agi")
 
         } else if (skills.charisma < this.skill_min) {
-            this.perform_action(ns, work_type.STUDY, "Leadership")
-            return true
-
-        } else {
-            return false
+            return this.perform_action(ns, work_type.STUDY, "Leadership")
         }
+        //we have all the stats we need
+        return false
     }
 
 
     /*
     Singularity.getFactionFavor 1
     */
-    work_for_faction(ns) {
+    work_for_faction(ns, formulas_available) {
         //get augments owned
         const augments_owned = ns.singularity.getOwnedAugmentations(true)
         //get factions
@@ -607,7 +609,7 @@ export class singularity_obj {
         //if a target faction is set
         if (target_faction != "") {
             //set to work for faction
-            this.perform_action(ns, work_type.FACTION, target_faction)
+            this.perform_action(ns, work_type.FACTION, target_faction, formulas_available)
             //indicate sucess
             return true
         }
@@ -621,7 +623,7 @@ export class singularity_obj {
     //jobStatReqOffset: lower is better
     //exp & money multiplier: higher is better
     //TODO: do we need to be in the city to apply for the job? e.g. Backman & Associates is in Aevum, but we are in Sector-12, can we apply for the job?
-    work_for_company(ns) {
+    work_for_company(ns, formulas_available) {
         //faction name, company name, server name
         const company_factions = {        
             //jobStatReqOffset: 224            
@@ -670,7 +672,7 @@ export class singularity_obj {
         //if there is an company set
         if (target_company != "") {
             //work for company
-            this.perform_action(ns, work_type.COMPANY, target_company)
+            this.perform_action(ns, work_type.COMPANY, target_company, formulas_available)
             //indicate success
             return true
         }
@@ -730,7 +732,9 @@ export class singularity_obj {
    /*
    function that tries to perform the action, if not already performing it (also guarding if work shouldn't be switched (e.g. grafting))
    */
-    perform_action(ns, type, activity) {
+    perform_action(ns, type, activity, formulas_available=false) {
+        //get player
+        var player = ns.getPlayer()
         //flag to keep track if we need to switch
         var flag_switch_work = false
         //get current work
@@ -745,31 +749,38 @@ export class singularity_obj {
             if (current_work.type != type) {
                 //set flag
                 flag_switch_work = true
+            //doing the same work (high level)
             } else {
                 //depending on the type
                 switch (type) {
                     case work_type.FACTION:
-                        flag_switch_work = (activity != current_work.factionName);
+                        flag_switch_work = (activity != current_work.factionName)
                         break
 
-                    case work_type.COMPANY:
-                        flag_switch_work = (activity != current_work.companyName);
+                    case work_type.COMPANY:                    
+                        //we need to check for promotion
+                        flag_switch_work = true 
+                        //stop
                         break
 
                     case work_type.CRIME:
-                        flag_switch_work = (activity != current_work.crimeType);
+                        flag_switch_work = (activity != current_work.crimeType)
+                        //stop
                         break
 
                     case work_type.CREATE_PROGRAM:
-                        flag_switch_work = (activity != current_work.programName);
+                        flag_switch_work = (activity != current_work.programName)
+                        //stop
                         break
 
                     case work_type.STUDY:
-                        flag_switch_work = (activity != current_work.classType);
+                        flag_switch_work = (activity != current_work.classType)
+                        //stop
                         break
 
                     case work_type.GRAFTING:
-                        flag_switch_work = (activity != current_work.augmentation);
+                        flag_switch_work = (activity != current_work.augmentation)
+                        //stop
                         break
 
                     default:
@@ -781,35 +792,36 @@ export class singularity_obj {
         if (flag_switch_work == true) {
             //depending on the type
             switch (type) {
-                case work_type.FACTION:
-                    //get faction work types
-                    const faction_work_type = ns.singularity.getFactionWorkTypes(activity)
-                    //TODO: improve by checking which work type is best for the player (e.g. hacking, combat, etc.)
-                    ns.singularity.workForFaction(activity, faction_work_type[0], true)
-                    return
 
-                case work_type.COMPANY:                
-                    //determine job field
-                    var jobfield = "Software" //Software (Hacking 85%, Char 15%) -> CTO (Chief Technology Officer)
-                    //get player stats
-                    const player_stats = ns.getPlayer().skills
-                    //if charisma is higher than hacking, then go for business instead: Business (Cha 90%, Hacking 10%) -> CEO (Chief Executive Officer)
-                    if (player_stats.charisma > player_stats.hacking) {
-                        //set to business
-                        jobfield = "Business"
+                case work_type.FACTION:
+                    //get best work type
+                    const work_type_best = this.get_best_work_faction(ns, player, activity)                    
+                    //check if not already working for same worktype
+                    if (current_work.factionWorkType != work_type_best) {
+                        //work for worktype
+                        return ns.singularity.workForFaction(activity, work_type_best, true)
                     }
-                    //apply to company or try to get promotion
+                    //already working for the best type
+                    return true
+
+                case work_type.COMPANY:   
+                    //get best company work   
+                    const jobfield = this.get_best_work_company(ns, player)
+                    //apply to company or try to get promotion (will cancel current job & job work for another company)
                     ns.singularity.applyToCompany(activity, jobfield)
-                    //work for company
-                    ns.singularity.workForCompany(activity, true)
-                    //stop
-                    return
+                    //refresh player
+                    player = ns.getPlayer()
+                    //check if we have the job
+                    if(player.jobs.has(activity)) {
+                        //work for company
+                        return ns.singularity.workForCompany(activity, true)
+                    }                 
+                    //we don't have the job, return failure
+                    return false
 
                 case work_type.CRIME:
                     //commit crime (calc for best crime has already happened)
-                    ns.singularity.commitCrime(activity, true)
-                    //stop
-                    return
+                    return ns.singularity.commitCrime(activity, true)                    
 
                 case work_type.STUDY:
                     //get city
@@ -827,29 +839,27 @@ export class singularity_obj {
                     switch (activity) {
                         case "hacking":
                         case "Algorithms":
-                            ns.singularity.universityCourse(university, "Algorithms", true)
-                            return
+                            return ns.singularity.universityCourse(university, "Algorithms", true)
+                            
 
                         case "str":
-                            ns.singularity.gymWorkout(gym, "str", true)
-                            return
+                            return ns.singularity.gymWorkout(gym, "str", true)                            
 
                         case "def":
-                            ns.singularity.gymWorkout(gym, "def", true)
-                            return
+                            return ns.singularity.gymWorkout(gym, "def", true)
+                            
 
                         case "dex":
-                            ns.singularity.gymWorkout(gym, "dex", true)
-                            return
+                            return ns.singularity.gymWorkout(gym, "dex", true)
+                            
 
                         case "agi":
-                            ns.singularity.gymWorkout(gym, "agi", true)
-                            return
+                            return ns.singularity.gymWorkout(gym, "agi", true)
+                            
 
                         case "charisma":
                         case "Leadership":
-                            ns.singularity.universityCourse(university, "Leadership", true)
-                            return
+                            return ns.singularity.universityCourse(university, "Leadership", true)
 
                         default:
                             log.error(ns, "Singularity", "Uncaught study activity: '" + JSON.stringify(activity) +
@@ -858,16 +868,78 @@ export class singularity_obj {
 
                 case work_type.CREATE_PROGRAM:
                     //ns.singularity.createProgram()
-                    return
+                    return true
 
                 case work_type.GRAFTING:
                     //skip for now
-                    return
+                    return true
 
                 default:
                     log.error(ns, "Singularity", "Uncaught work_type 2: '" + work_type + "'")
             }
+        //no need to switch
+        } else {
+            //indicate success
+            return true
         }
+    }
+
+
+    //get the best work for a company
+    get_best_work_company(ns, player) {//, formulas_available) {
+        //determine job field
+        var jobfield = "Software" 
+        //from https://github.com/bitburner-official/bitburner-src/blob/dev/src/Company/data/CompanyPositionsMetadata.ts            
+        //Software -> CTO (Chief Technology Officer)
+        //Hacking:  85-85-80-75-75-25-70-65
+        //Charisma: 15-15-20-25-25-25-30-35
+        var gains_software = (0.75 * player.skills.hacking) + (0.25 * player.skills.charisma)
+        //Business -> CEO (Chief Executive Officer)
+        //Charisma: 90-85-85-85-90-90
+        //Hacking:  10-15-15-15-10-10            
+        var gains_business = (0.15 * player.skills.hacking) + (0.85 * player.skills.charisma)
+        //if we can use formula's
+        /*if(formulas_available) {
+            //requires JobName...
+            //correct the gains
+            gains_software = ns.formulas.companyGains(player,company,"Software",1).reputation
+            gains_business = ns.formulas.companyGains(player,company,"Business",1).reputation
+        }*/
+        //check if business is better
+        if (gains_business > gains_business) {
+            //set to business
+            jobfield = "Business"
+        }
+        //return the jobfield
+        return jobfield
+    }
+
+
+    //get best work for faction
+    get_best_work_faction(ns, player, faction) {
+        //get faction work types
+        const faction_work_types = ns.singularity.getFactionWorkTypes(faction)
+        //default to first work type
+        var work_type_best = faction_work_types[0]
+        //TODO: improve by checking which work type is best for the player (e.g. hacking, combat, etc.)
+        if(formulas_available) {
+            //save best gains
+            var best_rep = -1
+            //for each worktype
+            for (const work_type of faction_work_types) {
+                //get the gains
+                const workstats = ns.formulas.factionGains(player, work_type, 1)
+                //if better than what we have
+                if (workstats.reputation > best_rep) {
+                    //save the gains
+                    best_rep = workstats.reputation
+                    //save the work type
+                    work_type_best = work_type
+                }
+            }
+        }
+        //return the best work type
+        return work_type_best
     }
 
 
@@ -968,47 +1040,7 @@ Faction 'Shadows of Anarchy': '[{"type":"numInfiltrations","numInfiltrations":1}
 
 
 
-//function to backdoor a server, to be called by root.js
-export async function backdoor_server(ns, neighbour, server) {
-    //connect to neighbour server
-    await await evaluate.exec(ns, "ns.singularity.connect('" + neighbour + "')")
-    //connect to the server
-    await await evaluate.exec(ns, "ns.singularity.connect('" + server + "')")
-    //Run the backdoor command in the terminal.
-    await await evaluate.exec(ns, "ns.singularity.installBackdoor()")
-    //go back home
-    await await evaluate.exec(ns, "ns.singularity.connect('home')")
-}
 
-
-//function for debugging, intended to only run once
-export async function print_faction_requirements(ns) {
-    //for each faction possible
-    for (const faction of FactionNameEnumType) { //or FactionName?
-        //List conditions for being invited to a faction.
-        const requirements = await evaluate.exec(ns, "ns.singularity.getFactionInviteRequirements('" + faction +
-            "')")
-        //print information
-        log.info(ns, "Singularity", "faction '" + faction + "' requires: '" + JSON.stringify(requirements) + "'", true)
-    }
-}
-
-
-//function for automating the player actions
-export async function work(ns) {
-    //get player
-    const player = ns.getPlayer()
-    //manage factions
-    var focus = await manage_factions(ns, player)
-    //determine work: faction > company > crime
-    if (!await work_for_faction(ns, player)) {
-        //work for company
-        if (!await work_for_company(ns, player)) {
-            //perform crime or bladeburner (future)?
-            await perform_crime(ns, player, focus)
-        }
-    }
-}
 
 
 //function that checks for bitnode destruction
