@@ -169,7 +169,7 @@ export class ram_obj {
         const ram_max = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
         //check if we can register
         if ((this.ram_used + ram_cost) > ram_max) {
-
+            //log.info(ns, "Ram", "Not enoug ram" + this.ram_used + " + " + ram_cost + " = " + (this.ram_used + ram_cost) + " > " + ram_max + " GB", true)
             //not enough ram, stop
             return false
         } 
@@ -224,20 +224,20 @@ export class ram_obj {
         while(true) {
             //register each handle and return if not successfull (e.g. no ram)
             //indicate if stanek is available to join asap
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STANEK_AVAILABLE, {}, 13)) break
+            await this.register_handle(ns, CONSTANTS.HANDLE.STANEK_AVAILABLE, {}, 13)
             
             
             //AUTOMATION
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4)) break
             //if darknet is available, we save 2 GBs (on singularity)
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET_AVAILABLE, {}, 15, 1, CONSTANTS.HANDLE.SINGULARITY)) break
+            await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET_AVAILABLE, {}, 15, 1, CONSTANTS.HANDLE.SINGULARITY)
             //IMPROVE AUTOMATION
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)) break
+            await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)
             
             //BASE
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.ROOT, new root_obj())) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())) break
+            await this.register_handle(ns, CONSTANTS.HANDLE.ROOT, new root_obj())
+            await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())
+            await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())
             
 
             //GO

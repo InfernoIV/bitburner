@@ -71,6 +71,7 @@ export class singularity_obj {
         ns.disableLog("singularity.purchaseTor")
         ns.disableLog("singularity.purchaseProgram")
         ns.disableLog("singularity.upgradeHomeRam")
+        ns.disableLog("singularity.purchaseAugmentation")
         //get tools
         const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
         this.brute_ssh = executables.includes(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)
@@ -95,6 +96,8 @@ export class singularity_obj {
     manage_player   15.5
     */
     async manage(ns, handles) {
+        //test
+        await this.join_stanek(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STANEK_AVAILABLE))
         //upgrade home
         this.upgrade_home(ns)
         //check if we don't own tor
