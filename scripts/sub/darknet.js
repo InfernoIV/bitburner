@@ -5,7 +5,6 @@ requires no SF (SF 15 unlocks more servers?)
 */
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
-import * as evaluate from "scripts/sub/evaluate.js"
 
 
 // Declaration

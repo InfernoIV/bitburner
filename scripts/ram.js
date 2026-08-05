@@ -64,9 +64,11 @@ export class ram_obj {
         //keeps track of registered handles
         this.handles = {}
         //keep track of ram usage
-        this.ram_used = 0
+        this.ram_used = 0.0
         //keep track of what claimed what
         this.registration = new Map()       
+        //keep track of ram we need to reserver for workers on home (e.g. Stanek)
+        this.ram_reserve = 0.0
     }
 
 
@@ -138,7 +140,7 @@ export class ram_obj {
     
 
     //function that registers a class to init and manage (assumes the object has both functions!)
-    async register_handle(ns, handle, object, sf_required = 0, sf_level_required = 1, dependency = "") {
+    async register_handle(ns, handle, object, sf_required = 0, sf_level_required = 1, dependency = "", ram_worker = 0.0) {
         //log.info(ns, "Ram", "Registering handle: '" + handle + "' => '" + JSON.stringify(object) + "'", true)
         //check if we already have this functionality handles
         if (this.registration.has(handle)) {
@@ -167,19 +169,36 @@ export class ram_obj {
         const ram_cost = CONSTANTS.RAM[handle]
         //get ram left
         const ram_max = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
+        //calculate total usage / need
+        const ram_need = this.ram_used + ram_cost + this.ram_reserve + ram_worker
         //check if we can register
-        if ((this.ram_used + ram_cost) > ram_max) {
+        if ((ram_need) > ram_max) {
             //log.info(ns, "Ram", "Not enoug ram" + this.ram_used + " + " + ram_cost + " = " + (this.ram_used + ram_cost) + " > " + ram_max + " GB", true)
             //not enough ram, stop
             return false
         } 
-        //kill all other scripts (share.js)
-        ns.killall(CONSTANTS.SERVER.HOME, true)
+        //kill share script on home
+        ns.kill(CONSTANTS.SCRIPT.WORKER.SHARE)
 
+        var message = "Registered handle '" + handle + "' for " + this.ram_used + " + " + ram_cost
+        //if we have reserved ram
+        if (this.ram_reserve > 0.0) {
+            //add to message
+            message += " + " + this.ram_reserve 
+        } 
+        //if we have ram of worker to be added
+        if (ram_worker > 0.0) {
+            //add to message
+            message += " + " + ram_worker
+        }
+        //calc percentage
+        const percentage = Math.ceil((ram_need/ram_max)*100)
          //log
-        log.success(ns, "Ram", "Registered handle '" + handle + "' for " + this.ram_used + " + " + ram_cost + " = " + (this.ram_used + ram_cost) +  " / " + ram_max + " GB", true)
+        log.success(ns, "Ram",  message + " = " + ram_need + " / " + ram_max + " GB (" + percentage + "%)", true)
         //update ram
         this.ram_used += ram_cost
+        //update reservation for worker
+        this.ram_reserve += ram_worker
         //apply ram
         ns.ramOverride(this.ram_used)
         //register object
@@ -192,8 +211,8 @@ export class ram_obj {
             await this.handles[handle].init(ns, this.handles)
         }
         
-        //start share (again)
-        share_exec(ns)
+        //start share script (again), taking reserves for workers into account
+        share_exec(ns, this.ram_reserve)
 
         //return success
         return true
@@ -231,6 +250,10 @@ export class ram_obj {
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4)) break
             //if darknet is available, we save 2 GBs (on singularity)
             await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET_AVAILABLE, {}, 15, 1, CONSTANTS.HANDLE.SINGULARITY)
+            
+            //join stanek asap
+            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STANEK, new stanek_obj(), 13, 1, "", 2.0)) break
+
             //IMPROVE AUTOMATION
             await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)
             
@@ -239,7 +262,6 @@ export class ram_obj {
             await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())
             await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())
             
-
             //GO
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO_ANALYSIS, {}, 0, 0, CONSTANTS.HANDLE.GO)) break
@@ -251,7 +273,6 @@ export class ram_obj {
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.GRAFTING, new grafting_obj(), 10, 1, CONSTANTS.HANDLE.SINGULARITY)) break
             
             //EXTEND FUNCTIONALITY
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STANEK, new stanek_obj(), 13)) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.CODING_CONTRACT, new coding_contract_obj())) break
             if (!await this.register_handle(ns, CONSTANTS.HANDLE.STOCK, new stock_obj())) break

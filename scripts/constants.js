@@ -11,11 +11,13 @@ export const TIME = {
     WAIT: 5,
 }
 
+
 //enum for port data
 export const PORT = {
     NO_DATA: "NULL PORT DATA",
     CODING_CONTRACT: "1",
 }
+
 
 //enum for script names
 export const SCRIPT = {
@@ -28,6 +30,7 @@ export const SCRIPT = {
         HACK: "scripts/worker/hack.js",
         DARKNET: "scripts/worker/darknet.js",
         SHARE: "scripts/worker/share.js",
+        STANEK: "scripts/worker/stanek.js",
     },
     TO_COPY: {
         HACK: ["scripts/worker/grow.js", "scripts/worker/weaken.js", "scripts/worker/hack.js"],
@@ -59,10 +62,6 @@ export const HANDLE = {                     //SF or BN requirement
     CORPORATION: "CORPORATION",             //3
     GRAFTING: "GRAFTING",                   //10
 }
-
-
-
-
 
 
 export const AUGMENT = {
@@ -303,9 +302,20 @@ export const RAM = {
 
     //boost
     /*
+    "Manager":                          10.45 GB
+        ns.stanek.acceptGift            2.0
+        ns.stanek.giftHeight            0.4
+        ns.stanek.giftWidth             0.4
+        ns.stanek.getFragment           2.0
+        ns.stanek.fragmentDefinitions   0.0
+        ns.stanek.clearGift             0.0   
+        ns.stanek.canPlaceFragment      0.5
+        ns.stanek.removeFragment        0.15
+        ns.stanek.placeFragment         5.0
+
 
     */
-    STANEK: 0.0,
+    STANEK: 10.45,
 
     /*
     gang.ascendMember (fn)	4.00GB
@@ -340,7 +350,7 @@ export const RAM = {
     WORKER: {
         /*
         base        1.6
-        ns.weaken   1.15
+        ns.weaken   0.15
         */
         WEAKEN: 1.75,
 
@@ -379,9 +389,14 @@ export const RAM = {
         ls (fn)	0.20GB
         dnet.getServerDetails (fn)	0.10GB
         dnet.unleashStormSeed (fn)	0.10GB
-
-        //TESTING: spawn
+        ns.spawn    2
         */
-        DARKNET: 15.4//13.4,
+        DARKNET: 15.4,
+
+        /*
+        baseCost                    1.6            
+        ns.stanek.chargeFragment    0.4
+        */
+       STANEK: 2.0,
     },
 }

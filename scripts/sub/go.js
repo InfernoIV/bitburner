@@ -18,9 +18,9 @@ import * as log from 'scripts/sub/log.js'
 // Declaration
 export class go_obj {
     constructor() {
-        this.available = true
+        /*this.available = true
         this.can_analyse = false
-        this.can_cheat = false
+        this.can_cheat = false*/
     }
 
 
@@ -73,7 +73,7 @@ export class go_obj {
 
 
     //play the game
-    manage(ns) {
+    manage(ns, handles) {
         //Returns the color of the current player ("White" | "Black"), or 'None' if the game is over.
         const current_player = ns.go.getCurrentPlayer()
         //if not our turn
@@ -88,7 +88,7 @@ export class go_obj {
             //it should be our turn, so make a move		
         }
         //make a move
-        this.make_move(ns)
+        this.make_move(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.GO_ANALYSIS), handles.hasOwnProperty(CONSTANTS.HANDLE.GO_CHEAT))
     }
 
     /*
@@ -216,7 +216,7 @@ export class go_obj {
 
 
     //make a move
-    make_move(ns) {
+    make_move(ns, can_analyze, can_cheat) {
         /* Shows if each point on the board is a valid move for the player. By default, analyzes the current board state. Takes an optional boardState (and an optional prior-move boardState, if desired) to analyze a custom board.
         The true/false validity of each move can be retrieved via the X and Y coordinates of the move.
         const validMoves = ns.go.analysis.getValidMoves();
@@ -272,7 +272,7 @@ export class go_obj {
             return
         }
         //gather information
-        var information = this.gather_information(ns)
+        var information = this.gather_information(ns, can_analyze, can_cheat)
         //add current information
         information.previous_moves = previous_moves
         information.state_game = state_game
@@ -283,24 +283,24 @@ export class go_obj {
         switch (opponent) {
             default:
                 //not defined: brute force it
-                this.brute_force(ns, information)
+                this.brute_force(ns, information, can_analyze, can_cheat)
         }
     }
 
 
     //just play the 1st move available
-    brute_force(ns, information) {
+    brute_force(ns, information, can_analyze, can_cheat) {
         //try to play in the middle first
         if (information.moves_valid[2][2]) {
             //play in the middle
             ns.go.makeMove(2, 2)
         }
-        if(this.can_analyse) {
+        if(can_analyze) {
             //use analysis information
             //TODO
         }
         //check if we can cheat
-        if(this.can_cheat && information.cheat_chance == 1) {
+        if(can_cheat && information.cheat_chance >= 1.0) {
             //TODO
         }
         //start from 1 from corner first?
@@ -400,7 +400,7 @@ export class go_obj {
 
 
     //gather all information, to be used to determine actions
-    gather_information(ns) {
+    gather_information(ns, can_analyze, can_cheat) {
         //variable to fill
         var information = {}
         /*Retrieves a simplified version of the board state. "X" represents black pieces, "O" white, and "." empty points. 
@@ -418,7 +418,7 @@ export class go_obj {
         information.state_board = ns.go.getBoardState()
 
         //if we can analyse
-        if(this.can_analyse) {
+        if(can_analyze) {
             /*Returns 'X' for black, 'O' for white, or '?' for each empty point to indicate which player controls that empty point. 
             If no single player fully encircles the empty space, it is shown as contested with '?'. "#" are dead nodes that are not part of the subnet.
             Takes an optional boardState argument; by default uses the current board state.	
@@ -456,7 +456,7 @@ export class go_obj {
         //set default value
         information.cheat_chance = 0
         //check if we can cheat
-        if (this.can_cheat) {
+        if (can_cheat) {
             /*Returns your chance of successfully playing one of the special moves in the ns.go.cheat API. 
             Scales up with your crime success rate stat. Scales down with the number of times you've attempted to cheat in the current game.
             Warning: if you fail to play a cheat move, your turn will be skipped. 
