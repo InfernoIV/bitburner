@@ -206,6 +206,8 @@ export class hack_obj {
     
     */
     calculate_timings(ns, server, player, formulas_available) {
+        this.time = {}
+        this.delay = { grow: {}, hack: {} }
         //if we can use formulas
         if (formulas_available) {
             //should this be mock server?
@@ -262,7 +264,7 @@ export class hack_obj {
             //get weaken effect (scales linear, independent of server or player)
             const weaken_effect = ns.formulas.weakenEffect(1)
             //calc for ram cost
-            for (const index = 1; index <= max_hack_threads; index++) {
+            for (var index = 1; index <= max_hack_threads; index++) {
                 //calc base ratio (1:1:1:1)
                 const ram_cost_base = job_size * index
                 //if not yet existing
@@ -302,14 +304,16 @@ export class hack_obj {
         //formula's not available: cannot calculate grow..
         } else {
             //get money per hack thread
-            const money_stolen = ns.hackAnalyze(host)
+            const money_stolen = ns.hackAnalyze(this.hack_target)
             //set max hack threads
             const max_hack_threads = Math.ceil(this.money_target / money_stolen)
+            //cap to 100?
+            const max_threads = Math.min(max_hack_threads, 100)
             //set job size on a 1:1:1:1 ratio
             const job_size = CONSTANTS.RAM.WORKER.HACK + CONSTANTS.RAM.WORKER.GROW + (2 * CONSTANTS.RAM.WORKER
                 .WEAKEN)
             //calc for ram cost
-            for (const index = 1; index < max_hack_threads; index++) {               
+            for (var index = 1; index < max_threads; index++) {               
                 //calc ram cost
                 const ram_cost = job_size * index
                 //save to map
@@ -443,14 +447,15 @@ export class hack_obj {
             //save to local variable
             var ram_available = ram_server
             //if not enough ram for basic version
-            while (ram_available < ram_min) {
+            while (ram_available < this.ram_min) {
                 //get closest lower key, which provides the threads
-                var ram_cost = Array.from(this.ram_to_threads.keys()).filter( function(i){ return i <= max }).pop()
+                var ram_cost = Array.from(this.ram_to_threads.keys()).filter( function(i){ return i <= ram_available }).pop()
                 //get threads from ram_to_threads
                 var threads = this.ram_to_threads.get(ram_cost)
 
                 //execute scripts with the correct timing
                 //hack
+                //TODO: fix missing 'hack' on line 459
                 if(!ns.exec(CONSTANTS.SCRIPT.WORKER.HACK, server, threads.hack, this.hack_target, this
                     .delay.hack.hack +
                     job_delay)) {

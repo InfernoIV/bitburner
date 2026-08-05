@@ -71,6 +71,7 @@ export class singularity_obj {
         ns.disableLog("singularity.purchaseTor")
         ns.disableLog("singularity.purchaseProgram")
         ns.disableLog("singularity.upgradeHomeRam")
+        ns.disableLog("singularity.purchaseAugmentation")
         //get tools
         const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
         this.brute_ssh = executables.includes(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)
