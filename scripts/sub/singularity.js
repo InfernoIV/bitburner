@@ -344,8 +344,9 @@ export class singularity_obj {
         if (target_city != "") {
             //if we are not in the target city
             if (player.city != target_city) {
+                log.info(ns, "Singularity", "Traveling to city: '" + target_city + ", currently in '" + player.city + "'", true)
                 //travel to city
-                //ns.singularity.travelToCity(target_city)
+                ns.singularity.travelToCity(target_city)
             }
         }
     }
@@ -466,9 +467,11 @@ export class singularity_obj {
             }
         }
         //sort the augments (on key = highest cost)
-        const augments_sorted = new Map([...augments.entries()].sort((a, b) => b[1].price - a[1].price))        
+        const augments_sorted = new Map([...augments.entries()].sort((a, b) => b[1].price - a[1].price))      
+        
         //for each augment we have saved
         for (const augment of augments_sorted.keys()) {    
+            //log.info(ns, "Singularity", "augment: " + augment + " => " + JSON.stringify(augments_sorted.get(augment)), true)  
             //try to buy augment
             const success = ns.singularity.purchaseAugmentation(augments_sorted.get(augment).faction, augment)
             //if able to buy most expensive augment
@@ -478,7 +481,7 @@ export class singularity_obj {
             //failed to buy
             } else {
                 //stop
-                return
+                //return
             }
         }
     }
@@ -515,7 +518,7 @@ export class singularity_obj {
             //keep trying
             while (success) {
                 //try to buy NFG
-                success = ns.singularity.purchaseAugmentation(best_faction, AUGMENT.NFG)
+                success = ns.singularity.purchaseAugmentation(best_faction, CONSTANTS.AUGMENT.NFG)
             }
             //install augments
             ns.singularity.installAugmentations(CONSTANTS.SCRIPT.BOOT)
@@ -743,7 +746,7 @@ export class singularity_obj {
         //get current work
         const current_work = ns.singularity.getCurrentWork()
         //if not working
-        if (current_work == null) {
+        if (current_work == null || current_work == undefined)  {
             //set flag
             flag_switch_work = true
             //working
@@ -798,12 +801,24 @@ export class singularity_obj {
 
                 case work_type.FACTION:
                     //get best work type
-                    const work_type_best = this.get_best_work_faction(ns, player, activity)                    
-                    //check if not already working for same worktype
-                    if (current_work.factionWorkType != work_type_best) {
+                    const work_type_best = this.get_best_work_faction(ns, player, activity, formulas_available)                   
+                    //if not working
+                    if (current_work == null) {
                         //work for worktype
                         return ns.singularity.workForFaction(activity, work_type_best, true)
                     }
+                    //check if we are working for faction
+                    if (current_work.hasOwnProperty("factionWorkType")) {
+                         //check if not already working for same worktype
+                        if (current_work.factionWorkType != work_type_best) {
+                            //work for worktype
+                            return ns.singularity.workForFaction(activity, work_type_best, true)
+                        }
+                    } else {
+                        //work for worktype
+                        return ns.singularity.workForFaction(activity, work_type_best, true)
+                    }
+                   
                     //already working for the best type
                     return true
 
@@ -814,8 +829,9 @@ export class singularity_obj {
                     ns.singularity.applyToCompany(activity, jobfield)
                     //refresh player
                     player = ns.getPlayer()
+                    //log.info(ns, "Singularity", "Jobs: " + JSON.stringify(player.jobs), true)
                     //check if we have the job
-                    if(player.jobs.has(activity)) {
+                    if(player.jobs.hasOwnProperty(activity)) {
                         //work for company
                         return ns.singularity.workForCompany(activity, true)
                     }                 
@@ -919,7 +935,7 @@ export class singularity_obj {
 
 
     //get best work for faction
-    get_best_work_faction(ns, player, faction) {
+    get_best_work_faction(ns, player, faction, formulas_available) {
         //get faction work types
         const faction_work_types = ns.singularity.getFactionWorkTypes(faction)
         //default to first work type

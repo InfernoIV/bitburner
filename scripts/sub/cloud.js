@@ -33,7 +33,7 @@ export class cloud_obj {
         //check each server
         for (const server of servers) {
             //get the ram
-            const ram = ns.getServerMaxRam(server)
+            const ram = ns.getServer(server).maxRam
             //add to map
             this.servers_owned.set(server, ram)
             //update lowest ram

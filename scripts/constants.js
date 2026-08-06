@@ -53,6 +53,7 @@ export const HANDLE = {                     //SF or BN requirement
     SLEEVE: "SLEEVE",                       //10
     GO_ANALYSIS: "GO_ANALYSIS",             //0
     GO_CHEAT: "GO_CHEAT",                   //14.2
+    CLOUD: "CLOUD",                         //0
     CODING_CONTRACT: "CODING_CONTRACT",     //0
     STOCK: "STOCK",                         //0
     INFILTRATION: "INFILTRATION",           //0
@@ -258,13 +259,13 @@ export const RAM = {
     HACKNET: 3.0,
 
     /*
-    cloud.purchaseServer (fn)	2.25GB
-    baseCost (misc)	1.60GB
+    getServer (fn)	2.00GB
     exec (fn)	1.30GB
-    cloud.getServerNames (fn)	1.05GB
     getPlayer (fn)	0.50GB
+    
+    cloud.purchaseServer (fn)	2.25GB
+    cloud.getServerNames (fn)	1.05GB
     cloud.upgradeServer (fn)	0.25GB
-    getServerMaxRam (fn)	0.05GB  
     */
     CLOUD: 4.05, //7.00
 
@@ -278,10 +279,11 @@ export const RAM = {
     CODING_CONTRACT: 20.0,  //21.80
 
     /*
-    stock.getSymbols    2
-    stock.hasWseAccount 0.05
-    Stock.sellStock     2.5
-    Stock.getPosition   2
+    stock.sellStock (fn)	2.50GB
+    stock.getSymbols (fn)	2.00GB
+    stock.getPosition (fn)	2.00GB
+    stock.hasWseAccount (fn)	0.05GB
+
     */
     STOCK: 6.55,
 
@@ -290,7 +292,17 @@ export const RAM = {
    INFILTRATION: 0.0,
 
     /*
-
+    bladeburner.joinBladeburnerDivision (fn)	4.00GB
+    bladeburner.getStamina (fn)	4.00GB
+    bladeburner.getRank (fn)	4.00GB
+    bladeburner.getActionEstimatedSuccessChance (fn)	4.00GB
+    bladeburner.getActionCountRemaining (fn)	4.00GB
+    bladeburner.getCityChaos (fn)	4.00GB
+    bladeburner.getCityCommunities (fn)	4.00GB
+    bladeburner.getCityEstimatedPopulation (fn)	4.00GB
+    bladeburner.getCity (fn)	4.00GB
+    bladeburner.switchCity (fn)	4.00GB
+    bladeburner.getNextBlackOp (fn)	2.00GB
     */
     BLADEBURNER: 0.0,
 
