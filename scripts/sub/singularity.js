@@ -744,7 +744,7 @@ export class singularity_obj {
         //flag to keep track if we need to switch
         var flag_switch_work = false
         //get current work
-        const current_work = ns.singularity.getCurrentWork()
+        var current_work = ns.singularity.getCurrentWork()
         //if not working
         if (current_work == null || current_work == undefined)  {
             //set flag
@@ -829,12 +829,20 @@ export class singularity_obj {
                     ns.singularity.applyToCompany(activity, jobfield)
                     //refresh player
                     player = ns.getPlayer()
-                    //log.info(ns, "Singularity", "Jobs: " + JSON.stringify(player.jobs), true)
-                    //check if we have the job
-                    if(player.jobs.hasOwnProperty(activity)) {
+                    //update current activity
+                    //get current work
+                    current_work = ns.singularity.getCurrentWork()
+                    //if not doing anything
+                    if (activity == null || activity == undefined) {
                         //work for company
                         return ns.singularity.workForCompany(activity, true)
-                    }                 
+                    }
+                    //if we are working for a differnent company but have a job at the target company
+                    if(activity != current_work.companyName && player.jobs.hasOwnProperty(activity)) {
+                        //work for company
+                        return ns.singularity.workForCompany(activity, true)
+                    }
+                       
                     //we don't have the job, return failure
                     return false
 

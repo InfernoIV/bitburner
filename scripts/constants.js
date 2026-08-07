@@ -101,6 +101,16 @@ export const FORMAT = {
 }
 
 
+/*
+'SINGULARITY' for 6.7 + 63 = 69.7 / 8192 GB (1%)
+ 'ROOT' for 69.7 + 1.35 = 71.05 / 8192 GB (1%)
+'HACK' for 71.05 + 2.45 = 73.5 / 8192 GB (1%)
+'DARKNET' for 73.5 + 0.2 = 73.7 / 8192 GB (1%)
+'GO' for 73.7 + 16 = 89.7 / 8192 GB (2%)
+'GO_ANALYSIS' for 89.7 + 48 = 137.7 / 8192 GB (2%)
+'STOCK' for 137.7 + 6.55 = 144.25 / 8192 GB (2%)
+*/
+
 //enum for script ram
 export const RAM = {
     //main scripts
@@ -109,42 +119,53 @@ export const RAM = {
     */
     MAIN: 1.60,//4.6,
     /*
+    
     getServer (fn)	2.00GB
-    baseCost (misc)	1.60GB
     getResetInfo (fn)	1.00GB
-    killall (fn)	0.50GB
-    getBitNodeMultipliers (fn)	4.00GB
+    kill (fn)	0.50GB
+
+    baseCost (misc)	1.60GB  -> covered in main
+    getBitNodeMultipliers (fn)	4.00GB  -> covered in intelligence
     */
     RAM: 5.1,
 
     /*
-    getServer (fn)	        2.00GB  -> already covered in main
-    baseCost (misc)	        1.60GB  -> already covered in main
-    scp (fn)	            0.60GB
-    scan (fn)	            0.20GB
-    ls (fn)	                0.20GB
-    getHackingLevel (fn)	0.05GB
-    sqlinject (fn)	        0.05GB
-    httpworm (fn)	        0.05GB
-    relaysmtp (fn)	        0.05GB
-    ftpcrack (fn)	        0.05GB
-    brutessh (fn)	        0.05GB
-    nuke (fn)	            0.05GB
+    getPlayer (fn)	0.50GB
+    scan (fn)	0.20GB
+    ls (fn)	0.20GB
+    sqlinject (fn)	0.05GB
+    httpworm (fn)	0.05GB
+    relaysmtp (fn)	0.05GB
+    ftpcrack (fn)	0.05GB
+    brutessh (fn)	0.05GB
+    nuke (fn)	0.05GB
+
+    getServer (fn)	2.00GB  -> covered in ram
+    baseCost (misc)	1.60GB  -> covered in main
+    singularity.connect (fn)	2.00GB  -> covered in singularity
+    singularity.installBackdoor (fn)	2.00GB  -> covered in singularity
     */
-    ROOT: 1.35,
+    ROOT: 1.2,
 
     /*
-    getServer (fn)	        2.00GB -> already covered in main
-    exec (fn)	            1.30GB
+    exec (fn)	1.30GB
     hackAnalyzeChance (fn)	1.00GB
-    scp (fn)	            0.60GB -> already covered in root
-    getHackingLevel (fn)	0.05GB  -> already covered in root
-    getHackTime (fn)	    0.05GB
-    getWeakenTime (fn)	    0.05GB
-    getGrowTime (fn)	    0.05GB
-    ns.formulas             0
+    hackAnalyzeSecurity (fn)	1.00GB
+    growthAnalyzeSecurity (fn)	1.00GB
+    hackAnalyze (fn)	1.00GB
+    scp (fn)	0.60GB
+    getHackTime (fn)	0.05GB
+    getWeakenTime (fn)	0.05GB
+    getGrowTime (fn)	0.05GB
+
+    weaken (fn)	0.15GB  -> keyword used, but not the actual function
+    grow (fn)	0.15GB  -> keyword used, but not the actual function
+    hack (fn)	0.10GB  -> keyword used, but not the actual function
+    getPlayer (fn)	0.50GB  -> covered in root
+    getServer (fn)	2.00GB  -> covered in ram
+    baseCost (misc)	1.60GB  -> covered in main
     */
-    HACK: 2.45,
+    HACK: 6.05,
 
     /*
     ns.getBitNodeMultipliers()  4
@@ -162,21 +183,47 @@ export const RAM = {
     INTELLIGENCE: 5.85,
 
     /*
-    ns.singularity.connect              1   (but implemented in root)
-    ns.singularity.installBackdoor      2   (but implemented in root)
-    purchaseProgram                     2
-    singularity.purchaseTor             2
-    singularity.upgradeHomeRam          3   
-    ls (fn)	                            0.2 -> already covered in root             
+    getServer (fn)	2.00GB  -> covered in ram
+    baseCost (misc)	1.60GB  -> covered in main
+    getPlayer (fn)	0.50GB    -> covered in root
+    ls (fn)	0.20GB    -> covered in root
 
-    singularity.getAugmentationsFromFaction 5
-    singularity.getOwnedAugmentations       5
-    singularity.purchaseAugmentation        5
-    singularity.installAugmentations        5
-    singularity.getAugmentationPrice        2.5
+    singularity.getOwnedAugmentations (fn)	5.00GB
+    singularity.goToLocation (fn)	5.00GB
+    singularity.getAugmentationsFromFaction (fn)	5.00GB
+    singularity.purchaseAugmentation (fn)	5.00GB
+    singularity.installAugmentations (fn)	5.00GB
+
+    singularity.getCrimeChance (fn)	5.00GB
+    singularity.getCrimeStats (fn)	5.00GB
+    singularity.commitCrime (fn)	5.00GB
+    singularity.upgradeHomeRam (fn)	3.00GB
+    singularity.checkFactionInvitations (fn)	3.00GB
+
+    singularity.joinFaction (fn)	3.00GB
+    singularity.workForFaction (fn)	3.00GB
+    singularity.applyToCompany (fn)	3.00GB
+    singularity.workForCompany (fn)	3.00GB
+    singularity.getFactionEnemies (fn)	3.00GB
+
+    singularity.getAugmentationPrice (fn)	2.50GB
+    singularity.getAugmentationRepReq (fn)	2.50GB
+    singularity.purchaseTor (fn)	2.00GB
+    singularity.purchaseProgram (fn)	2.00GB
+    singularity.travelToCity (fn)	2.00GB
+
+    singularity.universityCourse (fn)	2.00GB
+    singularity.gymWorkout (fn)	2.00GB
+    singularity.getFactionRep (fn)	1.00GB
+    singularity.getFactionFavor (fn)	1.00GB
+    singularity.getCompanyRep (fn)	1.00GB
+
+    singularity.getFactionWorkTypes (fn)	1.00GB
+    singularity.getCurrentWork (fn)	0.50GB
+    
 
     */
-    SINGULARITY: 63.0,
+    SINGULARITY: 80.5,
 
     /*
 
@@ -189,51 +236,35 @@ export const RAM = {
     */
     DARKNET_AVAILABLE: -2.0,
     /*
-    ns.exec             done by hack
-    ns.ls               done by root
-    ns.getServer        done by main
-    ns.scp              done by root
-    ns.dnet.probe       0.2
-    
-    getServer (fn)	2.00GB
-    baseCost (misc)	1.60GB
-    exec (fn)	1.30GB
-    scp (fn)	0.60GB
-    ls (fn)	0.20GB
+    getServer (fn)	2.00GB    -> covered in ram
+    baseCost (misc)	1.60GB  -> covered in main
+    exec (fn)	1.30GB  -> covered in hack
+    scp (fn)	0.60GB  -> covered in main
+    ls (fn)	0.20GB    -> covered in root
     dnet.probe (fn)	0.20GB
-
     */
-    DARKNET: 0.2,   //5.90
+    DARKNET: 0.2,  
 
     /*
-    ns.go.getCurrentPlayer                  0
-    ns.go.passTurn                          0
-    ns.go.getOpponent                       0
-    ns.go.resetBoardState                   0
-    ns.go.getGameState                      0
-    ns.go.getMoveHistory                    0
-    ns.go.makeMove                          4
-    ns.go.analysis.getStats                 0
-    ns.go.analysis.resetStats               0
-    ns.go.getBoardState                     4
-    ns.go.analysis.getValidMoves            8
+    go.getBoardState (fn)	4.00GB
+    go.makeMove (fn)	4.00GB
+
+    baseCost (misc)	1.60GB      -> covered in main
     */
-    GO: 16.0,
+    GO: 8.0,
     
     /*
-    ns.go.analysis.getControlledEmptyNodes  16
-    ns.go.analysis.getChains                16
-    ns.go.analysis.getLiberties             16
+    analysis.getControlledEmptyNodes (fn)	16.00GB
+    analysis.getChains (fn)	16.00GB
+    analysis.getLiberties (fn)	16.00GB
+    analysis.getValidMoves (fn)	8.00GB
     */
-    GO_ANALYSIS: 48.0,
+    GO_ANALYSIS: 56.0,
     
     /*
-    ns.go.cheat.destroyNode                 8
-    ns.go.cheat.removeRouter                8    
-    ns.go.cheat.repairOfflineNode           8
-    ns.go.cheat.playTwoMoves                8
+    cheat.getCheatSuccessChance (fn)	1.00GB
     */
-    GO_CHEAT: 24.0,
+    GO_CHEAT: 1.0,
 
     /*
     analysis.getControlledEmptyNodes (fn)	16.00GB
@@ -284,6 +315,8 @@ export const RAM = {
     stock.getPosition (fn)	2.00GB
     stock.hasWseAccount (fn)	0.05GB
 
+    baseCost (misc)	1.60GB    -> covered in main
+    exec (fn)	1.30GB    -> covered in hack
     */
     STOCK: 6.55,
 

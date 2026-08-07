@@ -368,6 +368,8 @@ export class hack_obj {
                 if (!ns.scp(CONSTANTS.SCRIPT.TO_COPY.HACK, server)) {
                     //debug
                     log.warning(ns, "Hack", "error copying '" + CONSTANTS.SCRIPT.TO_COPY.HACK + "' to " + server)
+                    ns.ui.openTail()
+                    ns.exit()
                     //go to next
                     continue
                 }
