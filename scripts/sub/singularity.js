@@ -72,6 +72,7 @@ export class singularity_obj {
         ns.disableLog("singularity.purchaseProgram")
         ns.disableLog("singularity.upgradeHomeRam")
         ns.disableLog("singularity.purchaseAugmentation")
+        ns.disableLog("singularity.donateToFaction")
         //get tools
         const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
         this.brute_ssh = executables.includes(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)
@@ -112,16 +113,17 @@ export class singularity_obj {
         //manage (joining of) faction (invites)
         this.manage_factions(ns)
         //manage player actions
-        const travel_blocked = this.manage_player(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.DARKNET), handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
+        const travel_blocked = this.manage_player(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.DARKNET), handles
+            .hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
         //check if we can travel
-        if(!travel_blocked) {
+        if (!travel_blocked) {
             //test
             await this.join_stanek(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STANEK_AVAILABLE))
             //manage player location
             this.manage_location(ns)
         }
         //manage augments
-        this.manage_augments(ns)
+        this.manage_augments(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
         //install augments
         this.install_augments(ns)
     }
@@ -139,7 +141,7 @@ export class singularity_obj {
             //darknet is available as well
             this.darknet = true
 
-        //if we can buy / have bought TOR
+            //if we can buy / have bought TOR
         } else if (ns.singularity.purchaseTor()) {
             //set flag
             this.tor_owned = true
@@ -238,24 +240,24 @@ export class singularity_obj {
         const factions_joined = player.factions
         //set target city
         var target_city = ""
-        
+
         //TODO: how to manage with infiltrations?
 
-       
+
 
         //get augments
         const augments_owned = ns.singularity.getOwnedAugmentations(true)
-       
+
 
         //city factions
         //loop for ease of breaking
-        while(true) {
+        while (true) {
             //if sector 12 has not been joined and there are still augments left    (15e6)
             if (!factions_joined.includes("Sector-12") && this.get_augments_left(ns, "Sector-12").length > 0) {
                 //set target city
                 target_city = "Sector-12"
                 //stop looking
-                break                
+                break
             }
             //if aevum has not been joined and there are still augments left    (20e6)
             if (!factions_joined.includes("Aevum") && this.get_augments_left(ns, "Aevum").length > 0) {
@@ -265,28 +267,34 @@ export class singularity_obj {
                 break
             }
             //if ishma has not been joined and there are still augments left    (20e6)
-            if (!factions_joined.includes("Ishima") && this.get_augments_left(ns, "Ishima").length > 0 && !factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum")) {
+            if (!factions_joined.includes("Ishima") && this.get_augments_left(ns, "Ishima").length > 0 && !
+                factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum")) {
                 //set target city
                 target_city = "Ishima"
                 //stop looking
                 break
             }
             //if chongqing has not been joined and there are still augments left    (20e6)
-            if (!factions_joined.includes("Chongqing") && this.get_augments_left(ns, "Chongqing").length > 0 && !factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum")) {
+            if (!factions_joined.includes("Chongqing") && this.get_augments_left(ns, "Chongqing").length > 0 && !
+                factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum")) {
                 //set target city
                 target_city = "Chongqing"
                 //stop looking
                 break
             }
             //if new tokyo has not been joined and there are still augments left    (20e6)
-            if (!factions_joined.includes("New Tokyo") && this.get_augments_left(ns, "New Tokyo").length > 0 && !factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum")) {
+            if (!factions_joined.includes("New Tokyo") && this.get_augments_left(ns, "New Tokyo").length > 0 && !
+                factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum")) {
                 //set target city
                 target_city = "New Tokyo"
                 //stop looking
                 break
-            }            
+            }
             //if volhaven has not been joined and there are still augments left (50e6)
-            if (!factions_joined.includes("Volhaven") && this.get_augments_left(ns, "Volhaven").length > 0 && !factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum") && !factions_joined.includes("Ishima") && !factions_joined.includes("Chongqing") && !factions_joined.includes("New Tokyo")) {
+            if (!factions_joined.includes("Volhaven") && this.get_augments_left(ns, "Volhaven").length > 0 && !
+                factions_joined.includes("Sector-12") && !factions_joined.includes("Aevum") && !factions_joined
+                .includes("Ishima") && !factions_joined.includes("Chongqing") && !factions_joined.includes(
+                    "New Tokyo")) {
                 //set target city
                 target_city = "Volhaven"
                 //stop looking
@@ -295,13 +303,13 @@ export class singularity_obj {
             //exit loop
             break
         }
-        
+
         //if we don't have a target city (set for a city faction)
         if (target_city == "") {
             //loop for ease of breaking
-            while(true) {
+            while (true) {
                 //hacking 50, 1e6 money
-                if(!factions_joined.includes("Tian Di Hui")){
+                if (!factions_joined.includes("Tian Di Hui")) {
                     //check if player is in a correct location
                     if (player.city != "Chongqing" && player.city != "New Tokyo" && player.city != "Ishima") {
                         //set to chongqing
@@ -310,7 +318,7 @@ export class singularity_obj {
                     break
                 }
                 //combat 75, karma -18
-                if(!factions_joined.includes("Tetrads")){   
+                if (!factions_joined.includes("Tetrads")) {
                     //check if player is in a correct location
                     if (player.city != "Chongqing" && player.city != "New Tokyo" && player.city != "Ishima") {
                         //set to chongqing
@@ -319,7 +327,7 @@ export class singularity_obj {
                     break
                 }
                 //combat 100, karma -90
-                if(!factions_joined.includes("The Syndicate")){
+                if (!factions_joined.includes("The Syndicate")) {
                     //check if player is in a correct location
                     if (player.city != "Sector-12" && player.city != "Aevum") {
                         //set to sector-12
@@ -328,7 +336,7 @@ export class singularity_obj {
                     break
                 }
                 //hacking 300, combat 300, kills 5, karma -45
-                if(!factions_joined.includes("The Dark Army")){
+                if (!factions_joined.includes("The Dark Army")) {
                     //check if player is in a correct location
                     if (player.city != "Chongqing") {
                         //set to chongqing
@@ -344,13 +352,14 @@ export class singularity_obj {
         if (target_city != "") {
             //if we are not in the target city
             if (player.city != target_city) {
-                log.info(ns, "Singularity", "Traveling to city: '" + target_city + ", currently in '" + player.city + "'", true)
+                log.info(ns, "Singularity", "Traveling to city: '" + target_city + ", currently in '" + player
+                    .city + "'", true)
                 //travel to city
                 ns.singularity.travelToCity(target_city)
             }
         }
     }
-    
+
 
     async join_stanek(ns, stanek_available) {
         //if not available
@@ -364,14 +373,14 @@ export class singularity_obj {
         if (player.factions.includes("Church of the Machine God")) {
             //success
             return true
-        //not joined
-        } else {    
+            //not joined
+        } else {
             //set target city
             const target_city = "Chongqing"
             //if we are not in the target city
             if (player.location != target_city) {
                 //if travel to city failed
-                if(!ns.singularity.travelToCity(target_city)) {
+                if (!ns.singularity.travelToCity(target_city)) {
                     //stop
                     return false
                 }
@@ -387,11 +396,11 @@ export class singularity_obj {
                 //join faction
                 return ns.singularity.joinFaction("Church of the Machine God")
             }
-        }        
+        }
         //stop as failsafe if it fails
         return false
     }
-    
+
 
 
     //function that returns the augments that are still left
@@ -442,9 +451,13 @@ export class singularity_obj {
     singularity.purchaseAugmentation        5
     singularity.installAugmentations        5
     singularity.getAugmentationPrice        2.5
+    singularity.getAugmentationRepReq       2.5
+    singularity.donateToFaction             5
+
+    https://github.com/bitburner-official/bitburner-src/blob/dev/src/Faction/formulas/donation.ts
     */
     //function that manages augments (buying the most expensive one first before going to the next)    
-    manage_augments(ns) {
+    manage_augments(ns, formulas_available) {
         //create a list of augments and their prices
         var augments = new Map()
         //get bought augments
@@ -461,29 +474,99 @@ export class singularity_obj {
                 if (!augments_bought.includes(augment) || augment == CONSTANTS.AUGMENT.NFG) {
                     //get the price
                     var price = ns.singularity.getAugmentationPrice(augment)
+                    //get the rep requirement
+                    var rep = ns.singularity.getAugmentationRepReq(augment)
+                    //set target faction
+                    var target_faction = faction
+                    //check if we already saves the augment
+                    if (augments.has(augment)) {
+                        //get the saved faction
+                        const saved_faction = augments.get(augment).faction
+                        //get rep
+                        const rep_new = ns.singularity.getFactionRep(faction)
+                        const rep_saved = ns.singularity.getFactionRep(saved_faction)
+                        //if the saved faction already has enough rep to buy the augment
+                        if (rep_saved >= rep) {
+                            //use the saved faction
+                            target_faction = saved_faction
+                        //if the new faction has enough rep to buy the augment
+                        } else if (rep_new >= rep) {
+                            //no need to change
+                        //if both factions don't have enough rep
+                        } else {
+                            //get favor of new faction
+                            const favor_new = ns.singularity.getFactionFavor(faction)
+                            //get favor of saved faction
+                            const favor_saved = ns.singularity.getFactionFavor(saved_faction)
+                            //if the saved faction has more favor
+                            if (favor_saved > favor_new) {
+                                //keep the saved faction
+                                target_faction = saved_faction
+                            }
+                        }
+                    }
                     //save the price
-                    augments.set(augment, {"faction": faction, "price": price})
-                }
+                    augments.set(augment, {
+                        "faction": target_faction,
+                        "price": price,
+                        "rep": rep,
+                    })
+                } 
             }
         }
         //sort the augments (on key = highest cost)
-        const augments_sorted = new Map([...augments.entries()].sort((a, b) => b[1].price - a[1].price))      
-        
+        const augments_sorted = new Map([...augments.entries()].sort((a, b) => b[1].price - a[1].price))
+
         //for each augment we have saved
-        for (const augment of augments_sorted.keys()) {    
+        for (const augment of augments_sorted.keys()) {
+            //get the information
+            const augment_info = augments_sorted.get(augment)
+            //get rep requirement
+            const faction_rep = ns.singularity.getFactionRep(augment_info.faction)
+            //get the favor of the faction
+            const favor = ns.singularity.getFactionFavor(augment_info.faction)
+
+            //if not enough rep (just blindly try to donate)
+            if (faction_rep < augment_info.rep) {
+                //try to donate to get target rep
+                this.donate_to_get_rep(ns, augment_info.faction, augment_info.rep - faction_rep, formulas_available)
+            }
             //log.info(ns, "Singularity", "augment: " + augment + " => " + JSON.stringify(augments_sorted.get(augment)), true)  
             //try to buy augment
-            const success = ns.singularity.purchaseAugmentation(augments_sorted.get(augment).faction, augment)
+            const success = ns.singularity.purchaseAugmentation(augment_info.faction, augment)
             //if able to buy most expensive augment
             if (success) {
                 //log
                 log.success(ns, "Singularity", "Bought augment: '" + augment + "'", true)
-            //failed to buy
+                //failed to buy
             } else {
                 //stop
                 //return
             }
         }
+    }
+
+
+    //function that donates to the faction
+    donate_to_get_rep(ns, faction, rep_difference, formulas_available) {
+        //variable to fill
+        var money = 0
+        //if we can use formulas
+        if (formulas_available) {
+            //just calc
+            money = ns.formulas.donationForRep(rep_difference, ns.getPlayer())
+
+        //estimate without taking bitnode multipliers into account...
+        } else {
+            //stolen from SRC https://github.com/bitburner-official/bitburner-src/blob/dev/src/Faction/formulas/donation.ts
+            const DonateMoneyToRepDivisor = 1e6
+            //we need to have player multipliers
+            const mults_faction_rep = ns.getPlayer().mults.faction_rep
+            //calculate the money for the needed rep
+            money = (rep_difference * DonateMoneyToRepDivisor) / mults_faction_rep   //(rep * CONSTANTS.DonateMoneyToRepDivisor) / person.mults.faction_rep * currentNodeMults.FactionWorkRepGain
+        }
+        //donate to the faction
+        ns.singularity.donateToFaction(faction, money) 
     }
 
 
@@ -601,7 +684,13 @@ export class singularity_obj {
             //get favor
             const favor = ns.singularity.getFactionFavor(faction)
             const rep_to_favor = Math.log1p(rep / 25000) / 0.019802627296179712
-            const favor_for_donate = 150
+            var favor_for_donate = 150
+            //if we can use bitnode multipliers
+            if (formulas_available) {
+                //adjust the number
+                favor_for_donate * ns.getBitNodeMultipliers().FavorToDonateToFaction
+            }
+
             const favor_needed = favor_for_donate - favor - rep_to_favor
 
             //if we need to get more rep or favor
@@ -628,23 +717,52 @@ export class singularity_obj {
     //company work is improved by SF11 (if you have at least 1), SF15 (if you have at least 2)
     //jobStatReqOffset: lower is better
     //exp & money multiplier: higher is better
-    //TODO: do we need to be in the city to apply for the job? e.g. Backman & Associates is in Aevum, but we are in Sector-12, can we apply for the job?
     work_for_company(ns, formulas_available) {
         //faction name, company name, server name
-        const company_factions = {        
+        const company_factions = {
             //jobStatReqOffset: 224            
-            "Blade Industries": { company: "Blade Industries", hostname: "blade" },                             //exp & money multiplier: 2.75      hacking: 900 <-> 1200 (5 ports) 
-            "Bachman & Associates": { company: "Bachman & Associates", hostname: "b-and-a" },                   //exp & money multiplier: 2.6       hacking: 900 <-> 1150 (5 ports)     
-            "Four Sigma": { company: "Four Sigma", hostname: "4sigma" },                                        //exp & money multiplier: 2.5       hacking: 900 <-> 1250 (5 ports)
-            "OmniTek Incorporated": { company: "OmniTek Incorporated", hostname: "omnitek" },                   //exp & money multiplier: 2.25      hacking: 900 <-> 1100 (5 ports)
-            "Clarke Incorporated": { company: "Clarke Incorporated", hostname: "clarkinc" },                    //exp & money multiplier: 2.25      hacking: 950 <-> 1250 (5 ports)
-            "Fulcrum Secret Technologies": { company: "Fulcrum Secret Technologies", hostname: "fulcrumtech" }, //exp & money multiplier: 2         hacking: 950 <-> 1250 (5 ports)
-            "KuaiGong International": { company: "KuaiGong International", hostname: "kuai-gong" },             //exp & money multiplier: 2         hacking: 950 <-> 1300 (5 ports)
+            "Blade Industries": {
+                company: "Blade Industries",
+                hostname: "blade"
+            }, //exp & money multiplier: 2.75      hacking: 900 <-> 1200 (5 ports) 
+            "Bachman & Associates": {
+                company: "Bachman & Associates",
+                hostname: "b-and-a"
+            }, //exp & money multiplier: 2.6       hacking: 900 <-> 1150 (5 ports)     
+            "Four Sigma": {
+                company: "Four Sigma",
+                hostname: "4sigma"
+            }, //exp & money multiplier: 2.5       hacking: 900 <-> 1250 (5 ports)
+            "OmniTek Incorporated": {
+                company: "OmniTek Incorporated",
+                hostname: "omnitek"
+            }, //exp & money multiplier: 2.25      hacking: 900 <-> 1100 (5 ports)
+            "Clarke Incorporated": {
+                company: "Clarke Incorporated",
+                hostname: "clarkinc"
+            }, //exp & money multiplier: 2.25      hacking: 950 <-> 1250 (5 ports)
+            "Fulcrum Secret Technologies": {
+                company: "Fulcrum Secret Technologies",
+                hostname: "fulcrumtech"
+            }, //exp & money multiplier: 2         hacking: 950 <-> 1250 (5 ports)
+            "KuaiGong International": {
+                company: "KuaiGong International",
+                hostname: "kuai-gong"
+            }, //exp & money multiplier: 2         hacking: 950 <-> 1300 (5 ports)
             //jobStatReqOffset: 249
-            "NWO": { company: "NWO", hostname: "nwo" },                                                         //exp & money multiplier: 2.75      hacking: 950 <-> 1300 (5 ports)  
-            "ECorp": { company: "ECorp", hostname: "ecorp" },                                                   //exp & money multiplier: 3         hacking: 1050 <-> 1400 (5 ports)
-            "MegaCorp": { company: "MegaCorp", hostname: "megacorp" },                                          //exp & money multiplier: 3         hacking: 1100 <-> 1350 (5 ports)
-            
+            "NWO": {
+                company: "NWO",
+                hostname: "nwo"
+            }, //exp & money multiplier: 2.75      hacking: 950 <-> 1300 (5 ports)  
+            "ECorp": {
+                company: "ECorp",
+                hostname: "ecorp"
+            }, //exp & money multiplier: 3         hacking: 1050 <-> 1400 (5 ports)
+            "MegaCorp": {
+                company: "MegaCorp",
+                hostname: "megacorp"
+            }, //exp & money multiplier: 3         hacking: 1100 <-> 1350 (5 ports)
+
         }
         //set the required reputation to 400k
         const company_reputation_needed_for_faction = 400000
@@ -664,7 +782,8 @@ export class singularity_obj {
             //check if the company server is backdoored
             const backdoor_installed = ns.getServer(info.hostname).backdoorInstalled
             //calc the rep needed (lowered when backdoor is installed)
-            const rep_needed = backdoor_installed ? company_reputation_needed_for_faction * 0.75 : company_reputation_needed_for_faction
+            const rep_needed = backdoor_installed ? company_reputation_needed_for_faction * 0.75 :
+                company_reputation_needed_for_faction
             //get company
             const company = info.company
             //if the company reputation is not enough 
@@ -735,10 +854,10 @@ export class singularity_obj {
     singularity.getFactionWorkTypes 1
     19.5
     */
-   /*
-   function that tries to perform the action, if not already performing it (also guarding if work shouldn't be switched (e.g. grafting))
-   */
-    perform_action(ns, type, activity, formulas_available=false) {
+    /*
+    function that tries to perform the action, if not already performing it (also guarding if work shouldn't be switched (e.g. grafting))
+    */
+    perform_action(ns, type, activity, formulas_available = false) {
         //get player
         var player = ns.getPlayer()
         //flag to keep track if we need to switch
@@ -746,7 +865,7 @@ export class singularity_obj {
         //get current work
         var current_work = ns.singularity.getCurrentWork()
         //if not working
-        if (current_work == null || current_work == undefined)  {
+        if (current_work == null || current_work == undefined) {
             //set flag
             flag_switch_work = true
             //working
@@ -755,7 +874,7 @@ export class singularity_obj {
             if (current_work.type != type) {
                 //set flag
                 flag_switch_work = true
-            //doing the same work (high level)
+                //doing the same work (high level)
             } else {
                 //depending on the type
                 switch (type) {
@@ -763,9 +882,9 @@ export class singularity_obj {
                         flag_switch_work = (activity != current_work.factionName)
                         break
 
-                    case work_type.COMPANY:                    
+                    case work_type.COMPANY:
                         //we need to check for promotion
-                        flag_switch_work = true 
+                        flag_switch_work = true
                         //stop
                         break
 
@@ -801,7 +920,7 @@ export class singularity_obj {
 
                 case work_type.FACTION:
                     //get best work type
-                    const work_type_best = this.get_best_work_faction(ns, player, activity, formulas_available)                   
+                    const work_type_best = this.get_best_work_faction(ns, player, activity, formulas_available)
                     //if not working
                     if (current_work == null) {
                         //work for worktype
@@ -809,7 +928,7 @@ export class singularity_obj {
                     }
                     //check if we are working for faction
                     if (current_work.hasOwnProperty("factionWorkType")) {
-                         //check if not already working for same worktype
+                        //check if not already working for same worktype
                         if (current_work.factionWorkType != work_type_best) {
                             //work for worktype
                             return ns.singularity.workForFaction(activity, work_type_best, true)
@@ -818,11 +937,11 @@ export class singularity_obj {
                         //work for worktype
                         return ns.singularity.workForFaction(activity, work_type_best, true)
                     }
-                   
+
                     //already working for the best type
                     return true
 
-                case work_type.COMPANY:   
+                case work_type.COMPANY:
                     //get best company work   
                     const jobfield = this.get_best_work_company(ns, player)
                     //apply to company or try to get promotion (will cancel current job & job work for another company)
@@ -838,17 +957,17 @@ export class singularity_obj {
                         return ns.singularity.workForCompany(activity, true)
                     }
                     //if we are working for a differnent company but have a job at the target company
-                    if(activity != current_work.companyName && player.jobs.hasOwnProperty(activity)) {
+                    if (activity != current_work.companyName && player.jobs.hasOwnProperty(activity)) {
                         //work for company
                         return ns.singularity.workForCompany(activity, true)
                     }
-                       
+
                     //we don't have the job, return failure
                     return false
 
                 case work_type.CRIME:
                     //commit crime (calc for best crime has already happened)
-                    return ns.singularity.commitCrime(activity, true)                    
+                    return ns.singularity.commitCrime(activity, true)
 
                 case work_type.STUDY:
                     //get city
@@ -867,22 +986,22 @@ export class singularity_obj {
                         case "hacking":
                         case "Algorithms":
                             return ns.singularity.universityCourse(university, "Algorithms", true)
-                            
+
 
                         case "str":
-                            return ns.singularity.gymWorkout(gym, "str", true)                            
+                            return ns.singularity.gymWorkout(gym, "str", true)
 
                         case "def":
                             return ns.singularity.gymWorkout(gym, "def", true)
-                            
+
 
                         case "dex":
                             return ns.singularity.gymWorkout(gym, "dex", true)
-                            
+
 
                         case "agi":
                             return ns.singularity.gymWorkout(gym, "agi", true)
-                            
+
 
                         case "charisma":
                         case "Leadership":
@@ -904,7 +1023,7 @@ export class singularity_obj {
                 default:
                     log.error(ns, "Singularity", "Uncaught work_type 2: '" + work_type + "'")
             }
-        //no need to switch
+            //no need to switch
         } else {
             //indicate success
             return true
@@ -913,9 +1032,9 @@ export class singularity_obj {
 
 
     //get the best work for a company
-    get_best_work_company(ns, player) {//, formulas_available) {
+    get_best_work_company(ns, player) { //, formulas_available) {
         //determine job field
-        var jobfield = "Software" 
+        var jobfield = "Software"
         //from https://github.com/bitburner-official/bitburner-src/blob/dev/src/Company/data/CompanyPositionsMetadata.ts            
         //Software -> CTO (Chief Technology Officer)
         //Hacking:  85-85-80-75-75-25-70-65
@@ -948,8 +1067,8 @@ export class singularity_obj {
         const faction_work_types = ns.singularity.getFactionWorkTypes(faction)
         //default to first work type
         var work_type_best = faction_work_types[0]
-        //TODO: improve by checking which work type is best for the player (e.g. hacking, combat, etc.)
-        if(formulas_available) {
+        //if we can use formulas
+        if (formulas_available) {
             //save best gains
             var best_rep = -1
             //for each worktype

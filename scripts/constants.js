@@ -193,7 +193,9 @@ export const RAM = {
     singularity.getAugmentationsFromFaction (fn)	5.00GB
     singularity.purchaseAugmentation (fn)	5.00GB
     singularity.installAugmentations (fn)	5.00GB
-
+    singularity.getAugmentationRepReq       2.5
+    singularity.donateToFaction             5
+    
     singularity.getCrimeChance (fn)	5.00GB
     singularity.getCrimeStats (fn)	5.00GB
     singularity.commitCrime (fn)	5.00GB
@@ -223,7 +225,7 @@ export const RAM = {
     
 
     */
-    SINGULARITY: 80.5,
+    SINGULARITY: 88.0,
 
     /*
 

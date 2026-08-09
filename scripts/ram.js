@@ -74,7 +74,7 @@ export class ram_obj {
 
     //sets the basic information
     async init(ns) {
-        //ns.disableLog("")
+        ns.disableLog("kill")
         //save initial ram cost
         this.ram_used = Math.ceil((CONSTANTS.RAM.MAIN + CONSTANTS.RAM.RAM)*100) / 100
         //allocate ram
