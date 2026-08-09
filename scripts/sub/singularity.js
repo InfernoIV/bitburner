@@ -1193,10 +1193,9 @@ export class singularity_obj {
             //automation
             [4, 1], //This Source-File lets you access and use the Singularity functions outside of this BitNode.
             //reduces the RAM cost of singularity functions in other BitNodes: 16x
-            [15,1], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
-
             [4, 2], //reduces the RAM cost of singularity functions in other BitNodes: 4x
             [4, 3], //reduces the RAM cost of singularity functions in other BitNodes: 1x
+            [15,1], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
             [9, 1], //Permanently unlocks the Hacknet Server in other BitNodes
             //increases hacknet production and reduces hacknet costs by: 12%
             [9, 2], //You start with 128GB of RAM on your home computer when entering a new BitNode

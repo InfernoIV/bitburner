@@ -473,6 +473,14 @@ export class hack_obj {
                     //go to next
                     continue
                 }
+                //copy scripts
+                //copy the script
+                if (!ns.scp(CONSTANTS.SCRIPT.TO_COPY.HACK, server)) {
+                    //debug
+                    log.warning(ns, "Hack", "error copying '" + CONSTANTS.SCRIPT.TO_COPY.HACK + "' to " + server)
+                    //go to next
+                    continue
+                }
                 
                 //get threads from ram_to_threads
                 var threads = this.ram_to_threads.get(ram_cost)

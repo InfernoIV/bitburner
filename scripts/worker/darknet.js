@@ -287,7 +287,8 @@ async function mastermind_password(ns, hostname, lenght) {
         if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //heartbleed for more information
             const heartbleed = await ns.dnet.heartbleed(hostname)
-            //information
+            //log
+            log.info(ns, ns.pid, "heartbleed: " + JSON.stringify(heartbleed))
             //check if successfull
             if (heartbleed.success == true) {
                 //check if we have logs (we should..)
@@ -295,11 +296,13 @@ async function mastermind_password(ns, hostname, lenght) {
                     //go next
                     continue
                 }
-                log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(heartbleed) + "'")
+                //if server is restarting.. heartbleed: '{"success":true,"code":200,"message":"Success","logs":["Server restarting, terminating scripts..."]}'
+                if (heartbleed.logs[0].includes("restarting")) {
+                    //stop
+                    return
+                }
                 const heartbleed_log = JSON.parse(heartbleed.logs[0])
-                log.info(ns, ns.pid, "log: '" + JSON.stringify(heartbleed_log) + "'")
                 const data = heartbleed_log.data   
-                log.info(ns, ns.pid, "data: '" + JSON.stringify(data) + "'")
                 //update the index
                 index = data.split(",")[0]
                 //check if we need to set to a number
