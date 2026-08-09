@@ -21,15 +21,15 @@ export class cloud_obj {
         //map of servers owned
         this.servers_owned = new Map()
         //variables that are set once
-        this.server_max_amount = 25 * currentNodeMults.CloudServerLimit
-        this.server_max_ram = 1048576 * currentNodeMults.CloudServerMaxRam
+        this.server_max_amount = 25 //* currentNodeMults.CloudServerLimit
+        this.server_max_ram = 1048576 //* currentNodeMults.CloudServerMaxRam
         //keep track of the lowest ram (to speed up scripts)
         this.ram_lowest = this.server_max_ram
         //log information
         //log.info(ns, "Cloud", "Max of '" + this.server_max_amount + "' cloud servers, max of '" + this.server_max_ram + "' ram", true)
 
         //check for existing servers
-        const servers = ns.cloud.getServerNames() //can we use the normal scan for this?
+        var servers = ns.cloud.getServerNames() //can we use the normal scan for this?
         //check each server
         for (const server of servers) {
             //get the ram
@@ -44,13 +44,19 @@ export class cloud_obj {
             //log information
             //log.info(ns, "Cloud", "Found cloud server '" + server + "' with '" + ram + "' ram => '" + this.servers_owned.size + "'", true)
         }
+        //re-set lowest ram if no servers are found
+        if (this.servers_owned.size == 0) {
+            //set to 0
+            this.ram_lowest = 0
+        }
         //log
-        log.info(ns, "Cloud", "Init complete")
+        log.info(ns, "Cloud", "Init complete, have " + this.servers_owned.size + " cloud servers, min ram: " + this.ram_lowest, true )
     }
 
 
     //buy and/or upgrade servers
-    manage(ns) {
+    manage(ns, handles) {
+        //log.info(ns, "Cloud", "manage start", true)
         //min money to upgrade
         const money_min = 55000000 //55m
         //get player
@@ -68,6 +74,8 @@ export class cloud_obj {
             }
             //if we can still buy servers
             if (this.servers_owned.size < this.server_max_amount) {
+                //debug
+                //log.info(ns, "Cloud", "Purchasing servers", true)
                 //buy servers
                 this.purchase_servers(ns)
             }

@@ -16,7 +16,7 @@ export function main(ns) {
     //keep track of ram
     const ram_in_use = CONSTANTS.RAM.MAIN
     //boot main
-    ns.exec(CONSTANTS.SCRIPT.JUMP, CONSTANTS.SERVER.HOME, 1,
+    ns.spawn(CONSTANTS.SCRIPT.JUMP, {threads: 1, spawnDelay: 0},
         CONSTANTS.SCRIPT.MAIN, ram_in_use
     )
 }

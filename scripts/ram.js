@@ -245,7 +245,7 @@ export class ram_obj {
         
         
         //AUTOMATION
-        await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4)
+        await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4, 1, "", 5.8)
         //if darknet is available, we save 2 GBs (on singularity)
         await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET_AVAILABLE, {}, 15, 1, CONSTANTS.HANDLE.SINGULARITY)
         
@@ -271,12 +271,12 @@ export class ram_obj {
         await this.register_handle(ns, CONSTANTS.HANDLE.GRAFTING, new grafting_obj(), 10, 1, CONSTANTS.HANDLE.SINGULARITY)
         
         //EXTEND FUNCTIONALITY
-        //await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())
+        await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())
         //await this.register_handle(ns, CONSTANTS.HANDLE.CODING_CONTRACT, new coding_contract_obj())
         await this.register_handle(ns, CONSTANTS.HANDLE.STOCK, new stock_obj())
         //await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj())
         await this.register_handle(ns, CONSTANTS.HANDLE.GANG, new gang_obj(), 2)
-        await this.register_handle(ns, CONSTANTS.HANDLE.HACKNET, new hacknet_obj(), 9)
+        await this.register_handle(ns, CONSTANTS.HANDLE.HACKNET, new hacknet_obj())//, 9)
         await this.register_handle(ns, CONSTANTS.HANDLE.CORPORATION, new corporation_obj(), 3)
 
         //log.info(ns, "Ram", "Import complete: '" + [...this.registration.entries()] + "'", true)

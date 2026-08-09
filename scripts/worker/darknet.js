@@ -441,31 +441,48 @@ async function derive_password_from_heartbleed(ns, hostname, length) {
     log.info(ns, ns.pid, "derive_password_from_heartbleed (try_passwords): " + JSON.stringify(result))
     //if not succesfull
     if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
-        log.info(ns, ns.pid, "try_passwords - Heartbleeding for more information")
-        //heartbleed for more information
-        var heartbleed = await ns.dnet.heartbleed(hostname)
-        log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(heartbleed) + "'")
-        //for each log
-        for (const log_raw of heartbleed.logs) {
-            //convert to object
-            const heartbleed_log = JSON.parse(log_raw)
-            //debug
-            log.info(ns, ns.pid, "heartbleed_log: '" + JSON.stringify(heartbleed_log) + "'")
-            //if there is data
-            if ("data" in heartbleed_log) {
-                //create regex
-                const regex = new RegExp(String.raw`\d{${length}}`, "g") //RegExp(String.raw`\D\d{${length}}\D`, "g")
-                //get passwords
-                const matches = heartbleed_log.data.match(regex)
+        //dummy value
+        var heartbleed = { success: true }
+        //keep track of loops
+        var loop = 1
+        //keep looping until success
+        while(heartbleed.success) {
+            log.info(ns, ns.pid, "try_passwords - Heartbleeding for more information")
+            //heartbleed for more information
+            heartbleed = await ns.dnet.heartbleed(hostname)
+            log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(heartbleed) + "'")
+            //for each log
+            for (const log_raw of heartbleed.logs) {
+                //convert to object
+                const heartbleed_log = JSON.parse(log_raw)
                 //debug
-                log.success(ns, ns.pid, "Found '" + JSON.stringify(matches) + "' in '" + JSON.stringify(heartbleed_log.message) + "'")
-                //try passwords
-                result = await try_passwords(ns, hostname, matches, "derive_password_from_heartbleed")
-                //check for success
-                if(result.success) {
-                    return result
+                log.info(ns, ns.pid, "heartbleed_log: '" + JSON.stringify(heartbleed_log) + "'")
+                //if there is data
+                if ("data" in heartbleed_log) {
+                    //create regex
+                    const regex = new RegExp(String.raw`\d{${length}}`, "g") //RegExp(String.raw`\D\d{${length}}\D`, "g")
+                    //get passwords
+                    const matches = heartbleed_log.data.match(regex)
+                    //debug
+                    log.success(ns, ns.pid, "Found '" + JSON.stringify(matches) + "' in '" + JSON.stringify(heartbleed_log.message) + "'")
+                    //try passwords
+                    result = await try_passwords(ns, hostname, matches, "derive_password_from_heartbleed")
+                    //check for success
+                    if(result.success) {
+                        //return the success
+                        return result
+                    }
                 }
             }
+            //debug
+            log.info(ns, ns.pid, "Couldn't find information in heartbleed log, trying again... (" + loop + ")")       
+            //if we keep looping...
+            if (loop >= 5) {
+                //stop
+                break
+            }  
+            //up the loop   
+            loop += 1
         }
     }
     //return result
@@ -845,11 +862,12 @@ async function start_worker(ns, hostname) {
     var threads = threads_while_blocked
     //if it has value to unblock
     if (threads_while_blocked < threads_unblocked) {
-        //log.info(ns, ns.pid, "Unblocking ram for " + (threads_unblocked - threads_while_blocked) + " more threads")
+        //log
+        log.info(ns, ns.pid, "Unblocking ram for " + (threads_unblocked - threads_while_blocked) + " more threads")
         //variable for results 
         result = null
         //while still ram blocked
-        while (ram_blocked > 0) {
+        while (ns.dnet.getBlockedRam(hostname) > 0.0) {
             //free ram
             result = await ns.dnet.memoryReallocation(hostname)
             //if not successfull
@@ -858,7 +876,7 @@ async function start_worker(ns, hostname) {
                 return
             }
             //update blocked ram
-            ram_blocked = ns.dnet.getBlockedRam(hostname)
+            //ram_blocked = ns.dnet.getBlockedRam(hostname)
             //wait a little bit
             await ns.sleep(CONSTANTS.TIME.WAIT)
         }
@@ -879,11 +897,12 @@ async function start_worker(ns, hostname) {
         preventDuplicates: true,
         threads: threads,
     }, hostname, threads)
-    //check if ok
+    //check if not started
     if (result == false) {
+        //get a message
         ns.ui.openTail()
         //debug
-        log.warning(ns, ns.pid, "Failed to start worker (" + CONSTANTS.RAM.WORKER.DARKNET + " x " + threads + " = " + (CONSTANTS.RAM.WORKER.DARKNET * threads) + ") on '" + hostname + "' => " + JSON
+        log.warning(ns, ns.pid, "Failed to start worker (" + CONSTANTS.RAM.WORKER.DARKNET + " x " + threads + " = " + (CONSTANTS.RAM.WORKER.DARKNET * threads) + ") of available " + (server_info.maxRam - server_info.ramUsed) + " on '" + hostname + "' => " + JSON
             .stringify(server_info), true)
         //stop
         return

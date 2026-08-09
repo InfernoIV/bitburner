@@ -468,9 +468,15 @@ export class hack_obj {
                 //get closest lower key, which provides the threads
                 var ram_cost = getClosestValue(ram_options, ram_available) //ram_options.filter( function(i, ram_available){ return i <= ram_available })//.pop()
                 //log.info(ns, "Singularity", "ram_cost: " + ram_cost, true)
+                //if not enough ram
+                if (ram_cost > ram_available) {
+                    //go to next
+                    continue
+                }
+                
                 //get threads from ram_to_threads
                 var threads = this.ram_to_threads.get(ram_cost)
-                //log.info(ns, "Singularity", "Threads: " + threads, true)
+                //log.info(ns, "Singularity", "Threads: " + JSON.stringify(threads), true)
                 //execute scripts with the correct timing
                 //hack
                 if(!ns.exec(CONSTANTS.SCRIPT.WORKER.HACK, server, threads.hack, this.hack_target, this
@@ -478,8 +484,8 @@ export class hack_obj {
                     job_delay)) {
                     //log if failed
                     log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.HACK + "' on '" +
-                        server + "' for " + threads.hack + " threads (" + ram_available + ") GB => " + (threads
-                            .hack * CONSTANTS.RAM.WORKER.HACK) + " GB => Server: " + JSON.stringify(ns.getServer(server)) + "'", true)
+                        server + "' for " + threads.hack + " threads  = " + (threads
+                            .hack * CONSTANTS.RAM.WORKER.HACK) + "/" + ram_available + " GB => Server: " + JSON.stringify(ns.getServer(server)) + "'", true)
                 }
 
                 //weaken 1
@@ -487,8 +493,9 @@ export class hack_obj {
                     .delay.hack.weaken_1 +
                     job_delay)) {
                         //log if failed
-                    log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.WEAKEN + "' on '" +
-                        server + "' for " + threads.weaken_1 + " threads (" + ram_available + ") GB => " + (threads.weaken_1 * CONSTANTS.RAM.WORKER.WEAKEN) + " GB => Server: '"+  JSON.stringify(ns.getServer(server)) + "'", true)
+                        log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.WEAKEN + "' on '" +
+                        server + "' for " + threads.weaken_1 + " threads  = " + (threads
+                            .weaken_1 * CONSTANTS.RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " + JSON.stringify(ns.getServer(server)) + "'", true)
                 }
 
                 //grow
@@ -497,7 +504,8 @@ export class hack_obj {
                     job_delay)) {
                     //log if failed
                     log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.GROW + "' on '" +
-                        server + "' for " + threads.grow + " threads (" + ram_available + ") GB => " + (threads.grow * CONSTANTS.RAM.WORKER.GROW) + " GB => Server: "+ JSON.stringify(ns.getServer(server)) + "'", true)
+                        server + "' for " + threads.grow + " threads  = " + (threads
+                            .grow * CONSTANTS.RAM.WORKER.GROW) + "/" + ram_available + " GB => Server: " + JSON.stringify(ns.getServer(server)) + "'", true)                    
                 }
 
                 //weaken 2
@@ -506,7 +514,8 @@ export class hack_obj {
                     job_delay)) {
                     //log if failed
                     log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.WEAKEN + "' on '" +
-                        server + "' for " + threads.weaken_2 + " threads (" + ram_available + ") GB => " + (threads.weaken_2 * CONSTANTS.RAM.WORKER.WEAKEN) + " GB => Server: " + JSON.stringify(ns.getServer(server)) + "'", true)
+                        server + "' for " + threads.weaken_2 + " threads  = " + (threads
+                            .weaken_2 * CONSTANTS.RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " + JSON.stringify(ns.getServer(server)) + "'", true)                    
                 }
 
                 //increase job delay

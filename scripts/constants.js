@@ -15,7 +15,8 @@ export const TIME = {
 //enum for port data
 export const PORT = {
     NO_DATA: "NULL PORT DATA",
-    CODING_CONTRACT: "1",
+    CODING_CONTRACT: 1,
+    BACKDOOR: 2,
 }
 
 
@@ -24,6 +25,7 @@ export const SCRIPT = {
     BOOT: "scripts/boot.js",
     MAIN: "scripts/main.js",
     JUMP: "scripts/jump.js",
+    DESTROY: "scripts/destroy_bitnode.js",
     WORKER: {
         GROW: "scripts/worker/grow.js",
         WEAKEN: "scripts/worker/weaken.js",
@@ -31,6 +33,7 @@ export const SCRIPT = {
         DARKNET: "scripts/worker/darknet.js",
         SHARE: "scripts/worker/share.js",
         STANEK: "scripts/worker/stanek.js",
+        BACKDOOR: "scripts/worker/backdoor.js",
     },
     TO_COPY: {
         HACK: ["scripts/worker/grow.js", "scripts/worker/weaken.js", "scripts/worker/hack.js"],
@@ -67,6 +70,7 @@ export const HANDLE = {                     //SF or BN requirement
 
 export const AUGMENT = {
     NFG: "NeuroFlux Governor",
+    TRP: "The Red Pill",
 }
 
 export const TOOLS = {
@@ -130,6 +134,12 @@ export const RAM = {
     RAM: 5.1,
 
     /*
+    singularity.destroyW0r1dD43m0n   25
+    spawn       2
+    base        1.6*/
+    DESTROY: 28.6,
+
+    /*
     getPlayer (fn)	0.50GB
     scan (fn)	0.20GB
     ls (fn)	0.20GB
@@ -142,8 +152,7 @@ export const RAM = {
 
     getServer (fn)	2.00GB  -> covered in ram
     baseCost (misc)	1.60GB  -> covered in main
-    singularity.connect (fn)	2.00GB  -> covered in singularity
-    singularity.installBackdoor (fn)	2.00GB  -> covered in singularity
+    
     */
     ROOT: 1.2,
 
@@ -166,6 +175,8 @@ export const RAM = {
     baseCost (misc)	1.60GB  -> covered in main
     */
     HACK: 6.05,
+
+
 
     /*
     ns.getBitNodeMultipliers()  4
@@ -195,7 +206,7 @@ export const RAM = {
     singularity.installAugmentations (fn)	5.00GB
     singularity.getAugmentationRepReq       2.5
     singularity.donateToFaction             5
-    
+
     singularity.getCrimeChance (fn)	5.00GB
     singularity.getCrimeStats (fn)	5.00GB
     singularity.commitCrime (fn)	5.00GB
@@ -445,5 +456,13 @@ export const RAM = {
         ns.stanek.chargeFragment    0.4
         */
        STANEK: 2.0,
+
+        /*
+        baseCost (misc)	1.60GB  -> covered in main
+        singularity.connect (fn)	2.00GB  -> covered in singularity
+        singularity.installBackdoor (fn)	2.00GB  -> covered in singularity
+        scan (fn)	0.20GB
+        */
+        BACKDOOR: 5.8,
     },
 }
