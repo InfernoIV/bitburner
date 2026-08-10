@@ -25,6 +25,11 @@ export async function main(ns) {
         if (port.peek() != CONSTANTS.PORT.NO_DATA) {
             //get the server name
             const server = port.read()
+            //check if we need to ignore
+            if (server == CONSTANTS.SERVER.WORLD_DEAMON) {
+                //go to next
+                continue
+            }
             //if not already backdoored
             if (!backdoored_server.includes(server)) {
                 //try

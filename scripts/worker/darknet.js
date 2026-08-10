@@ -126,6 +126,11 @@ async function authenticate_servers(ns, hostname_self) {
         }
         //authenticate
         var result = await authenticate_server(ns, server_details, darknet_hostname)
+        //check result
+        if (result == undefined) {
+            //go to next
+            continue
+        }
         //if succesfull
         if (result.success == true) {
             //start worker
@@ -639,13 +644,90 @@ async function find_number_higher_lower(ns, hostname, length) {
 
 
 async function find_number_divisible(ns, hostname, length) {
+    //passwords to try
+    const passwords_to_try = [2, 3, 4, 5, 6, 7, 8, 9]
+    var divisible = []
+    var not_divisible = []
+    var possible_passwords = []
+   
+    //try the divisor
+    var result = await try_passwords(ns, hostname, passwords_to_try, "find_number_divisible")
+    //if incorrect
+    if (result == ns.enums.DarknetResponseCode.AuthFailure) {
+        //get heartbleed
+        var heartbleed = await ns.dnet.heartbleed(hostname)
+        //if successfull
+        if (heartbleed.code == ns.enums.DarknetResponseCode.Success) {
+            //check logs
+            for (const log of heartbleed.logs) {
+                //get the number
+                const number = parseInt(log.message.split("'")[1]) //get the number
+                //if divisible
+                if (!log.message.includes("not")) {
+                    //add to divisible list
+                    divisible.push(number)
+                    
+                //not divisible
+                } else {
+                    //add to not divisible list
+                    not_divisible.push(number)
+                    
+                }
+            }
+        }
+        log.info(ns, ns.pid, "Found divisible: " + divisible)
+        log.info(ns, ns.pid, "Found non-divisible: " + not_divisible)
+        //for each possible number
+        for (let i = 0; i <= parseInt("9".repeat(length)); i++) {
+            //keep track of possibility
+            var flag_correct = true
+            //for the non-divisibles
+            for (const non_entry of not_divisible) {
+                //check if we can divide cleanly
+                if (non_entry % i == 0) {
+                    //set flag to false
+                    flag_correct = false
+                    //stop
+                    break
+                }
+            }
+            //if still correct
+            if (flag_correct) {
+                //check the other divisible entries?
+                for (const entry of divisible) {
+                    //check if we cannot divide cleanly
+                    if (entry % i != 0) {
+                        //set flag to false
+                        flag_correct = false
+                        //stop
+                        break
+                    }
+                }
+            }
+            //if flag is still correct
+            if (flag_correct) {
+                //add to possibility
+                possible_passwords.push(i)
+            }
+        }
+        ns.ui.openTail()
+        log.info(ns, ns.pid, "find_number_divisible: trying passwords: " + possible_passwords)
+        //try these passwords
+        return await try_passwords(ns, hostname, possible_passwords, "find_number_divisible")
+        //how to continue?
+    }
+
+ /*
     //create values
     var passwords = []
     //2 character password, so start from 10?
     for (let i = 0; i <= 99; i++) {
         //add to list
         passwords.push(i)
-    }
+    }*/
+    //var passwords = Array.from({length: parseInt("9".repeat(length))}, (e, i)=> i)
+
+    /*
     //loop until found or server is offline / moved
     while (true) {
         //set default number of passwords to check, before heartbleed
@@ -689,13 +771,16 @@ async function find_number_divisible(ns, hostname, length) {
             return result
         }
     }
-    /*
+    
     [2026-07-24 01:09:09] WARNING	28553	Auth failed for 'gig4.org', getServerDetails: '{"isOnline":true,"isConnectedToCurrentServer":true,"hasSession":false,"modelId":"Factori-Os",
     "passwordHint":"The password is divisible by 1 ;)","data":"","logTrafficInterval":22.870000000000005,"passwordLength":2,"passwordFormat":"numeric","blockedRam":0,"difficulty":3,"requiredCharismaSkill":119,"depth":4,"isStationary":false}', heartbleed: '{"success":false,"code":351,"message":"Direct Connection Required","logs":[]}'
     [2026-07-24 01:19:47] ERROR	31248	'gig4.org'heartbleed uncaught: 'undefined' ({"success":true,"code":200,"message":"Success","logs":["{\"code\":401,\"message\":\"Password is not divisible by '99'\",\"data\":\"false\",\"passwordAttempted\":\"99\"}"]})
-    */
+    
+    //WARNING	7842	Auth failed for 'ultra$genesis': '{"code":401,"success":false}', getServerDetails: '{"isOnline":true,"isConnectedToCurrentServer":true,"hasSession":false,"modelId":"Factori-Os","passwordHint":"The password is divisible by 1 ;)","data":"","logTrafficInterval":22.870000000000005,"passwordLength":3,"passwordFormat":"numeric","blockedRam":0,"difficulty":3,"requiredCharismaSkill":119,"depth":3,"isStationary":false}', heartbleed: '{"success":true,"code":200,"message":"Success","logs":["{\"code\":401,\"message\":\"Password is not divisible by '99'\",\"data\":\"false\",\"passwordAttempted\":\"99\"}"]}'
+    
     //WIP
     return {code: ns.enums.DarknetResponseCode.AuthFailure, success: false}
+    */
 }
 
 
