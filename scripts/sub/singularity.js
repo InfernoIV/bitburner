@@ -625,7 +625,6 @@ export class singularity_obj {
     //company work is improved by SF11 (if you have at least 1), SF15 (if you have at least 2)
     //jobStatReqOffset: lower is better
     //exp & money multiplier: higher is better
-    //TODO: do we need to be in the city to apply for the job? e.g. Backman & Associates is in Aevum, but we are in Sector-12, can we apply for the job?
     work_for_company(ns, formulas_available) {
         //faction name, company name, server name
         const company_factions = {        
@@ -635,15 +634,16 @@ export class singularity_obj {
             "Four Sigma": { company: "Four Sigma", hostname: "4sigma" },                                        //exp & money multiplier: 2.5       hacking: 900 <-> 1250 (5 ports)
             "OmniTek Incorporated": { company: "OmniTek Incorporated", hostname: "omnitek" },                   //exp & money multiplier: 2.25      hacking: 900 <-> 1100 (5 ports)
             "Clarke Incorporated": { company: "Clarke Incorporated", hostname: "clarkinc" },                    //exp & money multiplier: 2.25      hacking: 950 <-> 1250 (5 ports)
-            "Fulcrum Secret Technologies": { company: "Fulcrum Secret Technologies", hostname: "fulcrumtech" }, //exp & money multiplier: 2         hacking: 950 <-> 1250 (5 ports)
+            //fulcrum has a different faction and company name
+            "Fulcrum Secret Technologies": { company: "Fulcrum Technologies", hostname: "fulcrumtech" }, //exp & money multiplier: 2         hacking: 950 <-> 1250 (5 ports)
             "KuaiGong International": { company: "KuaiGong International", hostname: "kuai-gong" },             //exp & money multiplier: 2         hacking: 950 <-> 1300 (5 ports)
             //jobStatReqOffset: 249
             "NWO": { company: "NWO", hostname: "nwo" },                                                         //exp & money multiplier: 2.75      hacking: 950 <-> 1300 (5 ports)  
             "ECorp": { company: "ECorp", hostname: "ecorp" },                                                   //exp & money multiplier: 3         hacking: 1050 <-> 1400 (5 ports)
-            "MegaCorp": { company: "MegaCorp", hostname: "megacorp" },                                          //exp & money multiplier: 3         hacking: 1100 <-> 1350 (5 ports)
-            
+            "MegaCorp": { company: "MegaCorp", hostname: "megacorp" },                                          //exp & money multiplier: 3         hacking: 1100 <-> 1350 (5 ports)            
         }
-        //set the required reputation to 400k
+        //TODO: rank the companies in another order for augments?
+        //set the required reputation to 400k, or 200k when backdoored?
         const company_reputation_needed_for_faction = 400000
         //get factions
         const factions_joined = ns.getPlayer().factions
@@ -924,7 +924,7 @@ export class singularity_obj {
         const faction_work_types = ns.singularity.getFactionWorkTypes(faction)
         //default to first work type
         var work_type_best = faction_work_types[0]
-        //TODO: improve by checking which work type is best for the player (e.g. hacking, combat, etc.)
+        //if formulas are available
         if(formulas_available) {
             //save best gains
             var best_rep = -1
