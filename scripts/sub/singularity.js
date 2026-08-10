@@ -809,7 +809,7 @@ export class singularity_obj {
 
         }
         //TODO: rank the companies in another order for augments?
-        //set the required reputation to 400k, or 200k when backdoored?
+        //set the required reputation to 400k
         const company_reputation_needed_for_faction = 400000
         //get factions
         const factions_joined = ns.getPlayer().factions

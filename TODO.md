@@ -35,6 +35,7 @@
 
 ## Singularity (BN 4)
 - [ ] Determine order of companies: prioritize on specific augments?
+- [ ] interface with bladeburner, sleeve, grafing
 
 ## Stock (BN 1, BN 8)
 - [ ] Create better options for selling & forecasting
@@ -47,13 +48,16 @@
 - [ ] Create priority on basic actions
 - [ ] Determine sleeve actions
 - [ ] What does SupportMain sleeve action/status do?
+- [ ] interface towards singularity?
 
 ## Sleeve (BN 10)
 - [ ] Test theoratical prototype
+- [ ] interface towards singularity?
 
 ## Grafting (BN 10)
 - [ ] Determine what / when to graftin
 - [ ] Describe the pros and cons in the file
+- [ ] interface towards singularity?
 
 ## Stanek (BN 13)
 - [ ] Test theoratical prototype

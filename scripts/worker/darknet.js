@@ -981,14 +981,14 @@ async function phish(ns) {
         success: true
     }
     //while we can attempt
-    while (result_phishing.success == true) {
+    //while (result_phishing.success == true) {
         //Phishing attacks can only be run from scripts on darknet servers.
         var result_phishing = await ns.dnet.phishingAttack()
         //export type DarknetResult = { success: boolean; code: DarknetResponseCode; message: string };
         log.info(ns, ns.pid, "PhishingAttack: " + JSON.stringify(result_phishing))
         //wait a bit
-        await ns.sleep(CONSTANTS.TIME.WAIT)
-    }
+        //await ns.sleep(CONSTANTS.TIME.WAIT)
+    //}
 }
 
 
