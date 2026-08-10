@@ -74,7 +74,7 @@ export class ram_obj {
 
     //sets the basic information
     async init(ns) {
-        //ns.disableLog("")
+        ns.disableLog("kill")
         //save initial ram cost
         this.ram_used = Math.ceil((CONSTANTS.RAM.MAIN + CONSTANTS.RAM.RAM)*100) / 100
         //allocate ram
@@ -239,50 +239,46 @@ export class ram_obj {
 
     //function that manages the imports (in this order)
     async import(ns) {
-        //loop for easy breaking
-        while(true) {
-            //register each handle and return if not successfull (e.g. no ram)
-            //indicate if stanek is available to join asap
-            await this.register_handle(ns, CONSTANTS.HANDLE.STANEK_AVAILABLE, {}, 13)
-            
-            
-            //AUTOMATION
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4)) break
-            //if darknet is available, we save 2 GBs (on singularity)
-            await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET_AVAILABLE, {}, 15, 1, CONSTANTS.HANDLE.SINGULARITY)
-            
-            //join stanek asap
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STANEK, new stanek_obj(), 13, 1, "", 2.0)) break
+        //register each handle and return if not successfull (e.g. no ram)
+        //indicate if stanek is available to join asap
+        await this.register_handle(ns, CONSTANTS.HANDLE.STANEK_AVAILABLE, {}, 13)
+        
+        
+        //AUTOMATION
+        await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4, 1, "", 5.8)
+        //if darknet is available, we save 2 GBs (on singularity)
+        await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET_AVAILABLE, {}, 15, 1, CONSTANTS.HANDLE.SINGULARITY)
+        
+        //join stanek asap
+        await this.register_handle(ns, CONSTANTS.HANDLE.STANEK, new stanek_obj(), 13, 1, "", 2.0)
 
-            //IMPROVE AUTOMATION
-            await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)
-            
-            //BASE
-            await this.register_handle(ns, CONSTANTS.HANDLE.ROOT, new root_obj())
-            await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())
-            await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())
-            
-            //GO
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO_ANALYSIS, {}, 0, 0, CONSTANTS.HANDLE.GO)) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GO_CHEAT, {}, 14, 2, CONSTANTS.HANDLE.GO_ANALYSIS)) break
+        //IMPROVE AUTOMATION
+        await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)
+        
+        //BASE
+        await this.register_handle(ns, CONSTANTS.HANDLE.ROOT, new root_obj())
+        await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())
+        await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())
+        
+        //GO
+        await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())
+        await this.register_handle(ns, CONSTANTS.HANDLE.GO_ANALYSIS, {}, 0, 0, CONSTANTS.HANDLE.GO)
+        await this.register_handle(ns, CONSTANTS.HANDLE.GO_CHEAT, {}, 14, 2, CONSTANTS.HANDLE.GO_ANALYSIS)
 
-            //EXTEND SINGULARITY
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 6, 1, CONSTANTS.HANDLE.SINGULARITY) || 
-                !await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 7, 1, CONSTANTS.HANDLE.SINGULARITY) ) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GRAFTING, new grafting_obj(), 10, 1, CONSTANTS.HANDLE.SINGULARITY)) break
-            
-            //EXTEND FUNCTIONALITY
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.CODING_CONTRACT, new coding_contract_obj())) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.STOCK, new stock_obj())) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj())) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.GANG, new gang_obj(), 2)) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.HACKNET, new hacknet_obj(), 9)) break
-            if (!await this.register_handle(ns, CONSTANTS.HANDLE.CORPORATION, new corporation_obj(), 3)) break
-            
-            break
-        }
+        //EXTEND SINGULARITY
+        await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 6, 1, CONSTANTS.HANDLE.SINGULARITY) 
+        await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 7, 1, CONSTANTS.HANDLE.SINGULARITY) 
+        await this.register_handle(ns, CONSTANTS.HANDLE.GRAFTING, new grafting_obj(), 10, 1, CONSTANTS.HANDLE.SINGULARITY)
+        
+        //EXTEND FUNCTIONALITY
+        await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())
+        //await this.register_handle(ns, CONSTANTS.HANDLE.CODING_CONTRACT, new coding_contract_obj())
+        await this.register_handle(ns, CONSTANTS.HANDLE.STOCK, new stock_obj())
+        //await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj())
+        await this.register_handle(ns, CONSTANTS.HANDLE.GANG, new gang_obj(), 2)
+        await this.register_handle(ns, CONSTANTS.HANDLE.HACKNET, new hacknet_obj())//, 9)
+        await this.register_handle(ns, CONSTANTS.HANDLE.CORPORATION, new corporation_obj(), 3)
+
         //log.info(ns, "Ram", "Import complete: '" + [...this.registration.entries()] + "'", true)
     }
 }

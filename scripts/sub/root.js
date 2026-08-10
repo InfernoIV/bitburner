@@ -13,13 +13,21 @@ export class root_obj {
     }
 
 
-    init(ns) {
+    init(ns, handles) {
         //disable logging
         ns.disableLog("brutessh")
         ns.disableLog("nuke")
         ns.disableLog("relaysmtp")
         ns.disableLog("ftpcrack")
         ns.disableLog("scan")
+        //if we have singularity
+        if(handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY)) {
+            //if worker is not running
+            if (!ns.isRunning(CONSTANTS.SCRIPT.WORKER.BACKDOOR)) {
+                //start worker to backdoor servers
+                ns.exec(CONSTANTS.SCRIPT.WORKER.BACKDOOR, CONSTANTS.SERVER.HOME)  
+            }
+        }
         //debug
         log.info(ns, "Root", "Init complete")
     }
@@ -113,8 +121,8 @@ export class root_obj {
             if (server.hasAdminRights || flag_server_rooted) {
                 //check if we need to backdoor and we have singularity to backdoor
                 if (!server.backdoorInstalled && handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY)) {
-                    //backdoor the server
-                    await this.backdoor_server(ns, hostname)
+                    //communicate that a backdoor is needed on this hostname
+                    ns.tryWritePort(CONSTANTS.PORT.BACKDOOR, hostname)
                 }
                 //check if there is money
                 if (server.moneyMax > 0 || server.moneyMax != "0") {
@@ -146,42 +154,5 @@ export class root_obj {
         }
         //return the counter
         return hacking_tools_owned
-    }
-
-
-    async backdoor_server(ns, server) {
-        //create a list to hold the route
-        let route = []
-        //create a variable to save current server, and set it to current hostname
-        let step = server
-        //while not found home
-        while (step != CONSTANTS.SERVER.HOME) {
-            //save the first scan result
-            let nextStep = ns.scan(step)[0]
-            //add current to the start of the list
-            route.unshift(step)
-            //update target for next scan
-            step = nextStep
-        }
-
-        //for every jump of the route    
-        for (let jump of route) {
-            //connect to the step
-            ns.singularity.connect(jump)
-        }
-
-        //try-catch to ensure script not crashing
-        try {
-            //install backdoor
-            await ns.singularity.installBackdoor()
-            //log information
-            log.success(ns, "Root", "Backdoored server '" + server + "'")
-            //catch error
-        } catch (err) {
-            //log error
-            log.error(ns, "Root", "Failed to backdoor server '" + server + "': " + err, true)
-        }
-        //connect to home
-        ns.singularity.connect(CONSTANTS.SERVER.HOME)
     }
 }
