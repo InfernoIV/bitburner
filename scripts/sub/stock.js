@@ -14,7 +14,7 @@ export class stock_obj {
         //ns.disableLog("")
 
         //get symbols
-        this.symbols = ns.stock.getSymbols()
+        //this.symbols = ns.stock.getSymbols()
     }
 
 
@@ -25,10 +25,19 @@ export class stock_obj {
     Stock.getPosition   2
     */
     manage(ns) {
+        /*
+        stock.getSymbols: You don't have TIX API Access! Cannot use getSymbols()
+
+Stack:
+scripts/​sub/​stock.js:L17@stock_obj.init
+scripts/​ram.js:L223@ram_obj.register_handle
+scripts/​ram.js:L310@ram_obj.import
+scripts/​main.js:L26@async main
+        */
         //if we're allowed to trade
-        if(ns.stock.hasWseAccount) {
+        if(ns.stock.hasWseAccount() && ns.stock.hasTixApiAccess()) {
             //for each order
-            for (const symbol of this.symbols) {
+            for (const symbol of ns.stock.getSymbols()) {
                 //get stocks
                 const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
                 //if we have longs

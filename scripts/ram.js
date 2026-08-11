@@ -257,7 +257,7 @@ export class ram_obj {
         //if we started on low ram and ram has grown bigger
         if (this.ram_start < 128 && ns.getServer(CONSTANTS.SERVER.HOME).maxRam >= 128) {
             //start boot script
-            ns.exec(CONSTANTS.SCRIPT.BOOT, CONSTANTS.SERVER.HOME)
+            ns.spawn(CONSTANTS.SCRIPT.BOOT)
             //stop
             ns.exit()
         }
