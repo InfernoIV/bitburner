@@ -153,7 +153,7 @@ export class go_obj {
             var opponent_index = this.opponent_list.indexOf(opponent_current) + 1
             //check if out of bounds
             //TODO: integrate strategies for each opponent
-            if (opponent_index >= 2) { //this.opponent_list.length) { //) {
+            if (opponent_index >= this.opponent_list.length) { //2) { 
                 //set to 1st index
                 opponent_index = 0
             }
@@ -168,10 +168,18 @@ export class go_obj {
             }
             //reset stats to easily see if we have won 2x
             //ns.go.analysis.resetStats(true)
-            //set wins back to 0
-            this.wins = stats[opponent_next].wins //0
-            this.losses = stats[opponent_next].losses// 0
+            
+            this.wins = 0
+            this.losses = 0
             this.loss_streak = 0
+
+            const stat_next = stats[opponent_next]
+            //if not undefined
+            if (stat_next != undefined) {
+                this.wins = stats[opponent_next].wins //0
+                this.losses = stats[opponent_next].losses// 0
+            }
+            
         }
 
         //default size

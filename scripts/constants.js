@@ -61,6 +61,7 @@ export const HANDLE = {                     //SF or BN requirement
     HACK: "HACK",                           //0
     DARKNET: "DARKNET",                     //0/?
     GO: "GO",                               //0/15
+    SINGULARITY_LIGHT: "SINGULARITY_LIGHT", //4
     SINGULARITY: "SINGULARITY",             //4
     INTELLIGENCE: "INTELLIGENCE",           //5
     STANEK_AVAILABLE: "STANEK_AVAILABLE",   //13
@@ -133,7 +134,64 @@ export const RAM = {
     /*
     base                1.6
     */
-    MAIN: 1.60,//4.6,
+    MAIN: 1.60,//4.6,   //0.2 is used somewhere: TODO: find out!
+    /*
+RUNTIME ERROR
+RAM USAGE ERROR
+scripts/​main.js@home (PID - 27)
+
+scp: Dynamic RAM usage calculated to be greater than RAM allocation.
+      This is probably because you somehow circumvented the static RAM calculation.
+
+      Threads: 1
+      Dynamic RAM Usage: 29.60GB per thread
+      RAM Allocation: 29.20GB per thread
+      Functions in-use: [getResetInfo, getServer, kill, exec, getBoardState, getServerNames, scan, ls, getPlayer, hackAnalyzeChance, getValidMoves, makeMove, numNodes, getNodeStats, upgradeRam, upgradeLevel, upgradeCore, getHackTime, getWeakenTime, getGrowTime, hackAnalyze, scp]
+
+      One of these could be the reason:
+      * Using eval() to get a reference to a ns function
+        const myScan = eval('ns.scan');
+
+      * Using map access to do the same
+        const myScan = ns['scan'];
+
+      * Using RunOptions.ramOverride to set a smaller allocation than needed
+
+      Sorry :(
+
+Stack:
+scripts/​sub/​hack.js:L372@hack_obj.weaken_server
+scripts/​sub/​hack.js:L73@hack_obj.manage
+scripts/​ram.js:L136@ram_obj.manage_functionalities
+scripts/​main.js:L28@async main
+
+Script: scripts/main.js
+PID: 27
+
+
+[2026-08-11 09:38:09] scripts/main.js: SUCCESS	Ram	Registered handle 'ROOT' for 6.7 + 1.2 = 7.9 / 32 GB (25%)
+[2026-08-11 09:38:09] scripts/main.js: SUCCESS	Ram	Registered handle 'HACK' for 7.9 + 6.05 = 13.95 / 32 GB (44%)
+[2026-08-11 09:38:09] scripts/main.js: SUCCESS	Ram	Registered handle 'DARKNET' for 13.95 + 0.2 = 14.149999999999999 / 32 GB (45%)
+[2026-08-11 09:38:09] scripts/main.js: SUCCESS	Ram	Registered handle 'GO' for 14.149999999999999 + 8 = 22.15 / 32 GB (70%)
+[2026-08-11 09:38:09] scripts/main.js: SUCCESS	Ram	Registered handle 'CLOUD' for 22.15 + 4.05 = 26.2 / 32 GB (82%)
+[2026-08-11 09:38:09] scripts/main.js: INFO	Cloud	Init complete, have 0 cloud servers, min ram: 0
+[2026-08-11 09:38:09] scripts/main.js: SUCCESS	Ram	Registered handle 'HACKNET' for 26.2 + 3 = 29.2 / 32 GB (92%)
+
+
+Dynamic RAM Usage: 29.65GB per thread
+      RAM Allocation: 29.20GB per thread
+      Functions in-use: [getResetInfo, getServer, kill, exec, getBoardState, getServerNames, scan, ls, getPlayer, nuke, hackAnalyzeChance, getHackTime, getWeakenTime, getGrowTime, hackAnalyze, scp, getValidMoves, makeMove, numNodes, getNodeStats, upgradeRam, upgradeLevel, upgradeCore]
+
+      [2026-08-11 09:41:40] scripts/main.js: SUCCESS	Ram	Registered handle 'ROOT' for 6.7 + 1.2 = 7.9 / 32 GB (25%)
+[2026-08-11 09:41:40] scripts/main.js: SUCCESS	Ram	Registered handle 'HACK' for 7.9 + 6.05 = 13.95 / 32 GB (44%)
+[2026-08-11 09:41:40] scripts/main.js: SUCCESS	Ram	Registered handle 'DARKNET' for 13.95 + 0.2 = 14.149999999999999 / 32 GB (45%)
+[2026-08-11 09:41:40] scripts/main.js: SUCCESS	Ram	Registered handle 'GO' for 14.149999999999999 + 8 = 22.15 / 32 GB (70%)
+[2026-08-11 09:41:40] scripts/main.js: SUCCESS	Ram	Registered handle 'CLOUD' for 22.15 + 4.05 = 26.2 / 32 GB (82%)
+[2026-08-11 09:41:40] scripts/main.js: INFO	Cloud	Init complete, have 0 cloud servers, min ram: 0
+[2026-08-11 09:41:40] scripts/main.js: SUCCESS	Ram	Registered handle 'HACKNET' for 26.2 + 3 = 29.2 / 32 GB (92%)
+    */
+
+
     /*
     
     getServer (fn)	2.00GB
@@ -249,6 +307,19 @@ export const RAM = {
 
     */
     SINGULARITY: 88.0,
+    /*
+    singularity.getCrimeChance (fn)	5.00GB
+    singularity.commitCrime (fn)	5.00GB
+    singularity.upgradeHomeRam (fn)	3.00GB
+    singularity.universityCourse (fn)	2.00GB
+    singularity.gymWorkout (fn)	2.00GB
+    singularity.getCurrentWork (fn)	0.50GB
+
+    getServer (fn)	2.00GB  -> covered in ram
+    getPlayer (fn)	0.50GB  -> covered in root
+    ls (fn)	0.20GB  -> covered in root
+    */
+    SINGULARITY_LIGHT: 17.5,
 
     /*
 

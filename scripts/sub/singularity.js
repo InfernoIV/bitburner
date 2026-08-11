@@ -142,8 +142,6 @@ export class singularity_obj {
         const level_hacking = ns.getPlayer().skills.hacking
         //check if the red pill in installed
         const augment_red_pill_installed = ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP)
-        //check for hacking level
-        var required_level_hacking = 2500
         //correct if needed
         if (bitnode_multipliers_available) {
             //TODO
@@ -158,8 +156,10 @@ export class singularity_obj {
                 //set to destroy
                 can_destroy = true
             }
+            //get world deamon server
+            const world_deamon = ns.getServer(CONSTANTS.SERVER.WORLD_DEAMON)
             //if hacking level is sufficient
-            if (level_hacking >= required_level_hacking) {
+            if (world_deamon.hasAdminRights) {
                 //set to destroy
                 can_destroy = true
             }
@@ -396,10 +396,16 @@ export class singularity_obj {
         if (target_city != "") {
             //if we are not in the target city
             if (player.city != target_city) {
-                log.info(ns, "Singularity", "Traveling to city: '" + target_city + ", currently in '" + player
+                
+                //check money
+                const money = ns.getServer(CONSTANTS.SERVER.HOME).moneyAvailable
+                //check if enough
+                if (money >= 200000) {
+                    log.info(ns, "Singularity", "Traveling to city: '" + target_city + ", currently in '" + player
                     .city + "'", true)
-                //travel to city
-                ns.singularity.travelToCity(target_city)
+                    //travel to city
+                    ns.singularity.travelToCity(target_city)
+                }
             }
         }
     }
@@ -474,8 +480,11 @@ export class singularity_obj {
         if (this.work_for_faction(ns, formulas_available)) return false
         //work for company (if available)
         if (this.work_for_company(ns, formulas_available)) return false
+        //work for faction, ignoring favor
+        if (this.work_for_faction(ns, formulas_available, true)) return false
         //get money
         this.commit_crime(ns)
+        //stop
         return false
         /*
         bitnode multipliers can be 
@@ -686,7 +695,7 @@ export class singularity_obj {
     /*
     Singularity.getFactionFavor 1
     */
-    work_for_faction(ns, formulas_available) {
+    work_for_faction(ns, formulas_available, ignore_favor = false) {
         //get augments owned
         const augments_owned = ns.singularity.getOwnedAugmentations(true)
         //get factions
@@ -725,9 +734,16 @@ export class singularity_obj {
                 //go to next
                 continue
             }
+            //if we ignore favor (aka donate)
+            if (ignore_favor) {
+                //set as target faction
+                target_faction = faction
+                //stop
+                break
+            }
             //get favor
             const favor = ns.singularity.getFactionFavor(faction)
-            const rep_to_favor = Math.log1p(rep / 25000) / 0.019802627296179712
+            const rep_to_favor = Math.log1p(rep / 30000) / 0.019802627296179712 //(rep / 25000) / 0.019802627296179712
             var favor_for_donate = 150
             //if we can use bitnode multipliers
             if (formulas_available) {

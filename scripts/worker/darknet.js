@@ -83,8 +83,15 @@ function init(ns, hostname_self, threads) {
     ns.atExit(() => {
         //get logs
         var logs = ns.getScriptLogs()
+        if (logs == undefined) {
+            return
+        }
         //get the last log
         const last_log = logs.pop()
+        if (last_log == undefined) {
+            return
+        }
+
         //check if restarting
         const server_restarted = last_log.includes("restarted")
         //if restarting

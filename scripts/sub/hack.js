@@ -53,8 +53,7 @@ export class hack_obj {
         //check if we HAVE a target
         if (this.hack_target == "") {
             //debug
-            log.warning(ns, "Hack", "No hack target found, waiting for next cycle (" + JSON.stringify(root_obj) +
-                ")")
+            log.warning(ns, "Hack", "No hack target found, waiting for next cycle)")
             //wait a bit before checking again
             this.time_of_next_check = Date.now() + CONSTANTS.TIME.SAFETY
         } else {
@@ -181,6 +180,11 @@ export class hack_obj {
                     //update the max money
                     this.money_target = money_max
                 }
+            }
+            //if we don't find anything
+            if (this.hack_target == "") {
+                //stop
+                return
             }
             //get server
             var server = ns.getServer(this.hack_target)
@@ -463,15 +467,24 @@ export class hack_obj {
         for (var [server, ram_server] of execute_servers) {
             //save to local variable
             var ram_available = ram_server
+            //log.info(ns, "Hack", "this.ram_min: " + this.ram_min)
+            //ns.ui.openTail()
             //if not enough ram for basic version
             //while (ram_available < this.ram_min) {
                 //get closest lower key, which provides the threads
                 var ram_cost = getClosestValue(ram_options, ram_available) //ram_options.filter( function(i, ram_available){ return i <= ram_available })//.pop()
-                //log.info(ns, "Singularity", "ram_cost: " + ram_cost, true)
+                //log.info(ns, "Singularity", "ram_available: " + ram_available + ", ram_cost: " + ram_cost, true)
                 //if not enough ram
                 if (ram_cost > ram_available) {
-                    //go to next
-                    continue
+                    //get the index
+                    var index = ram_options.indexOf(ram_cost)
+                    //if this is the lowest index
+                    if (index == 0) {
+                        //go to next
+                        continue
+                    }
+                    //use 1 index lower
+                    ram_cost = ram_options[index]                    
                 }
                 //copy scripts
                 //copy the script
@@ -530,8 +543,8 @@ export class hack_obj {
                 job_delay += 4 * CONSTANTS.TIME.SAFETY
                 //lower the ram available
                 ram_available -= ram_cost
-            //}
-        }
+            }
+        //}
         //return time to wait
         return this.time.weaken + job_delay
     }

@@ -2,7 +2,9 @@ import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
 
 
-export function main(ns) {
+export async function main(ns) {
+    //wait a little bit
+    await ns.sleep(CONSTANTS.TIME.WAIT)
     //get servers
     const servers_found = scan_servers(ns)
     //for each server
