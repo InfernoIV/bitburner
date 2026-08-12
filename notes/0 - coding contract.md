@@ -1,4 +1,0 @@
-CodingContract
-	
-
-Coding Contract API

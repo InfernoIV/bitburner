@@ -1212,28 +1212,17 @@ export class singularity_obj {
             //reduces the RAM cost of singularity functions in other BitNodes: 16x
             [4, 2], //reduces the RAM cost of singularity functions in other BitNodes: 4x
             [4, 3], //reduces the RAM cost of singularity functions in other BitNodes: 1x
-            [15,1], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
-            [9, 1], //Permanently unlocks the Hacknet Server in other BitNodes
-            //increases hacknet production and reduces hacknet costs by: 12%
-            [9, 2], //You start with 128GB of RAM on your home computer when entering a new BitNode
-            //increases hacknet production and reduces hacknet costs by: 18%
+
+            //general boost
+            [1, 2], //increases all of the player's multipliers by: 24%
+            [1, 3], //increases all of the player's multipliers by: 28%
+            //permanent stat
             [5,
                 1
             ], //This Source-File grants you a new stat called Intelligence. Intelligence is unique because it is permanent and persistent (it never gets reset back to 1). However, gaining Intelligence experience is much slower than other stats. Higher Intelligence levels will boost your production for many actions in the game.
             //In addition, this Source-File will unlock: getBitNodeMultipliers(), Permanent access to formulas, Access to BitNode multiplier information on the Stats page
             //It will also raise all of your hacking-related multipliers by: 8%
-            [10, 1], //Unlocks Sleeve and Grafting API in other BitNodes. 
-
-
-            //unlocks
-            
-            [2, 1], //This Source-File allows you to form gangs in other BitNodes once your karma decreases to a certain value. It
-            //also increases your crime success rate, crime money, and charisma multipliers by: 24%
-            [3, 1], //This Source-File lets you create corporations on other BitNodes (although some BitNodes will disable this mechanic)
-            //increases your charisma and	company salary multipliers by: 8%
-            [6, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes. 
-            //raise both the level and experience gain rate of all your combat stats by: 8%
-            [7, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes
+            [15,1], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
             //increase all of your Bladeburner multipliers by: 8%
             [8, 1], //Permanent access to WSE and TIX API
             //increases your hacking growth multipliers by: 12%
@@ -1241,49 +1230,51 @@ export class singularity_obj {
             //increases your hacking growth multipliers by: 18%
             [8, 3], //Ability to use limit/stop orders in other BitNodes
             //increases your hacking growth multipliers by: 21%
+            [10, 1], //Unlocks Sleeve and Grafting API in other BitNodes. 
+
+            //money
+            [2, 1], //This Source-File allows you to form gangs in other BitNodes once your karma decreases to a certain value. It
+            //also increases your crime success rate, crime money, and charisma multipliers by: 24%
+            [3, 1], //This Source-File lets you create corporations on other BitNodes (although some BitNodes will disable this mechanic)
+            //increases your charisma and	company salary multipliers by: 8%
+            [3, 2], //increases your charisma and	company salary multipliers by: 12%
+            [3, 3], //increases your charisma and	company salary multipliers by: 14%
+            //permanently unlocks the full API (warehouse & office API)
+
+            [10, 2], //grants extra sleeve
+            [10, 3], //grants extra sleeve
+
+            
+            [6, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes. 
+            //raise both the level and experience gain rate of all your combat stats by: 8%
+
+            [9, 1], //Permanently unlocks the Hacknet Server in other BitNodes
+            //increases hacknet production and reduces hacknet costs by: 12%
+            [9, 2], //You start with 128GB of RAM on your home computer when entering a new BitNode
+            //increases hacknet production and reduces hacknet costs by: 18%
+            [9, 3], //Grants a highly-upgraded Hacknet Server when entering a new BitNode	(Note that the Level 3 effect of this Source-File only applies when entering a new BitNode, NOT when installing
+            //increases hacknet production and reduces hacknet costs by: 21%
+            
             [11,
                 1
             ], //company favor increases BOTH the player's salary and reputation gain rate at that company by 1% per favor (rather than just the reputation gain)
             //increases the player's company salary and reputation gain multipliers by: 32%
             //reduces the price increase for every augmentation bought by: 4%		
-            [13, 1], //Unlock Stanek's gift
-            [15, 2], //Your charisma level increases job salary and rep gain. Also increases authentication speed by 20%
-            [15, 3], //Your charisma level increases faction work rep gain. Also increases the xp and money gained from .cache files by 50%.
-
-            //boosts
-            [1, 2], //increases all of the player's multipliers by: 24%
-            [1, 3], //increases all of the player's multipliers by: 28%
-
-            [2, 2], //increases your crime success rate, crime money, and charisma multipliers by: 36%
-            [2, 3], //increases your crime success rate, crime money, and charisma multipliers by: 42%
-
-            [3, 2], //increases your charisma and	company salary multipliers by: 12%
-            [3, 3], //increases your charisma and	company salary multipliers by: 14%
-            //permanently unlocks the full API (?)
-
-            [5, 2], //raises all of your hacking-related multipliers by: 12%
-            [5, 3], //raises all of your hacking-related multipliers by: 14%
-
-            [6, 2], //raise both the level and experience gain rate of all your combat stats by: 12%
-            [6, 3], //raise both the level and experience gain rate of all your combat stats by: 14%
-
-            [7, 2], //increase all of your Bladeburner multipliers by: 12%
-            [7, 3], //increase all of your Bladeburner multipliers by: 14%
-            //immediately receive "BladesSimulacrum" augmentation after joining the Bladeburner division
-
-            [9, 3], //Grants a highly-upgraded Hacknet Server when entering a new BitNode	(Note that the Level 3 effect of this Source-File only applies when entering a new BitNode, NOT when installing
-            //increases hacknet production and reduces hacknet costs by: 21%
-
-            [10, 2], //grants extra sleeve
-            [10, 3], //grants extra sleeve
-
             [11, 2], //increases the player's company salary and reputation gain multipliers by: 48%
             //reduces the price increase for every augmentation bought by: 6%
             [11, 3], //increases the player's company salary and reputation gain multipliers by: 56%
             //reduces the price increase for every augmentation bought by: 7%
+            
 
-            [13, 2], //increases Stanek's size
-            [13, 3], //increases Stanek's size
+
+            [13, 1], //Unlock Stanek's gift
+            
+            [15, 2], //Your charisma level increases job salary and rep gain. Also increases authentication speed by 20%
+            [15, 3], //Your charisma level increases faction work rep gain. Also increases the xp and money gained from .cache files by 50%.
+
+            [2, 2], //increases your crime success rate, crime money, and charisma multipliers by: 36%
+            [2, 3], //increases your crime success rate, crime money, and charisma multipliers by: 42%
+
 
             [14, 1], //100% increased stat multipliers from Node Power
             //max favor for winstreak: 200k rep equivalent
@@ -1294,6 +1285,22 @@ export class singularity_obj {
             [14, 3], //25% additive increased success rate for the go.cheat API
             //max favor for winstreak: 400k rep equivalent
             //reputation converted to favor for winning two games in a row to: 2000 rep to favor
+
+            //unlocks
+            [13, 2], //increases Stanek's size
+            [13, 3], //increases Stanek's size
+            
+            [6, 2], //raise both the level and experience gain rate of all your combat stats by: 12%
+            [6, 3], //raise both the level and experience gain rate of all your combat stats by: 14%
+           
+            [7, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes
+            [7, 2], //increase all of your Bladeburner multipliers by: 12%
+            [7, 3], //increase all of your Bladeburner multipliers by: 14%
+            //immediately receive "BladesSimulacrum" augmentation after joining the Bladeburner division
+
+            //boosts
+            [5, 2], //raises all of your hacking-related multipliers by: 12%
+            [5, 3], //raises all of your hacking-related multipliers by: 14%
 
             [12,
                 999

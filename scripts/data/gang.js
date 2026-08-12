@@ -11,7 +11,7 @@ export const GANG_EQUIPMENT_MIN_PERCENTAGE = 0.75 //75%, total = combat: 24 -> 1
 
 
 //constants
-
+export const GANG_KARMA_NEEDED = -54000
 //default name of gang members
 export const GANG_MEMBER_NAME = "Thug-"
 //maximum number of gang members

@@ -1,1 +1,0 @@
-Stanek		Stanek's Gift API.

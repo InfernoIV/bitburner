@@ -1,5 +1,7 @@
 https://github.com/bitburner-official/bitburner-src/blob/2e456f5a9c179fbb989b6bbc6b8990e259912fbe/src/Documentation/doc/en/programming/darknet.md
 
+# Bitnode 15
+## Introduction
 The Darkweb Network
 
 Easy wealth... secret augments... The siren call of the so-called "dark net" has echoed in rumors for years. Delving into the uncharted and secretive parts of the internet comes with the promise of freedom from oppressive authority and surveillance.
@@ -237,6 +239,39 @@ export function autocomplete(data) {
   return ["--tail"];
 }
 
+## Bitnode multipliers
+HackingLevelMultiplier: 0.6,
+HackingSpeedMultiplier: 0.6,
+
+StrengthLevelMultiplier: 0.7,
+DefenseLevelMultiplier: 0.7,
+DexterityLevelMultiplier: 0.7,
+AgilityLevelMultiplier: 0.7,
+CharismaLevelMultiplier: 1.1,
+
+ServerMaxMoney: 0.8,
+ServerStartingMoney: 0.5,
+ServerStartingSecurity: 1.5,
+
+AugmentationMoneyCost: 3,
+
+CorporationValuation: 0.2,
+CorporationSoftcap: 0.4,
+CorporationDivisions: 0.4,
+
+DaedalusAugsRequirement: 20,
+
+BladeburnerRank: 0.2,
+BladeburnerSkillCost: 3,
+
+GangUniqueAugs: 0.3,
+
+StaneksGiftPowerMultiplier: 0.7,
+StaneksGiftExtraSize: -2,
+
+WorldDaemonDifficulty: 2,
+
+## Enums
 Darknet
 	
 
