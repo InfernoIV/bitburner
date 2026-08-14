@@ -17,6 +17,11 @@ unused for now
 */
 
 
+export const STOCK_SYMBOLS = ["ECP", "MGCP", "BLD", "CLRK", "OMTK", "FSIG", "KGI", "FLCM", "STM", "DCOMM", "HLS", "VITA",
+            "ICRS", "UNV", "AERO", "OMN", "SLRS", "GPH", "NVMD", "WDS", "LXO", "RHOC", "APHE", "SYSC", "CTK",
+            "NTLK", "OMGA", "FNS", "JGN", "SGC", "CTYS", "MDYN", "TITN"
+        ]
+
 //timing
 export const TIME = {
     SAFETY: 20,
@@ -407,14 +412,15 @@ Dynamic RAM Usage: 29.65GB per thread
 
     /*
     stock.sellStock (fn)	2.50GB
-    stock.getSymbols (fn)	2.00GB
     stock.getPosition (fn)	2.00GB
     stock.hasWseAccount (fn)	0.05GB
+    stock.getForecast()     2.50GB
 
+    stock.getSymbols (fn)	2.00GB  -> hardcoded
     baseCost (misc)	1.60GB    -> covered in main
     exec (fn)	1.30GB    -> covered in hack
     */
-    STOCK: 6.55,
+    STOCK: 7.05,
 
     /*
     */

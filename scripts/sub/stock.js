@@ -1,72 +1,288 @@
+//https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.stock.md
+
 //requires no SF to use
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
-import * as evaluate from "scripts/sub/evaluate.js"
 
 
 // Declaration
 export class stock_obj {
-    constructor() {
-    }
+    constructor() {}
 
-    
+
     init(ns) {
         //ns.disableLog("")
+        this.commission_fee = 100e3 //$100.00k
+        this.forecast_min = 0.33
+        this.symbols = CONSTANTS.STOCK_SYMBOLS
+        let message_long = ""
+        let message_short = ""
+        if (ns.stock.hasWseAccount() && ns.stock.hasTixApiAccess()) {
+            //for each order
+            for (const symbol of CONSTANTS.STOCK_SYMBOLS) { //ns.stock.getSymbols()) {
+                //get stocks
+                const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
+                //if there are longs
+                if (sharesLong > 0) {
+                    //if there are entries
+                    if (message_long != "") {
+                        //add a comma
+                        message_long += ", "
+                    }
+                    //add the data
+                    message_long += sharesLong + " * " + symbol
+                }
+                //if there are short
+                if (sharesShort > 0) {
+                    //if there are entries
+                    if (message_short != "") {
+                        //add a comma
+                        message_short += ", "
+                    }
+                    //add the data
+                    message_short += sharesShort + " * " + symbol
+                } 
+            }
+        }
+        //if there are NO stocks
+        if (message_long == "" && message_short == "") {
+            //log
+            log.info(ns, "Stocks", "Init complete: no stocks", true)
+        } else {
+            //create message
+            let message = "Init complete: "
+            //if there are longs
+            if (message_long != "") {
+                //add the longs information
+                message += "Longs: " + message_long
+            }
+            //if there are shorts
+            if (message_short != "") {
+                //check for longs
+                if (message_long != "") {
+                    //add a comma
+                    message += ", "
+                }
+                //add the shorts information
+                message += "Shorts: " + message_long
+            }
+            //log
+            log.info(ns, "Stocks", message, true)
+        }
 
-        //get symbols
-        //this.symbols = ns.stock.getSymbols()
+        /*
+        WARNING: When you reset after installing Augmentations, the Stock Market is reset. 
+        You will retain your WSE Account, access to the TIX API, and 4S Market Data access. 
+        However, all of your stock positions are lost, so make sure to sell your stocks before installing Augmentations!
+        */
     }
 
 
     /*
-    stock.getSymbols    2
+    stock.getForecast   2.5
     stock.hasWseAccount 0.05
     Stock.sellStock     2.5
     Stock.getPosition   2
     */
     manage(ns) {
-        /*
-        stock.getSymbols: You don't have TIX API Access! Cannot use getSymbols()
-
-Stack:
-scripts/​sub/​stock.js:L17@stock_obj.init
-scripts/​ram.js:L223@ram_obj.register_handle
-scripts/​ram.js:L310@ram_obj.import
-scripts/​main.js:L26@async main
-        */
         //if we're allowed to trade
-        if(ns.stock.hasWseAccount() && ns.stock.hasTixApiAccess()) {
-            //for each order
-            for (const symbol of ns.stock.getSymbols()) {
-                //get stocks
-                const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
-                //if we have longs
-                if (sharesLong > 0) {
-                    //just sell
-                    const profit = ns.stock.sellStock(symbol, sharesLong)
-                    //if profit
-                    if (profit > 0) {
-                        log.success(ns, "Stock", "Sold '" + symbol + "' * " + sharesLong + " for a profit of " + profit)
+        if (ns.stock.hasWseAccount() && ns.stock.hasTixApiAccess()) {
+            try {
+                //for each order
+                for (const symbol of CONSTANTS.STOCK_SYMBOLS) { //ns.stock.getSymbols()) {
+                    //get stocks
+                    const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
+                    //if we have longs
+                    if (sharesLong > 0) {
+                        //manage stock
+                        this.manage_longs(ns, symbol, sharesLong)
                     }
+                    /*
+                    //if we have shorts (currently possible?)
+                     if (sharesShort > 0) {
+                        //just sell
+                        ns.stock.sellStock()
+                    }*/
                 }
-                /*
-                //if we have shorts (currently possible?)
-                 if (sharesShort > 0) {
-                    //just sell
-                    ns.stock.sellStock()
-                }*/
+            } catch (err) {
+                log.error(ns, "Stock", "Error: " + err, true)
             }
         }
-            
 
-            
-            //has4SData         0.05
-            //hasTixApiAccess() 0.05
-            //hasWseAccount()	0.05
-            //has4SDataTixApi() 0.05
-            //Stock.getOrders   2.5 -> requires BN8.3 or be in BN8
+
+        //hasTixApiAccess() 0.05    -> use fcuntions
+        //hasWseAccount()	0.05    -> required for trading
+
+        //has4SData         0.05    
+        /*
+        Access to the 4S Market Data feed will display two additional pieces of information about each stock: Price Forecast & Volatility
+        Price Forecast indicates the probability the stock has of increasing or decreasing. 
+        A '+' forecast means the stock has a higher chance of increasing than decreasing, and a '-' means the opposite. 
+        The number of '+/-' symbols is used to illustrate the magnitude of these probabilities. 
+        For example, '+++' means that the stock has a significantly higher chance of increasing than decreasing, while '+' means that the stock only has a slightly higher chance of increasing than decreasing.
+        Volatility represents the maximum percentage by which a stock's price can change every tick (a tick occurs every few seconds while the game is running).
+        A stock's price forecast can change over time. 
+        This is also affected by volatility. 
+        The more volatile a stock is, the more its price forecast will change.
+        */
+
+        //has4SDataTixApi() 0.05
+
+        //Stock.getOrders   2.5 -> requires BN8.3 or be in BN8
+
+    }
+
+
+
+    
+
+    manage_longs(ns, symbol, shares) {
+        //get hostnames
+        const hostnames = this.get_server_hostnames(symbol)
+        //set a flag to track
+        let flag_prepped = true
+        //for each hostname
+        for (const hostname of hostnames) {
+            //check if prepped
+            flag_prepped = this.is_server_full(ns, hostname)
+            //if not prepped
+            if (!flag_prepped) {
+                //stop
+                break
+            }
+        }
+        //if prepped
+        if (true || flag_prepped) {
+            //get forecast
+            const forecast = ns.stock.getForecast(sym)
+            //if a downwards trend
+            if (forecast <= this.forecast_min) {
+                //sell
+                const profit = ns.stock.sellStock(symbol, shares)
+                //if profit
+                if (profit > 0) {
+                    log.success(ns, "Stock", "Sold '" + symbol + "' * " + sharesLong + " for a profit of " +
+                        profit)
+                }
+            }
+        } else {
+            //TODO: prep servers
+        }
+    }
+
+
+    is_server_full(ns, hostname) {
+        //get the server
+        const server = ns.getServer(hostname)
+        //check if current money = max money
+        return server.moneyAvailable == server.moneyMax
+    }
+
+
+    is_server_empty(ns, hostname) {
+        //get the server
+        const server = ns.getServer(hostname)
+        //check if current money = 0
+        return server.moneyAvailable == 0
+    }
+
+
+    get_server_hostnames(symbol) {
+        //depending on the symbols, return the corresponding hostnames
+        switch (symbol) {
+            case "ECP":
+                return ["ecorp"] //"Ecorp"
+            case "MGCP":
+                return ["megacorp"] //"MegaCorp"
+            case "BLD":
+                return ["blade"] //"Blade"
+            case "CLRK":
+                return ["clarkinc"] //"Clarke Incorporated"
+            case "OMTK":
+                return ["omnitek"] //"OmniTek Incorporated"
+            case "FSIG":
+                return ["4sigma"] //"Four Sigma"
+            case "KGI":
+                return ["kuai-gong"] //"KuaiGong International"
+            case "FLCM":
+                return ["fulcrumtech", "fulcrumassets"] //"Fulcrum Technologies"
+            case "STM":
+                return ["stormtech"] //"Storm Technologies"
+            case "DCOMM":
+                return ["defcomm"] //"DefComm"
+            case "HLS":
+                return ["helios"] //"Helios Labs"
+            case "VITA":
+                return ["vitalife"] //"VitaLife"
+            case "ICRS":
+                return ["icarus"] //"Icarus Microsystems"
+            case "UNV":
+                return ["univ-energy"] //"Universal Energy"
+            case "AERO":
+                return ["aerocorp"] //"AeroCorp"
+            case "OMN":
+                return ["omnia"] //"Omnia Cybersystems"
+            case "SLRS":
+                return ["solaris"] //"Solaris Space Systems"
+            case "GPH":
+                return ["global-pharm"] //"Global Pharmaceuticals"
+            case "NVMD":
+                return ["nova-med"] //"Nova Medical"
+            case "LXO":
+                return ["lexo-corp"] //"LexoCorp"
+            case "RHOC":
+                return ["rho-construction"] //"Rho Construction"
+            case "APHE":
+                return ["alpha-ent"] //"Alpha Enterprises"
+            case "SYSC":
+                return ["syscore"] //"SysCore Securities"
+            case "CTK":
+                return ["computek"] //"CompuTek"
+            case "NTLK":
+                return ["netlink"] //"NetLink Technologies"
+            case "OMGA":
+                return ["omega-net"] //"Omega Software"
+            case "FNS":
+                return ["foodnstuff"] //"FoodNStuff"
+            case "JGN":
+                return ["joesguns"] //"Joe's Guns"
+            case "SGC":
+                return ["sigma-cosmetics"] //"Sigma Cosmetics"
+            case "CTYS":
+                return ["catalyst"] //"Catalyst Ventures"
+            case "MDYN":
+                return ["microdyne"] //"Microdyne Technologies"
+            case "TITN":
+                return ["titan-labs"] //"Titan Laboratories"
+
+                //No server avaialable
+            case "WDS": //"Watchdog Security",
+            default:
+                return []
+        }
     }
 }
+
+
+/*
+WSE Account
+    If you want to trade via Stock Market dashboard (UI), you must purchase a WSE account.
+
+Trade Information eXchange (TIX) API
+    TIX, short for Trade Information eXchange, is the communications protocol used by the WSE. 
+    Purchasing access to the TIX API lets you write code to create your own algorithmic/automated trading strategies.
+
+If you want to trade via NS APIs, you must purchase TIX API access.
+
+Four Sigma (4S) Market Data Feed
+    Four Sigma's (4S) Market Data Feed provides information about stocks that will help your trading strategies.
+
+Commission Fees: Every transaction you make has a $100.00k commission fee.
+
+
+WARNING: When you reset after installing Augmentations, the Stock Market is reset. You will retain your WSE Account, access to the TIX API, and 4S Market Data access. 
+However, all of your stock positions are lost, so make sure to sell your stocks before installing Augmentations!
+*/
 
 /*
 Stock Market
@@ -80,25 +296,42 @@ Fundamentals
 Positions: Long vs Short
     First off, note that all transactions have a flat commission fee, so high-frequency trading is not a good strategy.
     When making a transaction on the stock market, there are two types of positions: Long and Short. A Long position is the typical scenario where you buy a stock and earn a profit if the price of that stock increases. Meanwhile, a Short position is the exact opposite.
-    In a Short position, you borrow shares of a stock to sell and earn a profit if the price of that stock decreases. This is also called 'shorting' a stock. The proceeds from the sale are held as collateral, called 'margin'. You also have to add additional margin equal to the current value of the stock - this is the cost to 'purchase' the short.
-    When you close a short position, you buy back the shares to pay back the securities loan. You then get the margin back, minus whatever was used to repurchase the shares. So, your profit is still the change in price times the number of shares. Beware that, unlike Long positions which have unlimited upside and limited downside, shorts have limited upside and unlimited downside, and selling a sufficiently underwater short can cause your money to go negative.
+    In a Short position, you borrow shares of a stock to sell and earn a profit if the price of that stock decreases. 
+    This is also called 'shorting' a stock. The proceeds from the sale are held as collateral, called 'margin'. 
+    You also have to add additional margin equal to the current value of the stock - this is the cost to 'purchase' the short.
+    When you close a short position, you buy back the shares to pay back the securities loan. 
+    You then get the margin back, minus whatever was used to repurchase the shares. 
+    So, your profit is still the change in price times the number of shares. 
+    Beware that, unlike Long positions which have unlimited upside and limited downside, shorts have limited upside and unlimited downside, and selling a sufficiently underwater short can cause your money to go negative.
     Shorting stocks is not available immediately, and must be unlocked later in the game.
 
 Forecast & Second-Order Forecast
-    A stock's forecast is its likelihood of increasing or decreasing in value. The forecast is typically represented by its probability of increasing in either a decimal or percentage form. For example, a forecast of 70% means the stock has a 70% chance of increasing and a 30% chance of decreasing.
-    A stock's second-order forecast is the target value that its forecast trends towards. For example, if a stock has a forecast of 60% and a second-order forecast of 70%, then the stock's forecast should slowly trend towards 70% over time. However, this is determined by RNG so there is a chance that it may never reach 70%.
+    A stock's forecast is its likelihood of increasing or decreasing in value. 
+    The forecast is typically represented by its probability of increasing in either a decimal or percentage form. 
+    For example, a forecast of 70% means the stock has a 70% chance of increasing and a 30% chance of decreasing.
+    A stock's second-order forecast is the target value that its forecast trends towards. For example, if a stock has a forecast of 60% and a second-order forecast of 70%, then the stock's forecast should slowly trend towards 70% over time. 
+    However, this is determined by RNG so there is a chance that it may never reach 70%.
     Both the forecast and the second-order forecast change over time.
-    A stock's forecast can be viewed after purchasing Four Sigma (4S) Market Data access. This lets you see the forecast info on the Stock Market UI. If you also purchase access to the 4S Market Data TIX API, then you can view a stock's forecast using the stock.getForecast function.
+    A stock's forecast can be viewed after purchasing Four Sigma (4S) Market Data access. 
+    This lets you see the forecast info on the Stock Market UI. 
+    If you also purchase access to the 4S Market Data TIX API, then you can view a stock's forecast using the stock.getForecast function.
     A stock's second-order forecast is always hidden.
 
 Spread (Bid Price & Ask Price)
     The bid price is the maximum price at which someone will buy a stock on the stock market.
     The ask price is the minimum price that a seller is willing to receive for a stock on the stock market
     The ask price will always be higher than the bid price (This is because if a seller is willing to receive less than the bid price, that transaction is guaranteed to happen). The difference between the bid and ask price is known as the spread. A stock's "price" will be the average of the bid and ask price.
-    The bid and ask price are important because these are the prices at which a transaction actually occurs. If you purchase a stock in the long position, the cost of your purchase depends on that stock's ask price. If you then try to sell that stock (still in the long position), the price at which you sell is the stock's bid price. Note that this is reversed for a short position. Purchasing a stock in the short position will occur at the stock's bid price, and selling a stock in the short position will occur at the stock's ask price.
+    The bid and ask price are important because these are the prices at which a transaction actually occurs. 
+    If you purchase a stock in the long position, the cost of your purchase depends on that stock's ask price. 
+    If you then try to sell that stock (still in the long position), the price at which you sell is the stock's bid price. 
+    Note that this is reversed for a short position. 
+    Purchasing a stock in the short position will occur at the stock's bid price, and selling a stock in the short position will occur at the stock's ask price.
 
 Transactions Influencing Stock Forecast
-    Buying or selling a large number of shares of a stock will influence that stock's forecast & second-order forecast. The forecast is the likelihood that the stock will increase or decrease in price. The magnitude of this effect depends on the number of shares being transacted. More shares will have a bigger effect.
+    Buying or selling a large number of shares of a stock will influence that stock's forecast & second-order forecast. 
+    The forecast is the likelihood that the stock will increase or decrease in price. 
+    The magnitude of this effect depends on the number of shares being transacted. 
+    More shares will have a bigger effect.
     The effect that transactions have on a stock's second-order forecast is significantly smaller than the effect on its forecast.
 
 Order Types
