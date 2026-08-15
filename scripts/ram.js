@@ -265,6 +265,10 @@ export class ram_obj {
             //stop
             ns.exit()
         }
+        //add ui
+        await this.register_handle(ns, CONSTANTS.HANDLE.UI, new ui_obj())
+        
+        //root for rooting servers, enabling hack
         if (ns.getServer(CONSTANTS.SERVER.HOME).maxRam <= 64) {
             //singularity for automating player training, actions and upgrading RAM 
             await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY_LIGHT, new singularity_light_obj(), 4, 1)

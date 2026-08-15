@@ -28,6 +28,8 @@ export class hack_obj {
     init(ns, handles) {
         //disable logging
         ns.disableLog("exec")
+        ns.disableLog("scp")
+
         //remove the data from the port
         ns.clearPort(CONSTANTS.PORT.HACK)
         //save if formula's are available to use

@@ -1103,20 +1103,25 @@ async function start_worker(ns, hostname) {
         //log
         log.info(ns, ns.pid, "Unblocking ram for " + (threads_unblocked - threads_while_blocked) + " more threads")
         //variable for results 
-        result = null
+        result = null //await ns.dnet.memoryReallocation(hostname)
         //while still ram blocked
-        while (ns.dnet.getBlockedRam(hostname) > 0.0) {
+        while (ram_blocked > 0.0) { //true) { 
             //free ram
             result = await ns.dnet.memoryReallocation(hostname)
             //if not successfull
             if (!result.success) {
+                //NoBlockRAM
+                if(result.code == 454) {
+                    //stop
+                    break
+                }
                 //stop
                 return
             }
-            //update blocked ram
-            //ram_blocked = ns.dnet.getBlockedRam(hostname)
+            //update ram
+            ram_blocked = ns.dnet.getBlockedRam(hostname)
             //wait a little bit
-            await ns.sleep(CONSTANTS.TIME.WAIT)
+            //await ns.sleep(CONSTANTS.TIME.WAIT)
         }
         //update threads
         threads = threads_unblocked

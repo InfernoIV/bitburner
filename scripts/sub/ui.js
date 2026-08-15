@@ -22,98 +22,83 @@ export class ui_obj {
     }
 
 
-    init(ns) {
+    init(ns) {       
         //clear the page
-        ns.ui.renderPage(null)
+        ns.atExit(() => {
+            const doc = eval("document")
+            doc.getElementById("overview-extra-hook-0").innerText = ""
+            doc.getElementById("overview-extra-hook-1").innerText = ""
+            //doc.getElementById("overview-extra-hook-2")
+
+            
+        })
+        /*const doc = eval("document")
+        const node = doc.getElementById("overview-extra-hook-2").parentNode.parentNode
+        const clone = node.cloneNode(true)
+        clone.id = "123"
+
+        //const table = doc.getElementsByTagName("table")[0]
+
+        //log.info(ns, "UI", "table: " + table.firstElementChild.childElementCount, true)
+        // Find a <table> element with id="myTable":
+        var table = doc.getElementsByTagName("table")[0]//doc.getElementById("myTable");
+
+        // Create an empty <tr> element and add it to the 1st position of the table:
+        var row = table.insertRow(clone)
+
+        // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
+        var cell1 = row.insertCell(0)
+        var cell2 = row.insertCell(1)
+
+        // Add some text to the new cells:
+        cell1.innerHTML = "NEW CELL1"
+        cell2.innerHTML = "NEW CELL2";*/
+        
+        this.entries = new Map()
+        this.add_general_information(ns)
+
+        log.info(ns, "UI", "Init complete", true)
     }
 
 
     /*
     ui.renderPage	0
     */
-    manage(ns, programs) {
-        //create variables to use
-        var bitnode_multipliers
-        var sleeve_info
-		var go_matches
-
-        //get player information
-        const player_info = this.get_player_information(ns)
-        //get dummy (for now)
-        const dummy = this.get_dummy(ns)
-
-		//check if we can get go match information
-		if (programs.go.available) {
-			//overwrite variable
-			go_matches = this.get_go_stats(ns)
-		}
-        //check if we can get bitnode multiplers
-        if (programs.intelligence.available) {
-            //overwrite variable
-            bitnode_multipliers = this.get_bitnode_multipliers(ns)
-        }
-        //check if we can get bitnode multiplers
-        if (programs.sleeve.available) {
-            //overwrite variable
-            sleeve_info = this.get_sleeve_information(ns)
-        }
-
-        //summerize the information
-        const ui_information = React.createElement('h1', null, "Custom information:", [player_info,
-            bitnode_multipliers, go_matches, dummy
-        ])
-        //show the information
-        ns.ui.renderPage(ui_information)
+    manage(ns, handles) {
+        //create string to add
+        let identifiers = Array.from(this.entries.keys()).join('<br>') //\r\n
+        let functions = ""
+        //for each entry
+        for (const func of this.entries.values()) {
+            //if ids is already set
+            if (functions != "") {
+                //add extra line
+                functions += '<br>'// '\r\n'
+            }
+            var result = eval(func)
+            functions += result
+        } 
+        //write to ui
+        const doc = eval("document")
+        doc.getElementById("overview-extra-hook-0").innerHTML = identifiers //innerText
+        doc.getElementById("overview-extra-hook-1").innerHTML = functions      
     }
 
 
-    //player information that is normally not displayed
-    get_player_information(ns) {
-        //get player information
-        const player = ns.getPlayer()
-        //format factions
-        const factions = player.factions.join(", ")
-        //format jobs
-        const jobs = player.jobs.join(", ")
+    //add player information
+    add_general_information(ns) {
+        this.entries.set("Intelligence", "ns.getPlayer().skills.intelligence")
+        this.entries.set("Karma", "formatNumber(ns.getPlayer().karma)")
+        this.entries.set("Kills", "formatNumber(ns.getPlayer().numPeopleKilled)")
+        this.entries.set("Entropy", "ns.getPlayer().entropy")
+        this.entries.set("Bitnode", "ns.getResetInfo().currentNode")
+        this.entries.set("ownedAugs", "ns.getResetInfo().ownedAugs.size")
 
-        //create the element to return
-        return React.createElement('p', null, "Player information:",
-            React.createElement('li', null, "Intelligence: ", player.skills.intelligence),
-            React.createElement('li', null, "Entropy: ", player.entropy),
-            React.createElement('li', null, "Karma: ", player.karma),
-            React.createElement('li', null, "Kills: ", player.numPeopleKilled),
-            React.createElement('li', null, "Factions: ", factions),
-            React.createElement('li', null, "Jobs: ", jobs),
-        )
+        //this.entries.set("Factions", "ns.getPlayer().factions.join(', ')")
+        //this.entries.set("Jobs", "Array.from(ns.getPlayer().jobs).join(', ')")
     }
 
-
-	//dummy test
-    get_dummy(ns) {
-        //dummy
-        const dummy = React.createElement('p', null, "Test",
-            React.createElement('li', null, "123")
-        )
-        return dummy
-    }
-
-
-	//bitnode multipliers
-    get_bitnode_multipliers(ns) {
-        //create list to add
-        var multipliers = []
-        //get multipliers
-        const bitnode_multipliers = ns.getBitNodeMultipliers()
-        //for each mulitplier
-        for (const [key, value] of Object.entries(bitnode_multipliers)) {
-            //add to the list
-            multipliers.push(React.createElement('li', null, key + ": ", value))
-        }
-        //return the chapter and the multipliers
-        return React.createElement('p', null, "Bitnode multipliers:", multipliers)
-    }
-
-
+    
 	//sleeve information
     get_sleeve_information(ns) {
         //create list to add
@@ -188,6 +173,18 @@ export class ui_obj {
 	}
 }
 
+
+function formatNumber(number) {
+// Use the toLocaleString method to add suffixes to the number
+return number.toLocaleString('en-US', {
+    // add suffixes for thousands, millions, and billions
+    // the maximum number of decimal places to use
+    maximumFractionDigits: 2,
+    // specify the abbreviations to use for the suffixes
+    notation: 'compact',
+    compactDisplay: 'short'
+})
+}
 
     /*
     import { createElement } from 'react';
@@ -365,3 +362,5 @@ export class ui_obj {
     UserInterface			User Interface API.
     UserInterfaceTheme		Interface Theme
     */
+
+    

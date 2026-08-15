@@ -62,6 +62,7 @@ export const SCRIPT = {
 
 
 export const HANDLE = {                     //SF or BN requirement
+    UI: "UI",                               //0
     MAIN: "MAIN",                           //0
     RAM: "RAM",                             //0
     ROOT: "ROOT",                           //0
@@ -137,6 +138,9 @@ export const FORMAT = {
 
 //enum for script ram
 export const RAM = {
+
+    UI: 0.0,
+
     //main scripts
     /*
     base                1.6
@@ -540,7 +544,7 @@ Dynamic RAM Usage: 29.65GB per thread
         dnet.unleashStormSeed (fn)	0.10GB
         ns.spawn    2
         */
-        DARKNET: 15.4,
+        DARKNET: 14.8,
 
         /*
         baseCost                    1.6            

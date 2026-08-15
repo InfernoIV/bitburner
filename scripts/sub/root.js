@@ -161,27 +161,13 @@ export class root_obj {
                     //stop
                     break
 
-                    //if type of cache (should not happen here)
-                case CONSTANTS.FILE_EXTENSION.CACHE:
-                    //if type of txt or lit
                 case CONSTANTS.FILE_EXTENSION.TEXT:
+                case CONSTANTS.FILE_EXTENSION.SCRIPT:
                 case CONSTANTS.FILE_EXTENSION.LITERATURE:
-                    //read file
-                    const file_contents = ns.read(file_name)
-                    //debug
-                    log.success(ns, ns.pid, "Found file: '" + file_name + "' => '" + file_contents + "'")
                     break
 
                 case CONSTANTS.FILE_EXTENSION.EXECUTABLE:
-                    //debug
-                    log.warning(ns, ns.pid, "Found executable '" + file_name + "'", true)
-                    //stop
-                    break
-
-                case CONSTANTS.FILE_EXTENSION.SCRIPT:
-                    //do nothing
-                    break
-
+                case CONSTANTS.FILE_EXTENSION.CACHE:
                 default:
                     log.error(ns, ns.pid, "Uncaught condition 'file_extension': '" + file_extension + "'")
             }
