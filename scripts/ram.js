@@ -152,7 +152,7 @@ export class ram_obj {
 
     //function that registers a class to init and manage (assumes the object has both functions!)
     async register_handle(ns, handle, object, sf_required = 0, sf_level_required = 1, dependency = "", ram_worker =
-    0.0) {
+        0.0) {
         //log.info(ns, "Ram", "Registering handle: '" + handle + "' => '" + JSON.stringify(object) + "'", true)
         //check if we already have this functionality handles
         if (this.registration.has(handle)) {
@@ -182,7 +182,9 @@ export class ram_obj {
         //get ram left
         const ram_max = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
         //calculate total usage / need
-        const ram_need = this.ram_used + ram_cost + this.ram_reserve + ram_worker
+        let ram_need = this.ram_used + ram_cost + this.ram_reserve + ram_worker
+        //round
+        ram_need = Math.ceil(ram_need * 100) / 100
         //check if we can register
         if ((ram_need) > ram_max) {
             //log.info(ns, "Ram", "Not enoug ram" + this.ram_used + " + " + ram_cost + " = " + (this.ram_used + ram_cost) + " > " + ram_max + " GB", true)
@@ -192,7 +194,7 @@ export class ram_obj {
         //kill share script on home
         ns.kill(CONSTANTS.SCRIPT.WORKER.SHARE)
 
-        var message = "Registered handle '" + handle + "' for " + this.ram_used + " + " + ram_cost
+        var message = "Registered '" + handle + "' for " + this.ram_used + " + " + ram_cost
         //if we have reserved ram
         if (this.ram_reserve > 0.0) {
             //add to message
@@ -209,6 +211,8 @@ export class ram_obj {
         log.success(ns, "Ram", message + " = " + ram_need + " / " + ram_max + " GB (" + percentage + "%)", true)
         //update ram
         this.ram_used += ram_cost
+        //round
+        this.ram_used = Math.ceil(this.ram_used * 100) / 100
         //update reservation for worker
         this.ram_reserve += ram_worker
         //apply ram

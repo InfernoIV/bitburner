@@ -13,17 +13,26 @@ export class darknet_obj {
         this.available = true
         //flag to keep track of launch
         this.darknet_started = false
+        //create a map for passwords
+        this.passwords = new Map()
+        
     }
 
     init(ns) {
+        //create port object
+        this.port = ns.getPortHandle(CONSTANTS.PORT.DARKNET)
+        //empty the port
+        this.port.clear()
         //log
         log.info(ns, "Darknet", "Init complete")
     }
- 
+
 
     manage(ns) {
         //if darkweb started
         if (this.darknet_started) {
+            //handle port
+            this.handle_port(ns)
             //stop
             return
         }
@@ -50,8 +59,8 @@ export class darknet_obj {
                 //stop
                 return
             }
-			//calc ram costs
-			const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.WORKER.DARKNET)            
+            //calc ram costs
+            const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.WORKER.DARKNET)
             //copy scripts
             var result = ns.scp(CONSTANTS.SCRIPT.TO_COPY.DARKNET, CONSTANTS.SERVER.DARKWEB)
             //start worker
@@ -66,10 +75,77 @@ export class darknet_obj {
                 //stop
                 return
             }
-			//signal start is done, to speed up execution
+            //signal start is done, to speed up execution
             this.darknet_started = true
             //log
             log.success(ns, "Darkweb", "Initial darkweb worker deployed")
+        }
+    }
+
+    handle_port(ns) {
+        //while there is data on the port
+        while (!this.port.empty()) {
+            //set raw
+            let raw = ""
+            //failsafe
+            try {
+                //get the data
+                raw = this.port.peek()
+                //parse the data
+                const data = raw //JSON.parse(raw)
+                //if we are NOT the recipient
+                if (data.target != "Darknet") {
+                    //stop
+                    return
+                }
+                //depending on the type
+                switch (data.type) {
+                    //check if we have a password
+                    case "get":
+                        //password to return    
+                        var password = ""
+                        //check if we have a password
+                        if (this.passwords.has(data.hostname)) {
+                            //set password
+                            password = this.passwords.get(data.hostname)
+                        }
+                        //send the data back
+                        this.port.tryWrite({
+                            "target": data.sender,
+                            "hostname": data.hostname,
+                            "password": password,
+                        })
+                        //next
+                        break
+
+                    //password correct: save
+                    case "set":
+                        //save the password
+                        this.passwords.set(data.hostname, data.password)
+                        //log
+                        //log.success(ns, "Darknet", "Saved password '" + data.password + "' of '" + data.hostname + "'", true)
+                        //next
+                        break
+
+                    //password incorrect: delete
+                    case "delete":
+                        //delete password 
+                        this.passwords.delete(data.hostname)
+                        //next
+                        break
+
+                    //uncaught
+                    default:
+                        log.error(ns, "Darknet", "Uncaught data.type: " + data.type, true)
+                }
+                //remove data 
+                this.port.read()
+                
+            //if error occurred
+            } catch (err) {
+                //log
+                log.error(ns, "Darknet", "handle_port, raw: " + raw + ", err: " + err, true)
+            }
         }
     }
 }

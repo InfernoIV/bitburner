@@ -21,11 +21,11 @@ export class root_obj {
         ns.disableLog("ftpcrack")
         ns.disableLog("scan")
         //if we have singularity
-        if(handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY)) {
+        if (handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY)) {
             //if worker is not running
             if (!ns.isRunning(CONSTANTS.SCRIPT.WORKER.BACKDOOR)) {
                 //start worker to backdoor servers
-                ns.exec(CONSTANTS.SCRIPT.WORKER.BACKDOOR, CONSTANTS.SERVER.HOME)  
+                ns.exec(CONSTANTS.SCRIPT.WORKER.BACKDOOR, CONSTANTS.SERVER.HOME)
             }
         }
         //debug
@@ -85,6 +85,9 @@ export class root_obj {
                 //next
                 continue
             }
+            //check files for coding contracts
+            this.check_files(ns, hostname)
+
             //set flag to check after rooting a server for backdoor purposes
             var flag_server_rooted = false
             //if we don't have rights, but we have the hacking level and the tools
@@ -136,6 +139,54 @@ export class root_obj {
                 }
             }
         }
+    }
+
+    check_files(ns, hostname) {
+        //get files on current server
+        const files = ns.ls(hostname)
+        //for each cache file found
+        for (const file_name of files) {
+            //get the extention
+            const file_extension = "." + file_name.split('.').pop()
+            //depending on the extention
+            switch (file_extension) {
+                //coding contract
+                case CONSTANTS.FILE_EXTENSION.CODING_CONTRACT:
+                    //communicate to coding contract
+                    ns.tryWritePort(CONSTANTS.PORT.CODING_CONTRACT, {
+                        "hostname": hostname,
+                        "filename": file_name,
+                        "origin": "root",
+                    })
+                    //stop
+                    break
+
+                    //if type of cache (should not happen here)
+                case CONSTANTS.FILE_EXTENSION.CACHE:
+                    //if type of txt or lit
+                case CONSTANTS.FILE_EXTENSION.TEXT:
+                case CONSTANTS.FILE_EXTENSION.LITERATURE:
+                    //read file
+                    const file_contents = ns.read(file_name)
+                    //debug
+                    log.success(ns, ns.pid, "Found file: '" + file_name + "' => '" + file_contents + "'")
+                    break
+
+                case CONSTANTS.FILE_EXTENSION.EXECUTABLE:
+                    //debug
+                    log.warning(ns, ns.pid, "Found executable '" + file_name + "'", true)
+                    //stop
+                    break
+
+                case CONSTANTS.FILE_EXTENSION.SCRIPT:
+                    //do nothing
+                    break
+
+                default:
+                    log.error(ns, ns.pid, "Uncaught condition 'file_extension': '" + file_extension + "'")
+            }
+        }
+
     }
 
 

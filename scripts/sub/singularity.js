@@ -76,6 +76,8 @@ export class singularity_obj {
         ns.disableLog("singularity.purchaseAugmentation")
         ns.disableLog("singularity.donateToFaction")
         ns.disableLog("singularity.applyToCompany")
+        ns.disableLog("singularity.workForFaction")
+
         //get tools
         const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
         this.brute_ssh = executables.includes(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)
@@ -1419,7 +1421,7 @@ export class singularity_obj {
                     }
                 }
             } catch (err) {
-                log.error(ns, "Stock", "Error: " + err, true)
+                log.error(ns, "Singularity", "Error: " + err, true)
             }
         }
     }

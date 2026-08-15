@@ -11,12 +11,15 @@ export class stock_obj {
 
 
     init(ns) {
+        //remove the data from the port
+        ns.clearPort(CONSTANTS.PORT.HACK)
         //ns.disableLog("")
         this.commission_fee = 100e3 //$100.00k
         this.forecast_min = 0.33
         this.symbols = CONSTANTS.STOCK_SYMBOLS
         let message_long = ""
         let message_short = ""
+        //if we have the accounts
         if (ns.stock.hasWseAccount() && ns.stock.hasTixApiAccess()) {
             //for each order
             for (const symbol of CONSTANTS.STOCK_SYMBOLS) { //ns.stock.getSymbols()) {
@@ -41,34 +44,19 @@ export class stock_obj {
                     }
                     //add the data
                     message_short += sharesShort + " * " + symbol
-                } 
-            }
-        }
-        //if there are NO stocks
-        if (message_long == "" && message_short == "") {
-            //log
-            log.info(ns, "Stocks", "Init complete: no stocks", true)
-        } else {
-            //create message
-            let message = "Init complete: "
-            //if there are longs
-            if (message_long != "") {
-                //add the longs information
-                message += "Longs: " + message_long
-            }
-            //if there are shorts
-            if (message_short != "") {
-                //check for longs
-                if (message_long != "") {
-                    //add a comma
-                    message += ", "
                 }
-                //add the shorts information
-                message += "Shorts: " + message_long
             }
-            //log
-            log.info(ns, "Stocks", message, true)
         }
+        if (message_long != "") {
+            //log
+            log.info(ns, "Stocks", "Longs: " + message_long, true)
+        }
+        if (message_short != "") {
+            //log
+            log.info(ns, "Stocks", "Shorts: " + message_short, true)
+        }
+        //log
+        log.info(ns, "Stocks", "Init complete", true)
 
         /*
         WARNING: When you reset after installing Augmentations, the Stock Market is reset. 
@@ -87,25 +75,100 @@ export class stock_obj {
     manage(ns) {
         //if we're allowed to trade
         if (ns.stock.hasWseAccount() && ns.stock.hasTixApiAccess()) {
-            try {
-                //for each order
-                for (const symbol of CONSTANTS.STOCK_SYMBOLS) { //ns.stock.getSymbols()) {
-                    //get stocks
-                    const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
-                    //if we have longs
-                    if (sharesLong > 0) {
-                        //manage stock
-                        this.manage_longs(ns, symbol, sharesLong)
+            //if there is port data pending
+            if (ns.peek(CONSTANTS.PORT.HACK) != CONSTANTS.PORT.NO_DATA) {
+                //get the data
+                const data = ns.peek(CONSTANTS.PORT.HACK)
+                //if it is for us
+                if (data.request == "complete") {
+                    //get stocks for this symbol (amount can be changed)
+                    const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(data.symbol)
+
+                    //if long
+                    if (data.type == "long") {
+                        //sell
+                        const profit = ns.stock.sellStock(data.symbol, sharesLong)
+                        //log
+                        log.success(ns, "Stock", "Sold longs: '" + data.symbol + "' * " + sharesLong +
+                            " for a profit of " + this.formatNumber(profit),
+                            true)
+
+                        //if shorts
+                    } else if (data.type == "short") {
+                        //sell
+                        const profit = ns.stock.sellStock(data.symbol, sharesShort)
+                        //log
+                        log.success(ns, "Stock", "Sold shorts: '" + data.symbol + "' * " + sharesShort +
+                            " for a profit of " + this.formatNumber(profit),
+                            true)
+
+                        //invalid type
+                    } else {
+                        //log
+                        log.error(ns, "Stock", "manage - uncaught type: '" + data.type + "'", true)
                     }
-                    /*
-                    //if we have shorts (currently possible?)
-                     if (sharesShort > 0) {
-                        //just sell
-                        ns.stock.sellStock()
-                    }*/
+
+                    //remove the message
+                    ns.readPort(CONSTANTS.PORT.HACK)
                 }
-            } catch (err) {
-                log.error(ns, "Stock", "Error: " + err, true)
+                //not waiting on hack
+            } else {
+                //try
+                try {
+                    //for each order
+                    for (const symbol of CONSTANTS.STOCK_SYMBOLS) { 
+                        //get stocks
+                        const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
+                        //if we have longs
+                        if (sharesLong > 0) {
+                            //get hostnames of symbol
+                            const hostnames = this.get_server_hostnames(symbol)
+                            //for each hostname
+                            for (const hostname of hostnames) {
+                                //get the server
+                                const server = ns.getServer(hostname)
+                                //write data
+                                ns.tryWritePort(CONSTANTS.PORT.HACK, {
+                                    "request": "hack",
+                                    "hostname": hostname,
+                                    "symbol": symbol,
+                                    "type": "long",
+                                })
+                                //log
+                                log.info(ns, "Stock", "Send hack request for '" + hostname + "' (" + symbol + ")",
+                                    true)
+                                //stop and wait for hack to reply
+                                return
+                            }
+                        }
+                        /*
+                        //if we have longs
+                        if (sharesShort > 0) {
+                            //get hostnames of symbol
+                            const hostnames = this.get_server_hostnames(symbol)
+                            //for each hostname
+                            for (const hostname of hostnames) {
+                                //get the server
+                                const server = ns.getServer(hostname)
+                                //write data
+                                ns.tryWritePort(CONSTANTS.PORT.HACK, {
+                                    "request": "hack",
+                                    "hostname": hostname,
+                                    "symbol": symbol,
+                                    "type": "short",
+                                })
+                                //log
+                                log.info(ns, "Stock", "Send hack request for '" + hostname + "' (" + symbol + ")",
+                                    true)
+                                //stop and wait for hack to reply
+                                return
+                            }
+                        }
+                        */
+                    }
+                } catch (err) {
+                    log.error(ns, "Stock", "manage - Error: " + err, true)
+                }
             }
         }
 
@@ -133,49 +196,16 @@ export class stock_obj {
     }
 
 
-
-    
-
-    manage_longs(ns, symbol, shares) {
-        //get hostnames
-        const hostnames = this.get_server_hostnames(symbol)
-        //set a flag to track
-        let flag_prepped = true
-        //for each hostname
-        for (const hostname of hostnames) {
-            //check if prepped
-            flag_prepped = this.is_server_full(ns, hostname)
-            //if not prepped
-            if (!flag_prepped) {
-                //stop
-                break
-            }
-        }
-        //if prepped
-        if (true || flag_prepped) {
-            //get forecast
-            const forecast = ns.stock.getForecast(sym)
-            //if a downwards trend
-            if (forecast <= this.forecast_min) {
-                //sell
-                const profit = ns.stock.sellStock(symbol, shares)
-                //if profit
-                if (profit > 0) {
-                    log.success(ns, "Stock", "Sold '" + symbol + "' * " + sharesLong + " for a profit of " +
-                        profit)
-                }
-            }
-        } else {
-            //TODO: prep servers
-        }
-    }
-
-
-    is_server_full(ns, hostname) {
-        //get the server
-        const server = ns.getServer(hostname)
-        //check if current money = max money
-        return server.moneyAvailable == server.moneyMax
+    formatNumber(number) {
+    // Use the toLocaleString method to add suffixes to the number
+    return number.toLocaleString('en-US', {
+        // add suffixes for thousands, millions, and billions
+        // the maximum number of decimal places to use
+        maximumFractionDigits: 2,
+        // specify the abbreviations to use for the suffixes
+        notation: 'compact',
+        compactDisplay: 'short'
+    })
     }
 
 

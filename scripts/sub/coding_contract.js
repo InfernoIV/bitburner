@@ -26,22 +26,29 @@ export class coding_contract_obj {
     */
     //function that manages the actions of coding contracts: reads port for other programs to post their found coding contracts to (e.g. root or darknet)
     async manage(ns) {
-        //if there is nothing to do
-        if (this.port.peek() == CONSTANTS.PORT.NO_DATA) {
-            //stop
-            return
-        }
         //while there is data
         while (this.port.peek() != CONSTANTS.PORT.NO_DATA) {
             //get data
-            var data = JSON.parse(this.port.read)
+            var data = this.port.read
+            log.info(ns, "Coding_Contract", "Data: " + data, true)
             //check if file still exists (due to darknet)
             if (ns.ls(data.hostname, data.filename).length > 0) {
                 //solve
-                this.solve(ns, data.filename, data.hostname)
+                //this.solve(ns, data.filename, data.hostname)
+
+                //log and remove for now
+                log.info(ns, "Coding_Contract", "Received from '" + data.origin + "': '" + JSON.stringify(data) + "'", true)
+                try {
+                    ns.rm(data.filename, data.hostname)
+                } catch (err) {
+                    log.error(ns, "Coding_Contract", "Error: " + err, true)
+                }
+                
             }
+            //remove the contract
+            this.port.read()
             //wait a little bit
-            await ns.sleep(CONSTANTS.TIME.WAIT)
+            //await ns.sleep(CONSTANTS.TIME.WAIT)
         }
     }
 
