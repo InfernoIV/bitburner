@@ -265,8 +265,7 @@ export class ram_obj {
             //stop
             ns.exit()
         }
-        //add ui
-        await this.register_handle(ns, CONSTANTS.HANDLE.UI, new ui_obj())
+        
         
         //root for rooting servers, enabling hack
         if (ns.getServer(CONSTANTS.SERVER.HOME).maxRam <= 64) {
@@ -323,6 +322,8 @@ export class ram_obj {
 
             //log.info(ns, "Ram", "Import complete: '" + [...this.registration.entries()] + "'", true)
         }
+        //add ui
+        await this.register_handle(ns, CONSTANTS.HANDLE.UI, new ui_obj())
     }
 }
 

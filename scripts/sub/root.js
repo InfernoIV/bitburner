@@ -66,7 +66,7 @@ export class root_obj {
         //copy of list of servers found
         const servers = this.scan_servers(ns)
         //get number of hacking tools
-        const hacking_tools_owned = this.get_number_of_hacking_tools_owned(ns)
+        const hacking_tools_owned = get_number_of_hacking_tools_owned(ns)
         //get hacking level
         const level_hacking = ns.getPlayer().skills.hacking
         //for each server found
@@ -176,7 +176,10 @@ export class root_obj {
     }
 
 
-    get_number_of_hacking_tools_owned(ns) {
+    
+}
+
+export function get_number_of_hacking_tools_owned(ns) {
         //counter for hacking tools
         var hacking_tools_owned = 0
         //get the available executables on home
@@ -192,4 +195,3 @@ export class root_obj {
         //return the counter
         return hacking_tools_owned
     }
-}

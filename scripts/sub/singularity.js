@@ -106,7 +106,8 @@ export class singularity_obj {
     */
     async manage(ns, handles) {
         //try to destroy bitnode
-        this.destroy_bitnode(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE), handles.hasOwnProperty(CONSTANTS.HANDLE.BLADEBURNER))
+        this.destroy_bitnode(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE), handles.hasOwnProperty(
+            CONSTANTS.HANDLE.BLADEBURNER))
         //test
         await this.join_stanek(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STANEK_AVAILABLE))
         //upgrade home
@@ -135,7 +136,7 @@ export class singularity_obj {
         //manage augments
         this.manage_augments(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
         //install augments
-        this.install_augments(ns,handles.hasOwnProperty(CONSTANTS.HANDLE.STOCK))
+        this.install_augments(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STOCK))
     }
 
 
@@ -143,7 +144,8 @@ export class singularity_obj {
         //get player
         const level_hacking = ns.getPlayer().skills.hacking
         //check if the red pill in installed
-        const augment_red_pill_installed = ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP)
+        const augment_red_pill_installed = ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT
+            .TRP)
         //correct if needed
         if (bitnode_multipliers_available) {
             //TODO
@@ -398,13 +400,13 @@ export class singularity_obj {
         if (target_city != "") {
             //if we are not in the target city
             if (player.city != target_city) {
-                
+
                 //check money
                 const money = ns.getServer(CONSTANTS.SERVER.HOME).moneyAvailable
                 //check if enough
                 if (money >= 200000) {
                     log.info(ns, "Singularity", "Traveling to city: '" + target_city + ", currently in '" + player
-                    .city + "'", true)
+                        .city + "'", true)
                     //travel to city
                     ns.singularity.travelToCity(target_city)
                 }
@@ -484,6 +486,11 @@ export class singularity_obj {
         if (this.work_for_company(ns, formulas_available)) return false
         //work for faction, ignoring favor
         if (this.work_for_faction(ns, formulas_available, true)) return false
+        //if we don't have enough kills for certains factions
+        if (ns.getPlayer().numPeopleKilled < 30) {
+            //commit murder
+            if (this.commit_murder(ns)) return false
+        }
         //get money
         this.commit_crime(ns)
         //stop
@@ -544,10 +551,10 @@ export class singularity_obj {
                         if (rep_saved >= rep) {
                             //use the saved faction
                             target_faction = saved_faction
-                        //if the new faction has enough rep to buy the augment
+                            //if the new faction has enough rep to buy the augment
                         } else if (rep_new >= rep) {
                             //no need to change
-                        //if both factions don't have enough rep
+                            //if both factions don't have enough rep
                         } else {
                             //get favor of new faction
                             const favor_new = ns.singularity.getFactionFavor(faction)
@@ -566,7 +573,7 @@ export class singularity_obj {
                         "price": price,
                         "rep": rep,
                     })
-                } 
+                }
             }
         }
         //sort the augments (on key = highest cost)
@@ -611,17 +618,18 @@ export class singularity_obj {
             //just calc
             money = ns.formulas.donationForRep(rep_difference, ns.getPlayer())
 
-        //estimate without taking bitnode multipliers into account...
+            //estimate without taking bitnode multipliers into account...
         } else {
             //stolen from SRC https://github.com/bitburner-official/bitburner-src/blob/dev/src/Faction/formulas/donation.ts
             const DonateMoneyToRepDivisor = 1e6
             //we need to have player multipliers
             const mults_faction_rep = ns.getPlayer().mults.faction_rep
             //calculate the money for the needed rep
-            money = (rep_difference * DonateMoneyToRepDivisor) / mults_faction_rep   //(rep * CONSTANTS.DonateMoneyToRepDivisor) / person.mults.faction_rep * currentNodeMults.FactionWorkRepGain
+            money = (rep_difference * DonateMoneyToRepDivisor) /
+                mults_faction_rep //(rep * CONSTANTS.DonateMoneyToRepDivisor) / person.mults.faction_rep * currentNodeMults.FactionWorkRepGain
         }
         //donate to the faction
-        ns.singularity.donateToFaction(faction, money) 
+        ns.singularity.donateToFaction(faction, money)
     }
 
 
@@ -656,7 +664,7 @@ export class singularity_obj {
                 //sell all stocks
                 this.sell_all_stocks(ns)
             }
-            
+
             //placeholder
             var success = true
             //keep trying
@@ -751,7 +759,8 @@ export class singularity_obj {
             }
             //get favor
             const favor = ns.singularity.getFactionFavor(faction)
-            const rep_to_favor = Math.log1p(rep / 30000) / 0.019802627296179712 //(rep / 25000) / 0.019802627296179712
+            const rep_to_favor = Math.log1p(rep / 30000) /
+                0.019802627296179712 //(rep / 25000) / 0.019802627296179712
             var favor_for_donate = 150
             //if we can use bitnode multipliers
             if (formulas_available) {
@@ -911,6 +920,32 @@ export class singularity_obj {
         this.perform_action(ns, work_type.CRIME, best_crime)
     }
 
+    
+    commit_murder(ns) {
+        //variable for preferred crime
+        var best_crime = ""
+        //get chrime change
+        var crime_chance = ns.singularity.getCrimeChance("Homicide")
+        //check for chance
+        if (crime_chance >= 0.66) {
+            best_crime = "Homicide"
+        }
+        //get chrime change
+        var crime_chance = ns.singularity.getCrimeChance("Assassination")
+        //check for chance
+        if (crime_chance >= 0.66) {
+            best_crime = "Assassination"
+        }
+        //if we have a crime
+        if (best_crime != "") {
+            //default to mug for now
+            this.perform_action(ns, work_type.CRIME, best_crime)
+            //indicate success
+            return true
+        }
+        //indicate failure
+        return false
+    }
 
     /*
     singularity.getCurrentWork      0.5
@@ -1137,7 +1172,7 @@ export class singularity_obj {
         //default to first work type
         var work_type_best = faction_work_types[0]
         //if formulas are available
-        if(formulas_available) {
+        if (formulas_available) {
             //save best gains
             var best_rep = -1
             //for each worktype
@@ -1216,7 +1251,8 @@ export class singularity_obj {
 
 
             //automation
-            [4, 1], //This Source-File lets you access and use the Singularity functions outside of this BitNode.
+            [4,
+            1], //This Source-File lets you access and use the Singularity functions outside of this BitNode.
             //reduces the RAM cost of singularity functions in other BitNodes: 16x
             [4, 2], //reduces the RAM cost of singularity functions in other BitNodes: 4x
             [4, 3], //reduces the RAM cost of singularity functions in other BitNodes: 1x
@@ -1230,7 +1266,8 @@ export class singularity_obj {
             ], //This Source-File grants you a new stat called Intelligence. Intelligence is unique because it is permanent and persistent (it never gets reset back to 1). However, gaining Intelligence experience is much slower than other stats. Higher Intelligence levels will boost your production for many actions in the game.
             //In addition, this Source-File will unlock: getBitNodeMultipliers(), Permanent access to formulas, Access to BitNode multiplier information on the Stats page
             //It will also raise all of your hacking-related multipliers by: 8%
-            [15,1], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
+            [15,
+            1], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
             //increase all of your Bladeburner multipliers by: 8%
             [8, 1], //Permanent access to WSE and TIX API
             //increases your hacking growth multipliers by: 12%
@@ -1241,9 +1278,11 @@ export class singularity_obj {
             [10, 1], //Unlocks Sleeve and Grafting API in other BitNodes. 
 
             //money
-            [2, 1], //This Source-File allows you to form gangs in other BitNodes once your karma decreases to a certain value. It
+            [2,
+            1], //This Source-File allows you to form gangs in other BitNodes once your karma decreases to a certain value. It
             //also increases your crime success rate, crime money, and charisma multipliers by: 24%
-            [3, 1], //This Source-File lets you create corporations on other BitNodes (although some BitNodes will disable this mechanic)
+            [3,
+            1], //This Source-File lets you create corporations on other BitNodes (although some BitNodes will disable this mechanic)
             //increases your charisma and	company salary multipliers by: 8%
             [3, 2], //increases your charisma and	company salary multipliers by: 12%
             [3, 3], //increases your charisma and	company salary multipliers by: 14%
@@ -1252,7 +1291,7 @@ export class singularity_obj {
             [10, 2], //grants extra sleeve
             [10, 3], //grants extra sleeve
 
-            
+
             [6, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes. 
             //raise both the level and experience gain rate of all your combat stats by: 8%
 
@@ -1260,9 +1299,10 @@ export class singularity_obj {
             //increases hacknet production and reduces hacknet costs by: 12%
             [9, 2], //You start with 128GB of RAM on your home computer when entering a new BitNode
             //increases hacknet production and reduces hacknet costs by: 18%
-            [9, 3], //Grants a highly-upgraded Hacknet Server when entering a new BitNode	(Note that the Level 3 effect of this Source-File only applies when entering a new BitNode, NOT when installing
+            [9,
+            3], //Grants a highly-upgraded Hacknet Server when entering a new BitNode	(Note that the Level 3 effect of this Source-File only applies when entering a new BitNode, NOT when installing
             //increases hacknet production and reduces hacknet costs by: 21%
-            
+
             [11,
                 1
             ], //company favor increases BOTH the player's salary and reputation gain rate at that company by 1% per favor (rather than just the reputation gain)
@@ -1272,13 +1312,15 @@ export class singularity_obj {
             //reduces the price increase for every augmentation bought by: 6%
             [11, 3], //increases the player's company salary and reputation gain multipliers by: 56%
             //reduces the price increase for every augmentation bought by: 7%
-            
+
 
 
             [13, 1], //Unlock Stanek's gift
-            
-            [15, 2], //Your charisma level increases job salary and rep gain. Also increases authentication speed by 20%
-            [15, 3], //Your charisma level increases faction work rep gain. Also increases the xp and money gained from .cache files by 50%.
+
+            [15,
+            2], //Your charisma level increases job salary and rep gain. Also increases authentication speed by 20%
+            [15,
+            3], //Your charisma level increases faction work rep gain. Also increases the xp and money gained from .cache files by 50%.
 
             [2, 2], //increases your crime success rate, crime money, and charisma multipliers by: 36%
             [2, 3], //increases your crime success rate, crime money, and charisma multipliers by: 42%
@@ -1297,10 +1339,10 @@ export class singularity_obj {
             //unlocks
             [13, 2], //increases Stanek's size
             [13, 3], //increases Stanek's size
-            
+
             [6, 2], //raise both the level and experience gain rate of all your combat stats by: 12%
             [6, 3], //raise both the level and experience gain rate of all your combat stats by: 14%
-           
+
             [7, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes
             [7, 2], //increase all of your Bladeburner multipliers by: 12%
             [7, 3], //increase all of your Bladeburner multipliers by: 14%
@@ -1408,7 +1450,7 @@ export class singularity_obj {
         if (ns.stock.hasWseAccount() && ns.stock.hasTixApiAccess()) {
             try {
                 //for each order
-                for (const symbol of CONSTANTS.STOCK_SYMBOLS) { 
+                for (const symbol of CONSTANTS.STOCK_SYMBOLS) {
                     //get stocks
                     const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
                     //if we have longs

@@ -1,5 +1,6 @@
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
+import {get_number_of_hacking_tools_owned} from "scripts/sub/root.js" 
 
 const { React } = globalThis
 const h = React.createElement
@@ -22,40 +23,52 @@ export class ui_obj {
     }
 
 
-    init(ns) {       
+    init(ns, handles) {       
         //clear the page
         ns.atExit(() => {
             const doc = eval("document")
             doc.getElementById("overview-extra-hook-0").innerText = ""
             doc.getElementById("overview-extra-hook-1").innerText = ""
-            //doc.getElementById("overview-extra-hook-2")
+            doc.getElementById("overview-extra-hook-2").innerText = ""
 
+            doc.getElementById("overview-money-hook").innerText = ""
+            doc.getElementById("overview-hack-hook").innerText = ""
             
+            doc.getElementById("overview-str-hook").innerText = ""
+            doc.getElementById("overview-def-hook").innerText = ""
+            doc.getElementById("overview-dex-hook").innerText = ""
+            doc.getElementById("overview-agi-hook").innerText = ""
         })
-        /*const doc = eval("document")
-        const node = doc.getElementById("overview-extra-hook-2").parentNode.parentNode
-        const clone = node.cloneNode(true)
-        clone.id = "123"
 
-        //const table = doc.getElementsByTagName("table")[0]
-
-        //log.info(ns, "UI", "table: " + table.firstElementChild.childElementCount, true)
-        // Find a <table> element with id="myTable":
-        var table = doc.getElementsByTagName("table")[0]//doc.getElementById("myTable");
-
-        // Create an empty <tr> element and add it to the 1st position of the table:
-        var row = table.insertRow(clone)
-
-        // Insert new cells (<td> elements) at the 1st and 2nd position of the "new" <tr> element:
-        var cell1 = row.insertCell(0)
-        var cell2 = row.insertCell(1)
-
-        // Add some text to the new cells:
-        cell1.innerHTML = "NEW CELL1"
-        cell2.innerHTML = "NEW CELL2";*/
+        const doc = eval("document")
+        const deadalus_money = 100e9
+        const deadalus_hacking = 2500
+        const deadalus_combat = 1500
         
+        const world_deamon_hacking = 0
+
+        doc.getElementById("overview-money-hook").innerText = "/$" + formatNumber(deadalus_money)
+        doc.getElementById("overview-money-hook").style.textAlign = "left"
+
+        doc.getElementById("overview-hack-hook").innerText = "/" + deadalus_hacking
+        doc.getElementById("overview-hack-hook").style.textAlign = "left"
+        
+        doc.getElementById("overview-str-hook").innerText = "/" + deadalus_combat
+        doc.getElementById("overview-str-hook").style.textAlign = "left"
+        doc.getElementById("overview-def-hook").innerText = "/" + deadalus_combat
+        doc.getElementById("overview-def-hook").style.textAlign = "left"
+        doc.getElementById("overview-dex-hook").innerText = "/" + deadalus_combat
+        doc.getElementById("overview-dex-hook").style.textAlign = "left"
+        doc.getElementById("overview-agi-hook").innerText = "/" + deadalus_combat
+        doc.getElementById("overview-agi-hook").style.textAlign = "left"
+
         this.entries = new Map()
-        this.add_general_information(ns)
+        this.add_general(ns)
+        //if we have singularity
+        if (handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY)) {
+            //add singularity information
+            this.add_singularity(ns)
+        }
 
         log.info(ns, "UI", "Init complete", true)
     }
@@ -67,35 +80,39 @@ export class ui_obj {
     manage(ns, handles) {
         //create string to add
         let identifiers = Array.from(this.entries.keys()).join('<br>') //\r\n
-        let functions = ""
+        let functs = []
+        let targets = []
         //for each entry
-        for (const func of this.entries.values()) {
-            //if ids is already set
-            if (functions != "") {
-                //add extra line
-                functions += '<br>'// '\r\n'
-            }
-            var result = eval(func)
-            functions += result
+        for (const [func, target] of this.entries.values()) {
+            functs.push(eval(func))
+            targets.push(target)
         } 
         //write to ui
         const doc = eval("document")
         doc.getElementById("overview-extra-hook-0").innerHTML = identifiers //innerText
-        doc.getElementById("overview-extra-hook-1").innerHTML = functions      
-    }
+        doc.getElementById("overview-extra-hook-1").innerHTML = functs.join('<br>')         
+        doc.getElementById("overview-extra-hook-2").innerHTML = targets.join('<br>')      
+        doc.getElementById("overview-extra-hook-2").style.textAlign = "left"
+    }   
 
 
     //add player information
-    add_general_information(ns) {
-        this.entries.set("Intelligence", "ns.getPlayer().skills.intelligence")
-        this.entries.set("Karma", "formatNumber(ns.getPlayer().karma)")
-        this.entries.set("Kills", "formatNumber(ns.getPlayer().numPeopleKilled)")
-        this.entries.set("Entropy", "ns.getPlayer().entropy")
-        this.entries.set("Bitnode", "ns.getResetInfo().currentNode")
-        this.entries.set("ownedAugs", "ns.getResetInfo().ownedAugs.size")
-
+    add_general(ns) {
+        const gang_karma = -54000
+        this.entries.set("Karma", ["formatNumber(ns.getPlayer().karma)", "/" + formatNumber(gang_karma)])
+        this.entries.set("Kills", ["formatNumber(ns.getPlayer().numPeopleKilled)", "/30"])
+        this.entries.set("Entropy", ["ns.getPlayer().entropy", " "])
+        this.entries.set("Bitnode", ["ns.getResetInfo().currentNode", " "])
+        this.entries.set("Augments", ["ns.getResetInfo().ownedAugs.size", "/?"])
+        this.entries.set("Hack tools", ["get_number_of_hacking_tools_owned(ns)", "/5"])
+        
+        //this.entries.set("Intelligence", "ns.getPlayer().skills.intelligence")
         //this.entries.set("Factions", "ns.getPlayer().factions.join(', ')")
         //this.entries.set("Jobs", "Array.from(ns.getPlayer().jobs).join(', ')")
+    }
+
+    add_singularity(ns) {
+        this.entries.set("Red Pill", ["ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP)", "_"])
     }
 
     
