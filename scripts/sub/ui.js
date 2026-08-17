@@ -1,383 +1,378 @@
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/sub/log.js"
-import {get_number_of_hacking_tools_owned} from "scripts/sub/root.js" 
+import {
+    get_number_of_hacking_tools_owned
+} from "scripts/sub/root.js"
 
-const { React } = globalThis
-const h = React.createElement
-
-const C = {
-    teal: "#4dd9c0",
-    tealDark: "#0d2e29",
-    bg: "#0a1f1c",
-    bgMid: "#0f2925",
-    border: "#1e5c50",
-    text: "#cff5ee",
-    textDim: "#4a8c80",
-
-}
 
 // Declaration
 export class ui_obj {
     constructor() {
-        this.available = true
+        //list of added rows (id's)
+        this.rows = []
+        //list of hooks
+        this.hooks = []
+        //time to refresh
+        this.refresh_time = 1000 //1 sec   
     }
 
 
-    init(ns, handles) {       
+    init(ns, handles) {
+        //align text left
+        doc.getElementById("overview-money-hook").style.textAlign = "left"
+        doc.getElementById("overview-hack-hook").style.textAlign = "left"
+        doc.getElementById("overview-str-hook").style.textAlign = "left"
+        doc.getElementById("overview-def-hook").style.textAlign = "left"
+        doc.getElementById("overview-dex-hook").style.textAlign = "left"
+        doc.getElementById("overview-agi-hook").style.textAlign = "left"
+
         //clear the page
         ns.atExit(() => {
+            //get document
             const doc = eval("document")
-            doc.getElementById("overview-extra-hook-0").innerText = ""
-            doc.getElementById("overview-extra-hook-1").innerText = ""
-            doc.getElementById("overview-extra-hook-2").innerText = ""
-
+            //reset static information
             doc.getElementById("overview-money-hook").innerText = ""
             doc.getElementById("overview-hack-hook").innerText = ""
-            
             doc.getElementById("overview-str-hook").innerText = ""
             doc.getElementById("overview-def-hook").innerText = ""
             doc.getElementById("overview-dex-hook").innerText = ""
             doc.getElementById("overview-agi-hook").innerText = ""
+            //remove custom hooks
+            for (const hook of this.hooks) {
+                //clear the interval
+                clearInterval(hook)
+            }
+            //remove custom rows
+            for (const row of this.rows) {
+                //get the custom element
+                const element = document.getElementById(row)
+                //remove the element
+                element.remove()
+            }
         })
 
-        const doc = eval("document")
-        const deadalus_money = 100e9
-        const deadalus_hacking = 2500
-        const deadalus_combat = 1500
-        
-        const world_deamon_hacking = 0
-
-        doc.getElementById("overview-money-hook").innerText = "/$" + formatNumber(deadalus_money)
-        doc.getElementById("overview-money-hook").style.textAlign = "left"
-
-        doc.getElementById("overview-hack-hook").innerText = "/" + deadalus_hacking
-        doc.getElementById("overview-hack-hook").style.textAlign = "left"
-        
-        doc.getElementById("overview-str-hook").innerText = "/" + deadalus_combat
-        doc.getElementById("overview-str-hook").style.textAlign = "left"
-        doc.getElementById("overview-def-hook").innerText = "/" + deadalus_combat
-        doc.getElementById("overview-def-hook").style.textAlign = "left"
-        doc.getElementById("overview-dex-hook").innerText = "/" + deadalus_combat
-        doc.getElementById("overview-dex-hook").style.textAlign = "left"
-        doc.getElementById("overview-agi-hook").innerText = "/" + deadalus_combat
-        doc.getElementById("overview-agi-hook").style.textAlign = "left"
-
-        this.entries = new Map()
+        //add information to existing rows
+        this.add_to_existing(ns)
+        //add general information
         this.add_general(ns)
-        //if we have singularity
-        if (handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY)) {
-            //add singularity information
-            this.add_singularity(ns)
-        }
+        //add augments requirement
+        this.add_augments(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
+        //if we have singularity: add singularity information
+        if (handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY)) this.add_singularity(ns)
+        //if we have sleeves: add sleeve information
+        if (handles.hasOwnProperty(CONSTANTS.HANDLE.SLEEVE)) this.add_sleeves(ns)
 
+        //log ready
         log.info(ns, "UI", "Init complete", true)
     }
 
 
-    /*
-    ui.renderPage	0
-    */
-    manage(ns, handles) {
-        //create string to add
-        let identifiers = Array.from(this.entries.keys()).join('<br>') //\r\n
-        let functs = []
-        let targets = []
-        //for each entry
-        for (const [func, target] of this.entries.values()) {
-            functs.push(eval(func))
-            targets.push(target)
-        } 
-        //write to ui
+    //add information to existing rows
+    add_to_existing(ns) {
         const doc = eval("document")
-        doc.getElementById("overview-extra-hook-0").innerHTML = identifiers //innerText
-        doc.getElementById("overview-extra-hook-1").innerHTML = functs.join('<br>')         
-        doc.getElementById("overview-extra-hook-2").innerHTML = targets.join('<br>')      
-        doc.getElementById("overview-extra-hook-2").style.textAlign = "left"
-    }   
+        //set a custom element id to the table for easy lookup
+        //deadalus requirements
+        const deadalus_money = 100e9
+        const deadalus_combat = 1500
+        var world_deamon_hacking = 3000
+        if (handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE)) {
+            //get the bitnode multipliers
+            const bit_node_multipliers = ns.getBitNodeMultipliers()
+            //get the world deamon multiplier
+            world_deamon_hacking *= bit_node_multipliers.WorldDaemonDifficulty
+        }
+        //money
+        doc.getElementById("overview-money-hook").innerText = "/$" + formatNumber(deadalus_money)
+        //hacking
+        doc.getElementById("overview-hack-hook").innerText = "/" + world_deamon_hacking
+        //combat
+        doc.getElementById("overview-str-hook").innerText = "/" + deadalus_combat
+        doc.getElementById("overview-def-hook").innerText = "/" + deadalus_combat
+        doc.getElementById("overview-dex-hook").innerText = "/" + deadalus_combat
+        doc.getElementById("overview-agi-hook").innerText = "/" + deadalus_combat
+    }
 
 
-    //add player information
+    //adds information not gated by source files
     add_general(ns) {
+        //karma needed to start a gang
         const gang_karma = -54000
-        this.entries.set("Karma", ["formatNumber(ns.getPlayer().karma)", "/" + formatNumber(gang_karma)])
-        this.entries.set("Kills", ["formatNumber(ns.getPlayer().numPeopleKilled)", "/30"])
-        this.entries.set("Entropy", ["ns.getPlayer().entropy", " "])
-        this.entries.set("Bitnode", ["ns.getResetInfo().currentNode", " "])
-        this.entries.set("Augments", ["ns.getResetInfo().ownedAugs.size", "/?"])
-        this.entries.set("Hack tools", ["get_number_of_hacking_tools_owned(ns)", "/5"])
-        
-        //this.entries.set("Intelligence", "ns.getPlayer().skills.intelligence")
-        //this.entries.set("Factions", "ns.getPlayer().factions.join(', ')")
-        //this.entries.set("Jobs", "Array.from(ns.getPlayer().jobs).join(', ')")
+        this.add_data("#009ffc", "Intelligence", "ns.getPlayer().skills.intelligence", true)
+        this.add_data("#ff0000", "Karma", "formatNumber(ns.getPlayer().karma)", true, "/" + formatNumber(
+            gang_karma))
+        this.add_data("#ff0000", "Kills", "formatNumber(ns.getPlayer().numPeopleKilled)", true, "/30")
+        this.add_data("#777777", "Entropy", "ns.getPlayer().entropy", true)
+        this.add_data("#777777", "City", "ns.getPlayer().city", true)
+        this.add_data("#777777", "Location", "ns.getPlayer().location", true)
+        this.add_data("#007c15", "Hack_tools", "get_number_of_hacking_tools_owned(ns)", true, "/5")
+        this.add_data_static("#007c15", "Bitnode", ns.getResetInfo().currentNode, "." + this.get_bitnode_level(ns))
     }
 
+
+    //adds information on augments 
+    add_augments(ns, has_intelligence) {
+        //variable to change
+        var deadalus_augments = "/??"
+        //if we have intelligence unlocked
+        if (has_intelligence) {
+            //get the augment requirements
+            deadalus_augments = "/" + ns.getBitNodeMultipliers().DaedalusAugsRequirement
+        }
+        //add augment requirement
+        this.add_data("#777777", "Augments", "ns.getResetInfo().ownedAugs.size", true, deadalus_augments)
+    }
+
+
+    //add information from singularity
     add_singularity(ns) {
-        this.entries.set("Red Pill", ["ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP)", "_"])
+        //add if we have the red pill
+        this.add_data("#ff00aa", "Red_Pill",
+            "ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP)", true)
     }
 
-    
-	//sleeve information
-    get_sleeve_information(ns) {
-        //create list to add
-        var sleeves = []
+    //adds information from sleeves
+    add_sleeves(ns) {
         //get number of sleeves owned
         const sleeves_owned = ns.sleeve.getNumSleeves()
         //for each sleeve
         for (let i = 0; i < sleeves_owned; i++) {
-            //get sleeve
-            const sleeve = ns.sleeve.getSleeve(i)
-            //get sleeve task
-            const task = ns.sleeve.getTask(i)
-			//variable to fill
-            var data
-
-            switch (task.type) {
-                case "BLADEBURNER": //SleeveBladeburnerTask
-                    data = "Bladeburner " + task.actionType + ": " + task.actionName
-                    break
-                case "CLASS": //SleeveClassTask
-                    data = "Training : " + task.classType
-                    break
-                case "COMPANY": //SleeveCompanyTask
-                    data = "Faction: " + task.companyName
-                    break
-                case "CRIME": //SleeveCrimeTask
-                    data = "Crime: " + task.crimeType
-                    break
-                case "FACTION": //SleeveFactionTask:
-                    //get additional data
-                    data = "Faction: " + task.factionName + " (" + task.factionWorkType + ")"
-                    break
-                case "INFILTRATE": //SleeveInfiltrateTask
-                    data = "Infiltrate"
-                    break
-                    //generic
-                case "RECOVERY": //SleeveRecoveryTask
-                    data = "Recovery: " + sleeve.shock
-                    break
-                case "SUPPORT": //SleeveSupportTask
-                    data = "Support"
-                    break
-                case "SYNCHRO": //SleeveSynchroTask
-                    data = "Synchronization: " + sleeve.sync
-                    break
-				default:
-					//do nothing
-            }
-            //add to the list
-            sleeves.push(React.createElement('li', null, "Sleeve #" + i + ": ", data))
+            //add sleeve (activity & shock)
+            this.add_data("#fffb00", "Sleeve_" + i, "get_sleeve_activity(" + i + ")", true, "ns.sleeve.getSleeve(" +
+                i + ").shock", true)
         }
-        //return the chapter and the multipliers
-        return React.createElement('p', null, "Sleeves:", sleeves)
     }
 
-	get_go_stats(ns) {
-		//create variable to fill
-		var opponent_stats = []
-		//get the stats
-		const stats_overview = ns.go.analysis.getStats()
-		//for each opponent
-		for (const opponent of stats_overview) {
-			//get stats for easy access
-			const stats = stats_overview[opponent]
-			const total = stats.wins + stats.losses
-			const percent = Math.round(stats.bonusPercent * 100) / 100
-			//add to the list
-            opponent_stats.push(React.createElement('li', null, opponent + ": " + stats.wins + "/" + total + " => " + stats.rep + " rep, " + percent + ": " + stats.bonusDescription))
-		}
-		//return the chapter and the multipliers
-        return React.createElement('p', null, "Go:", opponent_stats) 
-	}
+
+    //adds a data entry
+    add_data(color, name, function_1, eval_1, function_2 = "", eval_2 = false) {
+        //add the row
+        this.add_row(color, name)
+        //try
+        try {
+            //add timer
+            const hook = setInterval(update, this.refresh_time, name, function_1, eval_1, function_2, eval_2)
+            //add hook to list
+            this.hooks.push(hook)
+        } catch (err) {
+            //log
+            log.error(ns, "UI", "add_entry: " + err, true)
+        }
+    }
+
+
+    //creates a row to fill data into
+    add_row(color, name) {
+        //create row
+        var rowNode = document.createElement("TableRow");
+        rowNode.style.color = color
+        rowNode.id = name
+
+        var textNode_0 = document.createElement("Typography")
+        textNode_0.id = "overview-custom-hook-" + name + "-0"
+        textNode_0.innerText = name
+        var cellNode_0 = document.createElement("TableCell")
+        cellNode_0.appendChild(textNode_0)
+
+        var textNode_1 = document.createTextNode("Typography")
+        textNode_1.id = "overview-custom-hook-" + name + "-1"
+        var cellNode_1 = document.createElement("TableCell")
+        cellNode_1.appendChild(textNode_1)
+
+        var textNode_2 = document.createTextNode("Typography")
+        textNode_2.id = "overview-custom-hook-" + name + "-2"
+        textNode_2.style.textAlign = "left"
+        var cellNode_2 = document.createElement("TableCell")
+        cellNode_2.appendChild(textNode_2)
+
+        //add cells to rows
+        rowNode.appendChild(cellNode_0)
+        rowNode.appendChild(cellNode_1)
+        rowNode.appendChild(cellNode_2)
+
+        //get the table
+        const table = document.getElementsByTagName("TableBody")[0];
+        //append to table (TODO: other position?)
+        table.appendChild(rowNode);
+
+        //add id to list of nodes
+        this.rows.push(name)
+    }
+
+
+    //adds static data (only checked once)
+    add_data_static(color, name, function_1, function_2 = "") {
+        //add the row
+        this.add_row_static(color, name, function_1, function_2)
+    }
+
+
+    //adds a static row
+    add_row_static(color, name, value_1, value_2) {
+        //create row
+        var rowNode = document.createElement("tr");
+        rowNode.style.color = color
+        rowNode.id = name
+
+        var cellNode_0 = document.createElement("TableCell")
+        var textNode_0 = document.createElement("Typography")
+        textNode_0.innerText = name
+        cellNode_0.appendChild(textNode_0)
+
+        var cellNode_1 = document.createElement("TableCell")
+        var textNode_1 = document.createTextNode("Typography")
+        textNode_1.innerText = value_1
+        cellNode_1.appendChild(textNode_1)
+
+        var cellNode_2 = document.createElement("TableCell")
+        var textNode_2 = document.createTextNode("Typography")
+        textNode_2.innerText = value_2
+        cellNode_2.appendChild(textNode_2)
+
+        //add cells to rows
+        rowNode.appendChild(cellNode_0)
+        rowNode.appendChild(cellNode_1)
+        rowNode.appendChild(cellNode_2)
+
+        //get the table
+        const table = document.getElementsByTagName("TableBody")[0];
+        //append to table (TODO: other position?)
+        table.appendChild(rowNode);
+
+        //add id to list of nodes
+        this.rows.push(name)
+    }
+
+
+    //function to be executed
+    update(name, function_1, eval_1, function_2, eval_2) {
+        //create value 1
+        var value_1 = function_1
+        //if we need to eval
+        if (eval_1) {
+            //eval the value
+            value_1 = eval(value_1)
+        }
+        //save the value
+        doc.getElementById("custom-hook-" + name + "-1").innerHTML = value_1
+
+        //create value 2
+        var value_2 = function_2
+        //if we need to eval
+        if (eval_2) {
+            //eval the value
+            value_2 = eval(value_2)
+        }
+        //save the value
+        doc.getElementById("custom-hook-" + name + "-2").innerHTML = value_2
+    }
+
+
+    //manage function which is called every main cycle
+    manage(ns, handles) {
+        //everything is managed by intervals
+    }
 }
 
 
+//function that returns the activity of the sleeve
+function get_sleeve_activity(sleeve_number) {
+    //get sleeve
+    const sleeve = ns.sleeve.getSleeve(i)
+    //get sleeve task
+    const task = ns.sleeve.getTask(i)
+    //variable to fill
+    var data
+
+    switch (task.type) {
+        case "BLADEBURNER": //SleeveBladeburnerTask
+            data = "Bladeburner " + task.actionType + ": " + task.actionName
+            break
+        case "CLASS": //SleeveClassTask
+            data = "Training : " + task.classType
+            break
+        case "COMPANY": //SleeveCompanyTask
+            data = "Faction: " + task.companyName
+            break
+        case "CRIME": //SleeveCrimeTask
+            data = "Crime: " + task.crimeType
+            break
+        case "FACTION": //SleeveFactionTask:
+            //get additional data
+            data = "Faction: " + task.factionName + " (" + task.factionWorkType + ")"
+            break
+        case "INFILTRATE": //SleeveInfiltrateTask
+            data = "Infiltrate"
+            break
+            //generic
+        case "RECOVERY": //SleeveRecoveryTask
+            data = "Recovery: " + sleeve.shock
+            break
+        case "SUPPORT": //SleeveSupportTask
+            data = "Support"
+            break
+        case "SYNCHRO": //SleeveSynchroTask
+            data = "Synchronization: " + sleeve.sync
+            break
+        default:
+            //do nothing
+            data = ""
+    }
+    //return the data
+    return data
+}
+
+
+//function that formats a number to 2 fractions
 function formatNumber(number) {
-// Use the toLocaleString method to add suffixes to the number
-return number.toLocaleString('en-US', {
-    // add suffixes for thousands, millions, and billions
-    // the maximum number of decimal places to use
-    maximumFractionDigits: 2,
-    // specify the abbreviations to use for the suffixes
-    notation: 'compact',
-    compactDisplay: 'short'
-})
+    // Use the toLocaleString method to add suffixes to the number
+    return number.toLocaleString('en-US', {
+        // add suffixes for thousands, millions, and billions
+        // the maximum number of decimal places to use
+        maximumFractionDigits: 2,
+        // specify the abbreviations to use for the suffixes
+        notation: 'compact',
+        compactDisplay: 'short'
+    })
 }
 
-    /*
-    import { createElement } from 'react';
 
-    function Greeting({ name }) {
-      return createElement(
-        'h1',
-        null,
-        'Hello ',
-        createElement('i', null, name),
-        '. Welcome!'
-      );
+//function that gets current bitnode level
+function get_bitnode_level(ns) {
+    //fixed information
+    const reset_info = ns.getResetInfo()
+    //default to level to 1
+    var level = 1
+    //if we already have a source file
+    if (reset_info.ownedSF.has(reset_info.currentNode)) {
+        //add this to the level
+        level += reset_info.ownedSF.get(reset_info.currentNode)
+        //if we go above the limit
+        if (level > 3 && reset_info.currentNode != 12) {
+            //set to limit
+            level = 3
+        }
     }
-
-    */
-
-
-    /*
-    https://www.delftstack.com/howto/react/react-createelement/
-
-    const ListItem = (props) => {
-      return React.createElement('li', null, props.text);
-    };
-
-    const List = (props) => {
-      const items = props.items.map((item, index) =>
-        React.createElement(ListItem, { key: index, text: item })
-      );
-      return React.createElement('ul', null, ...items);
-    };
-
-    const element = React.createElement(List, { items: ['Item 1', 'Item 2', 'Item 3'] });
-    */
+    //give the level
+    return level
+}
 
 
-    /*
-    https://react.dev/reference/react/createElement#creating-an-element-without-jsx
-
-
-    creating easily reproducable components:
-
-    	const MyComponent = (props) => {
-    	return React.createElement('div', null, `Welcome, ${props.name}!`);
-    	};
-
-    	const element = React.createElement(MyComponent, { name: 'Alice' });
-    */
-
-    /*
-    Nesting
-
-    const ListItem = (props) => {
-      return React.createElement('li', null, props.text);
-    };
-
-    const List = (props) => {
-      const items = props.items.map((item, index) =>
-        React.createElement(ListItem, { key: index, text: item })
-      );
-      return React.createElement('ul', null, ...items);
-    };
-
-    const element = React.createElement(List, { items: ['Item 1', 'Item 2', 'Item 3'] });
-    */
-
-    /*
-    ns.ui.renderPage(node)
-    	On the left side of the UI, the sidebar contains shortcuts to game features (Terminal, Script Editor, City, etc.). 
-    	When clicking a sidebar item, the feature is rendered on the right side of the UI. This space is the main content area.
-    	For example, when you click the "City" button in the sidebar, the locations in that city are rendered in the main content area.
-    	This function effectively switches to a new custom "page", as if you had navigated via the sidebar. 
-    	Calling it again replaces the contents of the page.
-
-    	ReactNode type
-    		A stand-in for the real React.ReactNode. 
-    		A ReactElement is rendered dynamically with React. 
-    		number and string are displayed directly. boolean, null, and undefined are ignored and not rendered. 
-    		An array of ReactNodes will display all members of that array sequentially.
-
-    		Use React.createElement to make the ReactElement type, see creating an element without jsx from the official React documentation.
-
-    		Signature:
-    			type ReactNode = ReactElement | string | number | null | undefined | boolean | ReactNode[];
-
-    		References: ReactElement, ReactNode
-
-    	ReactElement interface
-    		A stand-in for the real React.ReactElement. 
-    		Use React.createElement to make these. 
-    		See creating an element without jsx from the official React documentation.
-
-    	React.createElement()
-    		This method takes three arguments: the type of the element (which can be a string representing an HTML tag or a React component), an optional set of props, 
-    		and an optional list of children.
-
-    		const element = React.createElement('h1', { className: 'greeting' }, 'Hello, World!');
-
-    		<h1 class="greeting">Hello, World!</h1>
-    		
-
-
-    */
-
-
-    /*
-    //list to keep track of elements to show
-    var ui_elements_to_show = []
-    //variable of the UI
-    var doc
-
-    //clear UI and add standard data
-    export async function init(ns) {
-    	//clear the ui
-    	//get the UI -> can this be done once during init?
-        doc = await evaluate.exec(ns,'document')
-    	//send text to html element 
-        doc.getElementById('overview-extra-hook-0').innerText = ""
-        doc.getElementById('overview-extra-hook-1').innerText = ""
-    	
-    	//add default elements to ui
-    	add(ns, "intelligence", "ns.getPlayer().skills.intelligence")
-    	add(ns, "karma", "ns.getPlayer().karma")
-    	add(ns, "kills", "ns.getPlayer().numPeopleKilled")
-    	add(ns, "entropy", "ns.getPlayer().entropy")
-    	add(ns, "# augments", "ns.getResetInfo().ownedAugs.size")
-    	
-    	//fixed information
-    	const reset_info = await evaluate.exec(ns,"ns.getResetInfo()") 
-    	//default to level to 1
-    	var level = 1
-    	//if we already have a source file
-    	if (reset_info.ownedSF.has(reset_info.currentNode)) {
-    		//add this to the level
-    		level += reset_info.ownedSF.get(reset_info.currentNode)
-    		//if we go above the limit
-    		if (level > 3 && reset_info.currentNode != 12) {
-    			//set to limit
-    			level = 3
-    		}
-    	}
-    	//add to ui
-    	add(ns, "BitNode", reset_info.currentNode + "." + level) 
-    }
-
-
-    //function that add information to the list of data to display
-    export function add(ns, text, func) {
-    	//add to the list
-    	ui_elements_to_show.push([text, func])
-    }
-
-
-    //function that updates the UI
-    export async function update(ns) {
-        //create new headers list
-        const headers = []
-        //create new values list
-        const values = []
-    	//for each saved element
-    	for (const element of ui_elements_to_show) {
-    		//get text
-    		headers.push(element[0])
-    		//refresh the data
-    		values.push(await evaluate.exec(ns,element[1]))
-    	}
-    	//send text to html element 
-        doc.getElementById('overview-extra-hook-0').innerText = headers.join("\n")
-        doc.getElementById('overview-extra-hook-1').innerText = values.join("\n")
-    }
-
-    */
-
-    /*
-    ReactElement			A stand-in for the real React.ReactElement. Use React.createElement to make these. See creating an element without jsx from the official React documentation.
-    UserInterface			User Interface API.
-    UserInterfaceTheme		Interface Theme
-    */
-
-    
+/*
+<TableRow>
+<TableCell component="th" scope="row" classes={{ root: classes.cell }}>
+    <Typography id="overview-extra-hook-0" color={theme.colors.hack}>
+    {}
+    </Typography>
+</TableCell>
+<TableCell component="th" scope="row" align="right" classes={{ root: classes.cell }}>
+    <Typography id="overview-extra-hook-1" color={theme.colors.hack}>
+    {}
+    </Typography>
+</TableCell>
+<TableCell component="th" scope="row" align="right" classes={{ root: classes.cell }}>
+    <Typography id="overview-extra-hook-2" color={theme.colors.hack}>
+    {}
+    </Typography>
+</TableCell>
+</TableRow>
+*/
