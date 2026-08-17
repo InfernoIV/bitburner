@@ -1038,9 +1038,14 @@ async function sort_password(ns, hostname, data, length) {
 
     //create the combinations
     const s1 = data[0]
-    const s2 = data[1]
     var passwords
 
+    if (length == 1) {
+        passwords = [s1]
+        return await try_passwords(ns, hostname, passwords, "sort_password")
+    }
+
+    const s2 = data[1]
     if (length == 2) {
         passwords = [s1 + s2, s2 + s1]
         //try the passwords
