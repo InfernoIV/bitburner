@@ -8,16 +8,19 @@ import {
 // Declaration
 export class ui_obj {
     constructor() {
+        this.functions = new Map()
         //list of added rows (id's)
         this.rows = []
         //list of hooks
         this.hooks = []
         //time to refresh
-        this.refresh_time = 1000 //1 sec   
+        //this.refresh_time = 1000 //1 sec   
+        this.index = 9
     }
 
 
     init(ns, handles) {
+        const doc = eval("document")
         //align text left
         doc.getElementById("overview-money-hook").style.textAlign = "left"
         doc.getElementById("overview-hack-hook").style.textAlign = "left"
@@ -26,6 +29,7 @@ export class ui_obj {
         doc.getElementById("overview-dex-hook").style.textAlign = "left"
         doc.getElementById("overview-agi-hook").style.textAlign = "left"
 
+        //log.info(ns, "UI", "Font: " + doc.getElementById("overview-agi-hook").style,true)
         //clear the page
         ns.atExit(() => {
             //get document
@@ -37,22 +41,17 @@ export class ui_obj {
             doc.getElementById("overview-def-hook").innerText = ""
             doc.getElementById("overview-dex-hook").innerText = ""
             doc.getElementById("overview-agi-hook").innerText = ""
-            //remove custom hooks
-            for (const hook of this.hooks) {
-                //clear the interval
-                clearInterval(hook)
-            }
             //remove custom rows
-            for (const row of this.rows) {
+            for (const key of this.functions.keys()) {
                 //get the custom element
-                const element = document.getElementById(row)
+                const element = document.getElementById(key.toLowerCase())
                 //remove the element
                 element.remove()
             }
         })
 
         //add information to existing rows
-        this.add_to_existing(ns)
+        this.add_to_existing(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
         //add general information
         this.add_general(ns)
         //add augments requirement
@@ -62,20 +61,21 @@ export class ui_obj {
         //if we have sleeves: add sleeve information
         if (handles.hasOwnProperty(CONSTANTS.HANDLE.SLEEVE)) this.add_sleeves(ns)
 
+        log.info(ns, "UI", "Map: " + JSON.stringify(Array.from(this.functions.entries())), true)
         //log ready
         log.info(ns, "UI", "Init complete", true)
     }
 
 
     //add information to existing rows
-    add_to_existing(ns) {
+    add_to_existing(ns, has_intelligence) {
         const doc = eval("document")
         //set a custom element id to the table for easy lookup
         //deadalus requirements
         const deadalus_money = 100e9
         const deadalus_combat = 1500
         var world_deamon_hacking = 3000
-        if (handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE)) {
+        if (has_intelligence) {
             //get the bitnode multipliers
             const bit_node_multipliers = ns.getBitNodeMultipliers()
             //get the world deamon multiplier
@@ -97,15 +97,15 @@ export class ui_obj {
     add_general(ns) {
         //karma needed to start a gang
         const gang_karma = -54000
-        this.add_data("#009ffc", "Intelligence", "ns.getPlayer().skills.intelligence", true)
-        this.add_data("#ff0000", "Karma", "formatNumber(ns.getPlayer().karma)", true, "/" + formatNumber(
+        this.add_data(ns, "#009ffc", "Intelligence", "ns.getPlayer().skills.intelligence", true)
+        this.add_data(ns, "#ff0000", "Karma", "formatNumber(ns.getPlayer().karma)", true, "/" + formatNumber(
             gang_karma))
-        this.add_data("#ff0000", "Kills", "formatNumber(ns.getPlayer().numPeopleKilled)", true, "/30")
-        this.add_data("#777777", "Entropy", "ns.getPlayer().entropy", true)
-        this.add_data("#777777", "City", "ns.getPlayer().city", true)
-        this.add_data("#777777", "Location", "ns.getPlayer().location", true)
-        this.add_data("#007c15", "Hack_tools", "get_number_of_hacking_tools_owned(ns)", true, "/5")
-        this.add_data_static("#007c15", "Bitnode", ns.getResetInfo().currentNode, "." + this.get_bitnode_level(ns))
+        this.add_data(ns, "#ff0000", "Kills", "formatNumber(ns.getPlayer().numPeopleKilled)", true, "/30")
+        this.add_data(ns, "#777777", "Entropy", "ns.getPlayer().entropy", true)
+        this.add_data(ns, "#777777", "City", "ns.getPlayer().city", true)
+        this.add_data(ns, "#777777", "Location", "ns.getPlayer().location", true)
+        this.add_data(ns, "#007c15", "Hack_tools", "get_number_of_hacking_tools_owned(ns)", true, "/5")
+        //this.add_data_static(ns, "#007c15", "Bitnode", ns.getResetInfo().currentNode, "." + get_bitnode_level(ns))
     }
 
 
@@ -119,14 +119,14 @@ export class ui_obj {
             deadalus_augments = "/" + ns.getBitNodeMultipliers().DaedalusAugsRequirement
         }
         //add augment requirement
-        this.add_data("#777777", "Augments", "ns.getResetInfo().ownedAugs.size", true, deadalus_augments)
+        this.add_data(ns, "#777777", "Augments", "ns.getResetInfo().ownedAugs.size", true, deadalus_augments)
     }
 
 
     //add information from singularity
     add_singularity(ns) {
         //add if we have the red pill
-        this.add_data("#ff00aa", "Red_Pill",
+        this.add_data(ns, "#ff00aa", "Red_Pill",
             "ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP)", true)
     }
 
@@ -137,62 +137,45 @@ export class ui_obj {
         //for each sleeve
         for (let i = 0; i < sleeves_owned; i++) {
             //add sleeve (activity & shock)
-            this.add_data("#fffb00", "Sleeve_" + i, "get_sleeve_activity(" + i + ")", true, "ns.sleeve.getSleeve(" +
+            this.add_data(ns, "#fffb00", "Sleeve_" + i, "get_sleeve_activity(" + i + ")", true,
+                "ns.sleeve.getSleeve(" +
                 i + ").shock", true)
         }
     }
 
 
     //adds a data entry
-    add_data(color, name, function_1, eval_1, function_2 = "", eval_2 = false) {
+    add_data(ns, color, name, function_1, eval_1, function_2 = "", eval_2 = false) {
         //add the row
-        this.add_row(color, name)
-        //try
-        try {
-            //add timer
-            const hook = setInterval(update, this.refresh_time, name, function_1, eval_1, function_2, eval_2)
-            //add hook to list
-            this.hooks.push(hook)
-        } catch (err) {
-            //log
-            log.error(ns, "UI", "add_entry: " + err, true)
-        }
+        this.add_row(ns, color, name)
+        //add to list
+        this.functions.set(name, [function_1, eval_1, function_2, eval_2])
     }
 
 
     //creates a row to fill data into
-    add_row(color, name) {
-        //create row
-        var rowNode = document.createElement("TableRow");
-        rowNode.style.color = color
-        rowNode.id = name
-
-        var textNode_0 = document.createElement("Typography")
-        textNode_0.id = "overview-custom-hook-" + name + "-0"
-        textNode_0.innerText = name
-        var cellNode_0 = document.createElement("TableCell")
-        cellNode_0.appendChild(textNode_0)
-
-        var textNode_1 = document.createTextNode("Typography")
-        textNode_1.id = "overview-custom-hook-" + name + "-1"
-        var cellNode_1 = document.createElement("TableCell")
-        cellNode_1.appendChild(textNode_1)
-
-        var textNode_2 = document.createTextNode("Typography")
-        textNode_2.id = "overview-custom-hook-" + name + "-2"
-        textNode_2.style.textAlign = "left"
-        var cellNode_2 = document.createElement("TableCell")
-        cellNode_2.appendChild(textNode_2)
-
-        //add cells to rows
-        rowNode.appendChild(cellNode_0)
-        rowNode.appendChild(cellNode_1)
-        rowNode.appendChild(cellNode_2)
-
+    add_row(ns, color, name) {
+        const doc = eval("document")
         //get the table
-        const table = document.getElementsByTagName("TableBody")[0];
-        //append to table (TODO: other position?)
-        table.appendChild(rowNode);
+        const table = doc.getElementsByTagName("tbody")[0]
+           
+        var row = table.insertRow(this.index)
+        this.index += 1
+        row.style.color = color
+        row.style.font = "16px JetBrainsMono" //'JetBrainsMono, "Courier New", monospace'
+        row.id = name.toLowerCase()
+
+        var cell0 = row.insertCell(0)
+        cell0.id = "custom-hook-" + name.toLowerCase() + "-0"
+        cell0.innerText = name
+        
+
+        var cell1 = row.insertCell(1)
+        cell1.id = "custom-hook-" + name.toLowerCase() + "-1"
+        cell1.style.textAlign = "right"
+
+        var cell2 = row.insertCell(2)
+        cell2.id = "custom-hook-" + name.toLowerCase() + "-2"
 
         //add id to list of nodes
         this.rows.push(name)
@@ -208,68 +191,42 @@ export class ui_obj {
 
     //adds a static row
     add_row_static(color, name, value_1, value_2) {
-        //create row
-        var rowNode = document.createElement("tr");
-        rowNode.style.color = color
-        rowNode.id = name
 
-        var cellNode_0 = document.createElement("TableCell")
-        var textNode_0 = document.createElement("Typography")
-        textNode_0.innerText = name
-        cellNode_0.appendChild(textNode_0)
-
-        var cellNode_1 = document.createElement("TableCell")
-        var textNode_1 = document.createTextNode("Typography")
-        textNode_1.innerText = value_1
-        cellNode_1.appendChild(textNode_1)
-
-        var cellNode_2 = document.createElement("TableCell")
-        var textNode_2 = document.createTextNode("Typography")
-        textNode_2.innerText = value_2
-        cellNode_2.appendChild(textNode_2)
-
-        //add cells to rows
-        rowNode.appendChild(cellNode_0)
-        rowNode.appendChild(cellNode_1)
-        rowNode.appendChild(cellNode_2)
-
+        const doc = eval("document")
         //get the table
-        const table = document.getElementsByTagName("TableBody")[0];
-        //append to table (TODO: other position?)
-        table.appendChild(rowNode);
+        const table = doc.getElementsByTagName("tbody")[0]
+        var row = table.insertRow(this.index)
+        this.index += 1
+        row.style.color = color
+        row.id = name
+
+        var cell0 = row.insertCell(0)
+        cell0.innerText = name
+
+        var cell1 = row.insertCell(1)
+        cell1.innerText = value_1
+
+        var cell2 = row.insertCell(2)
+        cell2.innerText = value_2
 
         //add id to list of nodes
         this.rows.push(name)
     }
 
 
-    //function to be executed
-    update(name, function_1, eval_1, function_2, eval_2) {
-        //create value 1
-        var value_1 = function_1
-        //if we need to eval
-        if (eval_1) {
-            //eval the value
-            value_1 = eval(value_1)
-        }
-        //save the value
-        doc.getElementById("custom-hook-" + name + "-1").innerHTML = value_1
 
-        //create value 2
-        var value_2 = function_2
-        //if we need to eval
-        if (eval_2) {
-            //eval the value
-            value_2 = eval(value_2)
-        }
-        //save the value
-        doc.getElementById("custom-hook-" + name + "-2").innerHTML = value_2
-    }
 
 
     //manage function which is called every main cycle
     manage(ns, handles) {
-        //everything is managed by intervals
+        //log.info(ns, "UI", "Manage: " + JSON.stringify(this.functions.entries()), true)
+        //for every saved
+        for (const key of this.functions.keys()) {
+            //get data
+            const [function_1, eval_1, function_2, eval_2] = this.functions.get(key)
+            //update 
+            update(ns, key, function_1, eval_1, function_2, eval_2)
+        }
     }
 }
 
@@ -319,6 +276,42 @@ function get_sleeve_activity(sleeve_number) {
     }
     //return the data
     return data
+}
+
+
+//function to be executed
+function update(ns, name, function_1, eval_1, function_2, eval_2) {
+    //debug
+    //ns.log(ns, "UI", "name: " + name + ", function_1: " + function_1, true )
+    const doc = eval("document")
+    //create value 1
+    var value_1 = function_1
+    //if we need to eval
+    if (eval_1) {
+        //eval the value
+        value_1 = eval(value_1)
+    }
+    
+    //save the value
+    const index_1 = doc.getElementById("custom-hook-" + name.toLowerCase() + "-1")
+    if (index_1 != undefined) {
+        index_1.innerHTML = value_1
+    }
+
+    //create value 2
+    var value_2 = function_2
+    //if we need to eval
+    if (eval_2) {
+        //eval the value
+        value_2 = eval(value_2)
+    }
+    
+    //save the value
+    const index_2 = doc.getElementById("custom-hook-" + name.toLowerCase() + "-2")
+    if (index_2 != undefined) {
+        index_2.innerHTML = value_2
+    }
+
 }
 
 
