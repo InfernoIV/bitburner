@@ -639,8 +639,10 @@ export class singularity_obj {
         var augments_bought = ns.singularity.getOwnedAugmentations(true)
         //get augments installed
         var augments_owned = ns.singularity.getOwnedAugmentations(false)
-        //if we have bought at least 5 augments
-        if ((augments_bought.length - augments_owned.length) >= this.augments_for_reset) {
+        //if we have bought at least 5 augments or we have the red pill
+        if (((augments_bought.length - augments_owned.length) >= this.augments_for_reset) || 
+        //we have bought the red pill but not yet installed
+            (ns.singularity.getOwnedAugmentations(true).includes(CONSTANTS.AUGMENT.TRP) && !ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP))) {
             //get factions
             const factions = ns.getPlayer().factions
             //get best rep
@@ -712,6 +714,16 @@ export class singularity_obj {
     Singularity.getFactionFavor 1
     */
     work_for_faction(ns, formulas_available, ignore_favor = false) {
+        //bought red pill
+        const have_red_pill = ns.singularity.getOwnedAugmentations(true).includes(CONSTANTS.AUGMENT.TRP)
+        //if red pill is not yet gotten and daedalus is unlocked
+        if (!have_red_pill && ns.getPlayer().factions.includes(CONSTANTS.FACTION.DAEDALUS)) {
+            //set to work for faction
+            this.perform_action(ns, work_type.FACTION, CONSTANTS.FACTION.DAEDALUS, formulas_available)
+            //indicate sucess
+            return true
+        }
+
         //get augments owned
         const augments_owned = ns.singularity.getOwnedAugmentations(true)
         //get factions
@@ -1056,7 +1068,7 @@ export class singularity_obj {
                     //get current work
                     current_work = ns.singularity.getCurrentWork()
                     //if not doing anything
-                    if (activity == null || activity == undefined) {
+                    if (activity == null || activity == undefined || !current_work.hasOwnProperty("companyName")) {
                         //work for company
                         return ns.singularity.workForCompany(activity, true)
                     }

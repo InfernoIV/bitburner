@@ -61,7 +61,7 @@ export class ui_obj {
         //if we have sleeves: add sleeve information
         if (handles.hasOwnProperty(CONSTANTS.HANDLE.SLEEVE)) this.add_sleeves(ns)
 
-        log.info(ns, "UI", "Map: " + JSON.stringify(Array.from(this.functions.entries())), true)
+        //log.info(ns, "UI", "Map: " + JSON.stringify(Array.from(this.functions.entries())), true)
         //log ready
         log.info(ns, "UI", "Init complete", true)
     }

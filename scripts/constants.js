@@ -94,6 +94,10 @@ export const AUGMENT = {
     TRP: "The Red Pill",
 }
 
+export const FACTION = {
+    DAEDALUS: "Daedalus",
+}
+
 export const TOOLS = {
     HACKING: {
         BRUTE_SSH: "BruteSSH.exe",
