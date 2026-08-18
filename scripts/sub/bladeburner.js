@@ -7,7 +7,6 @@ https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.
 
 
 import * as CONSTANTS from "scripts/constants.js"
-import * as evaluate from 'scripts/sub/evaluate.js'
 import * as log from 'scripts/sub/log.js'
 
 const blade_burner_action_type = {
@@ -261,19 +260,19 @@ export class bladeburner_obj {
         //for each skill
         for (const skill in this.skills) {
             //Get skill level.
-            await evaluate.exec(ns, "ns.bladeburner.getSkillLevel('" + skill + "')")
+            ns.bladeburner.getSkillLevel(skill)
 
 
 
 
             //Get bladeburner skill points.
-            await evaluate.exec(ns, "ns.bladeburner.getSkillPoints()")
+            ns.bladeburner.getSkillPoints()
 
             //Get cost to upgrade skill.
-            await evaluate.exec(ns, "ns.bladeburner.getSkillUpgradeCost('" + skillName + "',1)")
+            ns.bladeburner.getSkillUpgradeCost(skillName)
 
             //Upgrade skill.
-            await evaluate.exec(ns, "ns.bladeburner.upgradeSkill('" + skill + "', 1)")
+            ns.bladeburner.upgradeSkill(skill)
         }
     }
 
@@ -281,7 +280,7 @@ export class bladeburner_obj {
     //returns current action information
     async get_current_action(ns) {
         //Get current action.
-        const current_action = await evaluate.exec(ns, "ns.bladeburner.getCurrentAction()")
+        const current_action = ns.bladeburner.getCurrentAction()
         //return
         return current_action
     }
@@ -290,7 +289,7 @@ export class bladeburner_obj {
     //check to see if black ops are completed (and thus bitnode can be destroyed)
     async all_black_ops_completed(ns) {
         //Get an object with the name and rank requirement of the next BlackOp that can be completed.
-        const next_black_op = await evaluate.exec(ns, "ns.bladeburner.getNextBlackOp()")
+        ns.bladeburner.getNextBlackOp()
         //return if null
         return (next_black_op == null)
     }
@@ -299,7 +298,7 @@ export class bladeburner_obj {
     //starts actions for player
     async start_action(type, name) {
         //Start an action.
-        await evaluate.exec(ns, "ns.bladeburner.startAction('" + type + "','" + name + "')")
+        ns.bladeburner.startAction(type, name)
     }
 
 

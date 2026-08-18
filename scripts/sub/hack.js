@@ -29,9 +29,13 @@ export class hack_obj {
         //disable logging
         ns.disableLog("exec")
         ns.disableLog("scp")
-
+        //create port objects
+        this.port_hack_request = ns.getPortHandle(CONSTANTS.PORT.HACK_REQUEST)
+        this.port_hack_target = ns.getPortHandle(CONSTANTS.PORT.HACK_TARGET)
         //remove the data from the port
-        ns.clearPort(CONSTANTS.PORT.HACK)
+        this.port_hack_request.clear()
+        //remove the data from the port
+        this.port_hack_target.clear()
         //save if formula's are available to use
         this.formulas_available = handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE)
         //wait a little bit before starting
@@ -56,7 +60,7 @@ export class hack_obj {
         //set flag if we need to empty the server
         var empty_the_server = false
         //if there is anything that should be done
-        if (ns.peek(CONSTANTS.PORT.HACK) != CONSTANTS.PORT.NO_DATA) {
+        if (this.port_hack_request.peek() != CONSTANTS.PORT.NO_DATA) {
             //default to false
             flag_new_target = false
             //variable to fill
@@ -64,9 +68,9 @@ export class hack_obj {
             //failsafe
             try {
                 //while there is data in the port
-                while (ns.peek(CONSTANTS.PORT.HACK) != CONSTANTS.PORT.NO_DATA) {
+                while (this.port_hack_request.peek() != CONSTANTS.PORT.NO_DATA) {
                     //get port data
-                    data = ns.peek(CONSTANTS.PORT.HACK)
+                    data = this.port_hack_request.peek()
                     //log.info(ns, "Hack", "Data: " + JSON.stringify(data), true)
                     //if this is not a hack request
                     if (data.request != "hack") {
@@ -81,15 +85,14 @@ export class hack_obj {
                         log.warning(ns, "Hack", "Current skills/tools to low for stock target '" + data.hostname +
                             "'", true)
                         //write a message back
-                        ns.tryWritePort(CONSTANTS.PORT.HACK, {
+                        this.port_hack_request.tryWrite({
                             "request": "complete",
                             "hostname": data.hostname,
                             "symbol": data.symbol,
                             "type": data.type,
                         })
                         //remove the message
-                        ns.readPort(CONSTANTS.PORT.HACK)
-
+                        this.port_hack_request.read()
                         //next
                         continue
                     }
@@ -99,15 +102,14 @@ export class hack_obj {
                         log.warning(ns, "Hack", "Weaken takes too long for stock target '" + data.hostname +
                             "'", true)
                         //write a message back
-                        ns.tryWritePort(CONSTANTS.PORT.HACK, {
+                        this.port_hack_request.tryWrite({
                             "request": "complete",
                             "hostname": data.hostname,
                             "symbol": data.symbol,
                             "type": data.type,
                         })
                         //remove the message
-                        ns.readPort(CONSTANTS.PORT.HACK)
-
+                        this.port_hack_request.read()
                         //next
                         continue
                     }
@@ -123,8 +125,9 @@ export class hack_obj {
                     //if the server is at required state
                     if ((empty_the_server && server_info.moneyAvailable == 0) ||
                         (!empty_the_server && server_info.moneyAvailable == server_info.moneyMax)) {
+
                         //write a message back
-                        ns.tryWritePort(CONSTANTS.PORT.HACK, {
+                        this.port_hack_request.tryWrite({
                             "request": "complete",
                             "hostname": data.hostname,
                             "symbol": data.symbol,
@@ -133,7 +136,7 @@ export class hack_obj {
                         //log
                         log.success(ns, "Hack", "Prepared stock server " + this.hack_target, true)
                         //remove port data
-                        ns.readPort(CONSTANTS.PORT.HACK)
+                        this.port_hack_request.read()
                         //go to next
                         continue
                         //server is not ready
@@ -146,7 +149,7 @@ export class hack_obj {
                 //log
                 log.error(ns, "Hack", "handle_port raw: " + data + ", err: " + err, true)
                 //remove port data
-                ns.readPort(CONSTANTS.PORT.HACK)
+                this.port_hack_request.read()
                 //stop
                 return
             }
@@ -189,10 +192,15 @@ export class hack_obj {
                 case STATE.HACK.WEAKEN:
                     //weaken the server
                     time_wait = this.weaken_server(ns, execute_servers)
+                    //calc percentrage
+                    const percentage = Math.ceil((server_info
+                        .hackDifficulty / server_info.minDifficulty) * 100)
                     //debug
-                    log.info(ns, "Hack", "Started weaken for '" + this.hack_target + "' = " + Math.ceil((server_info
-                        .hackDifficulty / server_info.minDifficulty) * 100) + "% => " + format_time(
-                        time_wait), true)
+                    log.info(ns, "Hack", "Started weaken for '" + this.hack_target + "' = " + percentage + "% => " +
+                        format_time(
+                            time_wait), true)
+                    //write to port
+                    this.write_data_to_port("Weaken " + percentage + "%")
                     //stop
                     break
 
@@ -200,10 +208,15 @@ export class hack_obj {
                 case STATE.HACK.GROW:
                     //set the time to wait
                     time_wait = this.grow_server(ns, execute_servers)
+                    //calc percentrage
+                    const percentage = Math.floor((server_info
+                        .moneyAvailable / server_info.moneyMax) * 100)
                     //debug
-                    log.info(ns, "Hack", "Started grow for '" + this.hack_target + "' = " + Math.floor((server_info
-                            .moneyAvailable / server_info.moneyMax) * 100) + "% => " + format_time(time_wait),
+                    log.info(ns, "Hack", "Started grow for '" + this.hack_target + "' = " + percentage + "% => " +
+                        format_time(time_wait),
                         true)
+                    //write to port
+                    this.write_data_to_port("Grow " + percentage + "%")
                     //stop
                     break
 
@@ -213,6 +226,8 @@ export class hack_obj {
                     time_wait = this.hack_server(ns, execute_servers)
                     //debug
                     log.info(ns, "Hack", "Started hack for '" + this.hack_target + "' => " + format_time(time_wait))
+                    //write to port
+                    this.write_data_to_port("Hack")
                     //stop
                     break
 
@@ -227,6 +242,17 @@ export class hack_obj {
         }
     }
 
+
+    //writes data to port for the UI to use
+    write_data_to_port(activity) {
+        //save data to port (create a second entry)
+        this.port_hack_target.tryWrite({
+            target: this.hack_target,
+            activity: activity
+        })
+        //remove the first entry
+        this.port_hack_target.read()
+    }
 
     //function that finds a target
     /*

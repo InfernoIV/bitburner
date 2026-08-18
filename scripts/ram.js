@@ -298,8 +298,15 @@ export class ram_obj {
             await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())
             await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())
 
+            
+
             //GO
             await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())
+
+            //infiltrations
+            await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj(), 4, 1)
+
+            //extend GO
             await this.register_handle(ns, CONSTANTS.HANDLE.GO_ANALYSIS, {}, 0, 0, CONSTANTS.HANDLE.GO)
             await this.register_handle(ns, CONSTANTS.HANDLE.GO_CHEAT, {}, 14, 2, CONSTANTS.HANDLE.GO_ANALYSIS)
 
@@ -315,7 +322,6 @@ export class ram_obj {
             await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())
             //await this.register_handle(ns, CONSTANTS.HANDLE.CODING_CONTRACT, new coding_contract_obj())
             await this.register_handle(ns, CONSTANTS.HANDLE.STOCK, new stock_obj())
-            //await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj())
             await this.register_handle(ns, CONSTANTS.HANDLE.GANG, new gang_obj(), 2)
             //await this.register_handle(ns, CONSTANTS.HANDLE.HACKNET, new hacknet_obj())//, 9)
             await this.register_handle(ns, CONSTANTS.HANDLE.CORPORATION, new corporation_obj(), 3)

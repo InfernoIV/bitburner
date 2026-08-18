@@ -3,22 +3,30 @@ import * as log from "scripts/sub/log.js"
 import {
     get_number_of_hacking_tools_owned
 } from "scripts/sub/root.js"
+import {
+    GANG_MEMBERS_MAX,
+    GANG_MEMBER_NAME,
+} from "scripts/data/gang.js"
+
 
 
 // Declaration
 export class ui_obj {
     constructor() {
+        //map to save functions into to use
         this.functions = new Map()
         //list of added rows (id's)
         this.rows = []
-        //list of hooks
-        this.hooks = []
-        //time to refresh
-        //this.refresh_time = 1000 //1 sec   
+        //starting index to add data
         this.index = 9
+        //font to be used
+        this.font = "16px JetBrainsMono"
+        //border format
+        this.border = "solid #cfcfcf"
     }
 
 
+    //TODO: how to handle added handles (e.g. home grows in ram and another functionality is launched) -> how to trigger / add?
     init(ns, handles) {
         const doc = eval("document")
         //align text left
@@ -52,16 +60,37 @@ export class ui_obj {
 
         //add information to existing rows
         this.add_to_existing(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
-        //add general information
-        this.add_general(ns)
-        //add augments requirement
-        this.add_augments(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
-        //if we have singularity: add singularity information
-        if (handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY)) this.add_singularity(ns)
+
+        //add extended stats
+        this.add_stats(ns)
+
         //if we have sleeves: add sleeve information
         if (handles.hasOwnProperty(CONSTANTS.HANDLE.SLEEVE)) this.add_sleeves(ns)
 
-        //log.info(ns, "UI", "Map: " + JSON.stringify(Array.from(this.functions.entries())), true)
+        //add bitnode information
+        this.add_bitnode(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY))
+
+        //if we have bladeburner
+        if (handles.hasOwnProperty(CONSTANTS.HANDLE.BLADEBURNER)) this.add_bladeburner(ns)
+
+        //add augments requirement
+        this.add_augments(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
+
+        //add hacking information
+        this.add_hacking(ns)
+
+        //if we have gang
+        if (handles.hasOwnProperty(CONSTANTS.HANDLE.GANG)) this.add_gang(ns)
+
+        //if we have corporation
+        if (handles.hasOwnProperty(CONSTANTS.HANDLE.CORPORATION)) this.add_corporation(ns)
+
+        //add go statistics
+        this.add_go(ns)
+
+        //add location
+        this.add_location(ns)
+
         //log ready
         log.info(ns, "UI", "Init complete", true)
     }
@@ -80,6 +109,9 @@ export class ui_obj {
             const bit_node_multipliers = ns.getBitNodeMultipliers()
             //get the world deamon multiplier
             world_deamon_hacking *= bit_node_multipliers.WorldDaemonDifficulty
+        } else {
+            //we're not sure...
+            world_deamon_hacking += "?"
         }
         //money
         doc.getElementById("overview-money-hook").innerText = "/$" + formatNumber(deadalus_money)
@@ -93,19 +125,61 @@ export class ui_obj {
     }
 
 
+    add_location(ns) {
+        //GROUP: location
+        this.add_data(ns, "#777777", "City",
+            "ns.getPlayer().city", true
+        )
+
+        this.add_data(ns, "#777777", "Location",
+            "ns.getPlayer().location", true,
+        )
+        //add a border
+        this.add_border("Location")
+    }
+
+
     //adds information not gated by source files
-    add_general(ns) {
+    add_stats(ns) {
         //karma needed to start a gang
         const gang_karma = -54000
-        this.add_data(ns, "#009ffc", "Intelligence", "ns.getPlayer().skills.intelligence", true)
-        this.add_data(ns, "#ff0000", "Karma", "formatNumber(ns.getPlayer().karma)", true, "/" + formatNumber(
-            gang_karma))
-        this.add_data(ns, "#ff0000", "Kills", "formatNumber(ns.getPlayer().numPeopleKilled)", true, "/30")
-        this.add_data(ns, "#777777", "Entropy", "ns.getPlayer().entropy", true)
-        this.add_data(ns, "#777777", "City", "ns.getPlayer().city", true)
-        this.add_data(ns, "#777777", "Location", "ns.getPlayer().location", true)
-        this.add_data(ns, "#007c15", "Hack_tools", "get_number_of_hacking_tools_owned(ns)", true, "/5")
-        //this.add_data_static(ns, "#007c15", "Bitnode", ns.getResetInfo().currentNode, "." + get_bitnode_level(ns))
+        /*
+        this.add_data(ns, "#009ffc", "Intelligence", 
+            "ns.getPlayer().skills.intelligence", true)
+        */
+
+        this.add_data(ns, "#ff0000", "Karma",
+            "formatNumber(ns.getPlayer().karma)", true,
+            formatNumber(gang_karma), false,
+            "/"
+        )
+
+        this.add_data(ns, "#ff0000", "Kills",
+            "formatNumber(ns.getPlayer().numPeopleKilled)", true,
+            "30", false,
+            "/"
+        )
+
+        this.add_data(ns, "#777777", "Entropy",
+            "ns.getPlayer().entropy", true,
+        )
+        //add a border
+        this.add_border("Entropy")
+    }
+
+    add_hacking(ns) {
+        //GROUP: hack
+        this.add_data(ns, "#007c15", "Hack_tools",
+            "get_number_of_hacking_tools_owned(ns)", true,
+            "5", false,
+            "/"
+        )
+        this.add_data(ns, "#007c15", "Hack_target",
+            "ns.peek(CONSTANTS.PORT.HACK_TARGET).target", true,
+            "ns.peek(CONSTANTS.PORT.HACK_TARGET).activity", true
+        )
+        //add a border
+        this.add_border("Hack_target")
     }
 
 
@@ -119,37 +193,179 @@ export class ui_obj {
             deadalus_augments = "/" + ns.getBitNodeMultipliers().DaedalusAugsRequirement
         }
         //add augment requirement
-        this.add_data(ns, "#777777", "Augments", "ns.getResetInfo().ownedAugs.size", true, deadalus_augments)
+        this.add_data(ns, "#777777", "Augments",
+            "ns.getResetInfo().ownedAugs.size", true,
+            deadalus_augments)
+        //add a border
+        this.add_border("Augments")
     }
 
 
-    //add information from singularity
-    add_singularity(ns) {
-        //add if we have the red pill
-        this.add_data(ns, "#ff00aa", "Red_Pill",
-            "ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP)", true)
+    //bitnode 2
+    add_gang(ns) {
+        //gang members
+        this.add_data(ns, "#ff0000", "Gang_Members",
+            "get_number_of_gang_members(ns)", true,
+            GANG_MEMBERS_MAX, false,
+            "/"
+        )
+        //gang territory
+        this.add_data(ns, "#ff0000", "Gang_Territory",
+            "ns.gang.getGangInformation().territory*100", true,
+            "%"
+        )
+        //add a border
+        this.add_border("Gang_Territory")
     }
 
-    //adds information from sleeves
+
+    //bitnode 3
+    add_corporation(ns) {
+        //TODO
+        //if we don't have a corporation
+        if(!ns.corporation.hasCorporation()){ 
+            stop
+            //return
+        }       
+        /*
+        //funds - public
+        this.add_data(ns, "#ff9900", "Corp_funds",
+            "ns.corporation.getCorporation().funds", true,
+            "ns.corporation.getCorporation().public", true,
+            "=>"
+        )
+
+        //division information
+        const divisions = ns.corporation.getCorporation().divisions
+        //for each division
+        for (const division of divisions) {
+            //get the division
+            ns.corporation.getDivision(divisionName)
+            //division
+            this.add_data(ns, "#ff9900", "Corp_div_" + divisionName,
+                "ns.corporation.getDivision(divisionName).industry", true,
+
+        )
+        }
+        
+        
+        //shares
+        this.add_data(ns, "#ff9900", "Corp_Shares",
+            "ns.corporation.getCorporation().totalShares-ns.corporation.getCorporation().investorShares-ns.corporation.getCorporation().issuedShares", true,
+            "ns.corporation.getCorporation().totalShares-ns.corporation.getCorporation().investorShares", true,
+            "/"
+        )
+
+        //valuation - public
+        this.add_data(ns, "#ff9900", "Corp_valuation",
+            "ns.corporation.getCorporation().valuation", true,
+            "", true,
+            ""
+        )
+
+        //investments
+        this.add_data(ns, "#ff9900", "Corp_Investment",
+            "ns.corporation.getInvestmentOffer().round", true,
+            "formatNumber(ns.corporation.getInvestmentOffer().funds)", true,
+            "="
+        )
+    
+        //add a border
+        this.add_border("Corp_Investment")
+        */
+    }
+
+
+    //bitnode 4
+    add_bitnode(ns, has_singularity) {
+        //add bitnode information
+        this.add_data_static(ns, "#ff00aa", "Bitnode",
+            ns.getResetInfo().currentNode,
+            "." + get_bitnode_level(ns)
+        )
+        //if we have singularity
+        if (has_singularity) {
+            //add if we have the red pill
+            this.add_data(ns, "#ff00aa", "Red_Pill",
+                "ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP)", true
+            )
+            //add a border
+            this.add_border("Red_Pill")
+        } else {
+            //add a border
+            this.add_border("Bitnode")
+        }
+    }
+
+
+    //bitnode 6 / 7
+    add_bladeburner(ns) {
+        //add bladeburner stamina
+        this.add_data(ns, "#ff0000", "Stamina",
+            "ns.bladeburner.getStamina()[0]", true,
+            "ns.bladeburner.getStamina()[1]", true,
+            "/"
+        )
+
+        //add black ops overview
+        this.add_data(ns, "#ff0000", "Black_Ops",
+            "ns.bladeburner.getBlackOpNames().indexOf(ns.bladeburner.getNextBlackOp().name)", true,
+            ns.bladeburner.getBlackOpNames().length, false,
+            "/"
+        )
+        //add a border
+        this.add_border("Black_Ops")
+    }
+
+
+    //bitnode 10
     add_sleeves(ns) {
         //get number of sleeves owned
         const sleeves_owned = ns.sleeve.getNumSleeves()
         //for each sleeve
         for (let i = 0; i < sleeves_owned; i++) {
             //add sleeve (activity & shock)
-            this.add_data(ns, "#fffb00", "Sleeve_" + i, "get_sleeve_activity(" + i + ")", true,
-                "ns.sleeve.getSleeve(" +
-                i + ").shock", true)
+            this.add_data(ns, "#fffb00",
+                "Sleeve_" + i,
+                "get_sleeve_activity(" + i + ")", true,
+                "ns.sleeve.getSleeve(" + i + ").shock", true)
         }
+        //add a border
+        this.add_border("Sleeve_" + (sleeves_owned - 1))
+    }
+
+    //bitnode ?
+    add_go(ns) {
+        //get thet opponents
+        const opponents = ns.go.analysis.getStats().keys()
+        //save the last id
+        var last_id = ""
+        //for each opponent, skip the NO AI
+        for (const i = 1; i < opponents.length; i++) {
+            //get the opponent
+            const opponent = opponents.keys()[i]
+            //add the opponent data
+            this.add_data(ns, "#00fff2",
+                //name in which the " " is replaced by "_"
+                "Go_" + opponent.replace(/ /g, "_"),
+                "ns.go.analysis.getStats().get(opponent).wins", true,
+                "ns.go.analysis.getStats().get(opponent).losses", true,
+                "-"
+            )
+            //save the last index
+            last_id = "Go_" + opponent.replace(/ /g, "_")
+        }
+        //add a border
+        this.add_border(last_id)
     }
 
 
     //adds a data entry
-    add_data(ns, color, name, function_1, eval_1, function_2 = "", eval_2 = false) {
+    add_data(ns, color, name, function_1, eval_1, function_2 = "", eval_2 = false, divider = "") {
         //add the row
         this.add_row(ns, color, name)
         //add to list
-        this.functions.set(name, [function_1, eval_1, function_2, eval_2])
+        this.functions.set(name, [function_1, eval_1, function_2, eval_2, divider])
     }
 
 
@@ -158,17 +374,17 @@ export class ui_obj {
         const doc = eval("document")
         //get the table
         const table = doc.getElementsByTagName("tbody")[0]
-           
+
         var row = table.insertRow(this.index)
         this.index += 1
         row.style.color = color
-        row.style.font = "16px JetBrainsMono" //'JetBrainsMono, "Courier New", monospace'
+        row.style.font = this.font
         row.id = name.toLowerCase()
 
         var cell0 = row.insertCell(0)
         cell0.id = "custom-hook-" + name.toLowerCase() + "-0"
         cell0.innerText = name
-        
+
 
         var cell1 = row.insertCell(1)
         cell1.id = "custom-hook-" + name.toLowerCase() + "-1"
@@ -191,15 +407,14 @@ export class ui_obj {
 
     //adds a static row
     add_row_static(color, name, value_1, value_2) {
-
         const doc = eval("document")
         //get the table
         const table = doc.getElementsByTagName("tbody")[0]
         var row = table.insertRow(this.index)
         this.index += 1
         row.style.color = color
-        row.id = name
-
+        row.style.font = this.font
+        row.id = name.toLowerCase()
         var cell0 = row.insertCell(0)
         cell0.innerText = name
 
@@ -214,7 +429,15 @@ export class ui_obj {
     }
 
 
-
+    //adds a border to a row
+    add_border(name) {
+        const doc = eval("document")
+        //get the element
+        const element = doc.getElementById(name.toLowerCase())
+        //set border
+        //https://www.w3schools.com/jsref/dom_obj_style.asp
+        element.style.borderBottom = this.border
+    }
 
 
     //manage function which is called every main cycle
@@ -223,9 +446,9 @@ export class ui_obj {
         //for every saved
         for (const key of this.functions.keys()) {
             //get data
-            const [function_1, eval_1, function_2, eval_2] = this.functions.get(key)
+            const [function_1, eval_1, function_2, eval_2, divider] = this.functions.get(key)
             //update 
-            update(ns, key, function_1, eval_1, function_2, eval_2)
+            update(ns, key, function_1, eval_1, function_2, eval_2, divider)
         }
     }
 }
@@ -280,7 +503,7 @@ function get_sleeve_activity(sleeve_number) {
 
 
 //function to be executed
-function update(ns, name, function_1, eval_1, function_2, eval_2) {
+function update(ns, name, function_1, eval_1, function_2, eval_2, divider) {
     //debug
     //ns.log(ns, "UI", "name: " + name + ", function_1: " + function_1, true )
     const doc = eval("document")
@@ -291,7 +514,7 @@ function update(ns, name, function_1, eval_1, function_2, eval_2) {
         //eval the value
         value_1 = eval(value_1)
     }
-    
+
     //save the value
     const index_1 = doc.getElementById("custom-hook-" + name.toLowerCase() + "-1")
     if (index_1 != undefined) {
@@ -305,11 +528,11 @@ function update(ns, name, function_1, eval_1, function_2, eval_2) {
         //eval the value
         value_2 = eval(value_2)
     }
-    
+
     //save the value
     const index_2 = doc.getElementById("custom-hook-" + name.toLowerCase() + "-2")
     if (index_2 != undefined) {
-        index_2.innerHTML = value_2
+        index_2.innerHTML = divider + value_2
     }
 
 }
@@ -347,6 +570,29 @@ function get_bitnode_level(ns) {
     }
     //give the level
     return level
+}
+
+function get_number_of_gang_members(ns) {
+    //variable to fill
+    var gang_members_amount = 0
+    //for each possible member
+    for (let i = 0; i < GANG_MEMBERS_MAX; i++) {
+        //create the member name
+        const member_name = GANG_MEMBER_NAME + i
+        //Get information about a specific gang member.
+        const member_information = ns.gang.getMemberInformation(member_name)
+        //valid member if not null? TODO: check
+        if (member_information != null) {
+            //up the member count
+            gang_members_amount += 1
+            //invalid member
+        } else {
+            //stop
+            break
+        }
+    }
+    //return the number
+    return gang_members_amount
 }
 
 

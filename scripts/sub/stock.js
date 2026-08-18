@@ -12,7 +12,7 @@ export class stock_obj {
 
     init(ns) {
         //remove the data from the port
-        ns.clearPort(CONSTANTS.PORT.HACK)
+        ns.clearPort(CONSTANTS.PORT.HACK_REQUEST)
         //ns.disableLog("")
         this.commission_fee = 100e3 //$100.00k
         this.forecast_min = 0.33
@@ -76,9 +76,9 @@ export class stock_obj {
         //if we're allowed to trade
         if (ns.stock.hasWseAccount() && ns.stock.hasTixApiAccess()) {
             //if there is port data pending
-            if (ns.peek(CONSTANTS.PORT.HACK) != CONSTANTS.PORT.NO_DATA) {
+            if (ns.peek(CONSTANTS.PORT.HACK_REQUEST) != CONSTANTS.PORT.NO_DATA) {
                 //get the data
-                const data = ns.peek(CONSTANTS.PORT.HACK)
+                const data = ns.peek(CONSTANTS.PORT.HACK_REQUEST)
                 //if it is for us
                 if (data.request == "complete") {
                     //get stocks for this symbol (amount can be changed)
@@ -109,7 +109,7 @@ export class stock_obj {
                     }
 
                     //remove the message
-                    ns.readPort(CONSTANTS.PORT.HACK)
+                    ns.readPort(CONSTANTS.PORT.HACK_REQUEST)
                 }
                 //not waiting on hack
             } else {
@@ -128,7 +128,7 @@ export class stock_obj {
                                 //get the server
                                 const server = ns.getServer(hostname)
                                 //write data
-                                ns.tryWritePort(CONSTANTS.PORT.HACK, {
+                                ns.tryWritePort(CONSTANTS.PORT.HACK_REQUEST, {
                                     "request": "hack",
                                     "hostname": hostname,
                                     "symbol": symbol,
