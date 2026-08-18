@@ -186,6 +186,7 @@ export class hack_obj {
             const server_info = ns.getServer(this.hack_target)
             //check the state
             const state = this.check_target(ns, server_info, empty_the_server)
+            var percentage = 0
             //depending on the state
             switch (state) {
                 //if we need to weaken
@@ -193,14 +194,14 @@ export class hack_obj {
                     //weaken the server
                     time_wait = this.weaken_server(ns, execute_servers)
                     //calc percentrage
-                    const percentage = Math.ceil((server_info
+                    percentage = Math.ceil((server_info
                         .hackDifficulty / server_info.minDifficulty) * 100)
                     //debug
                     log.info(ns, "Hack", "Started weaken for '" + this.hack_target + "' = " + percentage + "% => " +
                         format_time(
                             time_wait), true)
                     //write to port
-                    this.write_data_to_port("Weaken " + percentage + "%")
+                    this.write_data_to_port(ns, "Weaken " + percentage + "%")
                     //stop
                     break
 
@@ -209,14 +210,14 @@ export class hack_obj {
                     //set the time to wait
                     time_wait = this.grow_server(ns, execute_servers)
                     //calc percentrage
-                    const percentage = Math.floor((server_info
+                    percentage = Math.floor((server_info
                         .moneyAvailable / server_info.moneyMax) * 100)
                     //debug
                     log.info(ns, "Hack", "Started grow for '" + this.hack_target + "' = " + percentage + "% => " +
                         format_time(time_wait),
                         true)
                     //write to port
-                    this.write_data_to_port("Grow " + percentage + "%")
+                    this.write_data_to_port(ns, "Grow " + percentage + "%")
                     //stop
                     break
 
@@ -227,7 +228,7 @@ export class hack_obj {
                     //debug
                     log.info(ns, "Hack", "Started hack for '" + this.hack_target + "' => " + format_time(time_wait))
                     //write to port
-                    this.write_data_to_port("Hack")
+                    this.write_data_to_port(ns, "Hack")
                     //stop
                     break
 
@@ -244,14 +245,15 @@ export class hack_obj {
 
 
     //writes data to port for the UI to use
-    write_data_to_port(activity) {
-        //save data to port (create a second entry)
+    write_data_to_port(ns, activity) {
+        //remove the previous data
+        this.port_hack_target.read()
+        //save data to port 
         this.port_hack_target.tryWrite({
             target: this.hack_target,
-            activity: activity
+            activity: " " + activity
         })
-        //remove the first entry
-        this.port_hack_target.read()
+        //log.info(ns, "Hack", "Wrote to port: '" + this.hack_target + "','" + activity + "' => ", true)
     }
 
     //function that finds a target

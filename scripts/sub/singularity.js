@@ -150,7 +150,7 @@ export class singularity_obj {
             //get player
             const level_hacking = ns.getPlayer().skills.hacking
             //if bladeburner completed the final black op or enough hacking level
-            if (false || level_hacking >= world_deamon_hacking) {
+            if (level_hacking >= world_deamon_hacking || false) {
                 //replace this script with the destroy script
                 ns.spawn(CONSTANTS.SCRIPT.DESTROY, 1, 
                     this.next_bitnode, level_hacking >= world_deamon_hacking)

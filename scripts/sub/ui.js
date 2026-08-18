@@ -86,7 +86,7 @@ export class ui_obj {
         if (handles.hasOwnProperty(CONSTANTS.HANDLE.CORPORATION)) this.add_corporation(ns)
 
         //add go statistics
-        this.add_go(ns)
+        //this.add_go(ns)
 
         //add location
         this.add_location(ns)
@@ -176,7 +176,8 @@ export class ui_obj {
         )
         this.add_data(ns, "#007c15", "Hack_target",
             "ns.peek(CONSTANTS.PORT.HACK_TARGET).target", true,
-            "ns.peek(CONSTANTS.PORT.HACK_TARGET).activity", true
+            "ns.peek(CONSTANTS.PORT.HACK_TARGET).activity", true,
+            "=>"
         )
         //add a border
         this.add_border("Hack_target")
@@ -279,9 +280,10 @@ export class ui_obj {
     //bitnode 4
     add_bitnode(ns, has_singularity) {
         //add bitnode information
-        this.add_data_static(ns, "#ff00aa", "Bitnode",
-            ns.getResetInfo().currentNode,
-            "." + get_bitnode_level(ns)
+        this.add_data(ns, "#ff00aa", "Bitnode",
+            "ns.getResetInfo().currentNode", true,
+            "get_bitnode_level(ns)", true,
+            "."
         )
         //if we have singularity
         if (has_singularity) {
