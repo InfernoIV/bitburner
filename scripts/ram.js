@@ -278,7 +278,7 @@ export class ram_obj {
             //darknet for money (and is really cheap in ram cost)
             await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())
             //infiltrations
-            await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj(), 4, 1)
+            //await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj(), 4, 1)
         } else {
 
 
@@ -306,7 +306,7 @@ export class ram_obj {
             await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())
 
             //infiltrations
-            await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj(), 4, 1)
+            //await this.register_handle(ns, CONSTANTS.HANDLE.INFILTRATION, new infiltration_obj(), 4, 1)
 
             //extend GO
             await this.register_handle(ns, CONSTANTS.HANDLE.GO_ANALYSIS, {}, 0, 0, CONSTANTS.HANDLE.GO)
