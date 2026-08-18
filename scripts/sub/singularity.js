@@ -141,37 +141,19 @@ export class singularity_obj {
 
 
     destroy_bitnode(ns, bitnode_multipliers_available, bladeburner_available) {
-        //get player
-        const level_hacking = ns.getPlayer().skills.hacking
-        //check if the red pill in installed
-        const augment_red_pill_installed = ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT
-            .TRP)
-        //correct if needed
-        if (bitnode_multipliers_available) {
-            //TODO
-            required_level_hacking = ""
-        }
         //if we have the red pill installed
-        if (augment_red_pill_installed) {
-            //variable to keep track if we can destroy
-            var can_destroy = false
-            //if bladeburner completed the final black op.
-            if (false) {
-                //set to destroy
-                can_destroy = true
-            }
-            //get world deamon server
-            const world_deamon = ns.getServer(CONSTANTS.SERVER.WORLD_DEAMON)
-            //if hacking level is sufficient
-            if (world_deamon.hasAdminRights) {
-                //set to destroy
-                can_destroy = true
-            }
-
-            //if flag has been set
-            if (can_destroy) {
+        if (ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT
+            .TRP)) {
+            //get the required hacking level
+            var world_deamon_hacking = ns.getServer(CONSTANTS.SERVER.WORLD_DEAMON).requiredHackingSkill
+            //log.info(ns, "Singularity", "world_deamon_hacking: " + world_deamon_hacking, true)
+            //get player
+            const level_hacking = ns.getPlayer().skills.hacking
+            //if bladeburner completed the final black op or enough hacking level
+            if (false || level_hacking >= world_deamon_hacking) {
                 //replace this script with the destroy script
-                ns.spawn(CONSTANTS.SCRIPT.DESTROY, 1, this.next_bitnode)
+                ns.spawn(CONSTANTS.SCRIPT.DESTROY, 1, 
+                    this.next_bitnode, level_hacking >= world_deamon_hacking)
             }
         }
     }
