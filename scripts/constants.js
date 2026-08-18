@@ -322,6 +322,8 @@ Dynamic RAM Usage: 29.65GB per thread
 
     */
     SINGULARITY: 88.0,
+
+    
     /*
     singularity.getCrimeChance (fn)	5.00GB
     singularity.commitCrime (fn)	5.00GB
@@ -336,6 +338,7 @@ Dynamic RAM Usage: 29.65GB per thread
     */
     SINGULARITY_LIGHT: 17.5,
 
+
     /*
 
     */
@@ -346,6 +349,8 @@ Dynamic RAM Usage: 29.65GB per thread
     If darknet is available, we don't have to buy TOR: saving 2 GB
     */
     DARKNET_AVAILABLE: -2.0,
+
+
     /*
     getServer (fn)	2.00GB    -> covered in ram
     baseCost (misc)	1.60GB  -> covered in main
@@ -356,6 +361,7 @@ Dynamic RAM Usage: 29.65GB per thread
     */
     DARKNET: 0.2,  
 
+
     /*
     go.getBoardState (fn)	4.00GB
     go.makeMove (fn)	4.00GB
@@ -364,6 +370,7 @@ Dynamic RAM Usage: 29.65GB per thread
     */
     GO: 8.0,
     
+
     /*
     analysis.getControlledEmptyNodes (fn)	16.00GB
     analysis.getChains (fn)	16.00GB
@@ -372,10 +379,12 @@ Dynamic RAM Usage: 29.65GB per thread
     */
     GO_ANALYSIS: 56.0,
     
+
     /*
     cheat.getCheatSuccessChance (fn)	1.00GB
     */
     GO_CHEAT: 1.0,
+
 
     /*
     analysis.getControlledEmptyNodes (fn)	16.00GB
@@ -400,6 +409,7 @@ Dynamic RAM Usage: 29.65GB per thread
     */
     HACKNET: 3.0,
 
+
     /*
     getServer (fn)	2.00GB
     exec (fn)	1.30GB
@@ -412,13 +422,10 @@ Dynamic RAM Usage: 29.65GB per thread
     CLOUD: 4.05, //7.00
 
     /*
-    codingcontract.attempt (fn)	10.00GB
-    codingcontract.getContractType (fn)	5.00GB
-    codingcontract.getData (fn)	5.00GB
-    baseCost (misc)	1.60GB
+    codingcontract.getContract (fn)	15.00GB
     ls (fn)	0.20GB
     */
-    CODING_CONTRACT: 20.0,  //21.80
+    CODING_CONTRACT: 15.20, 
 
     /*
     stock.sellStock (fn)	2.50GB

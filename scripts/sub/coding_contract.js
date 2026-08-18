@@ -7,17 +7,15 @@ import * as log from "scripts/sub/log.js"
 
 // Declaration
 export class coding_contract_obj {
-    constructor() {
-        this.available = true
-    }
+    constructor() {}
 
 
     init(ns) {
         //ns.disableLog("")
         //create port object
         this.port = ns.getPortHandle(CONSTANTS.PORT.CODING_CONTRACT)
-        //flush the port?
-
+        //clear the data from the port
+        this.port.clear()
     }
 
 
@@ -30,52 +28,42 @@ export class coding_contract_obj {
         while (this.port.peek() != CONSTANTS.PORT.NO_DATA) {
             //get data
             var data = this.port.read
-            log.info(ns, "Coding_Contract", "Data: " + data, true)
+            //log
+            log.info(ns, "Coding_Contract", "Received from '" + data.origin + "': '" + JSON.stringify(data) + "'",
+                true)
             //check if file still exists (due to darknet)
             if (ns.ls(data.hostname, data.filename).length > 0) {
                 //solve
-                //this.solve(ns, data.filename, data.hostname)
-
-                //log and remove for now
-                log.info(ns, "Coding_Contract", "Received from '" + data.origin + "': '" + JSON.stringify(data) + "'", true)
-                try {
-                    ns.rm(data.filename, data.hostname)
-                } catch (err) {
-                    log.error(ns, "Coding_Contract", "Error: " + err, true)
-                }
-                
+                this.solve(ns, data.filename, data.hostname)
             }
-            //remove the contract
+            //remove the contract from the port
             this.port.read()
-            //wait a little bit
-            //await ns.sleep(CONSTANTS.TIME.WAIT)
         }
     }
 
 
     /*
-    for testing purposes:
-    getDescription(filename, host)      5 GB
-    createDummyContract(type, host)     2 GB
-    */
-
-    /*
-    ns.codingcontract.attempt           10 GB
-    ns.codingcontract.getContractType   5 GB
-    ns.codingcontract.getData           5 GB
+    ns.codingcontract.getContract           15 GB
     */
     //solve the coding contract
     solve(ns, filename, hostname) {
-        //get contract type
-        const contract_type = ns.codingcontract.getContractType(filename, hostname)
-        //get data
-        const data = ns.codingcontract.getData(filename, hostname)
+        //get contract
+        const contract = ns.codingcontract.getContract(filename, hostname)
+        //debug
+        log.info(ns, "Coding_Contract", "type: " + contract.type + ", data: " + contract.data + ", description: " +
+            description, true)
         //get answer
-        const answer = this.determine_answer(contract_type, data)
+        const answer = this.determine_answer(contract.type, contract.data)
         //if answer is set
         if (answer != null) {
             //attempt solving
-            var result = ns.codingcontract.attempt(answer, filename, hostname)
+            const result = contract.submit(answer)
+            //log
+            log.info(ns, "Coding_Contract", "Submitted answer '" + answer + "' => " + result, true)
+        } else {
+            //log
+            log.warning(ns, "Coding_Contract", "Could not determine an answer for '" + contract.type + "': " +
+                contract.data, true)
         }
     }
 
@@ -84,42 +72,279 @@ export class coding_contract_obj {
     determine_answer(contract_type, data) {
         //depending on the type
         switch (contract_type) {
-            case FindLargestPrimeFactor:
-            case SubarrayWithMaximumSum:
-            case TotalWaysToSum:
-            case TotalWaysToSumII:
-            case SpiralizeMatrix:
-            case ArrayJumpingGame:
-            case ArrayJumpingGameII:
-            case MergeOverlappingIntervals:
-            case GenerateIPAddresses:
-            case AlgorithmicStockTraderI:
-            case AlgorithmicStockTraderII:
-            case AlgorithmicStockTraderIII:
-            case AlgorithmicStockTraderIV:
-            case MinimumPathSumInATriangle:
-            case UniquePathsInAGridI:
-            case UniquePathsInAGridII:
-            case ShortestPathInAGrid:
-            case SanitizeParenthesesInExpression:
-            case FindAllValidMathExpressions:
-            case HammingCodesIntegerToEncodedBinary:
-            case HammingCodesEncodedBinaryToInteger:
-            case Proper2ColoringOfAGraph:
-            case CompressionIRLECompression:
-            case CompressionIILZDecompression:
-            case CompressionIIILZCompression:
-            case EncryptionICaesarCipher:
-            case EncryptionIIVigenereCipher:
-            case SquareRoot:
-            case TotalPrimesInRange:
-            case LargestRectangleInAMatrix:
+            case "Find Largest Prime Factor":
+                return this.FindLargestPrimeFactor(data)
+
+            case "Subarray with Maximum Sum":
+                return this.SubarrayWithMaximumSum(data)
+
+            case "Total Ways to Sum":
+                return this.TotalWaysToSum(data)
+
+            case "Total Ways to Sum II":
+                return this.TotalWaysToSumII(data)
+
+            case "Spiralize Matrix":
+                return this.SpiralizeMatrix(data)
+
+            case "Array Jumping Game":
+                return this.ArrayJumpingGame(data)
+
+            case "Array Jumping Game II":
+                return this.ArrayJumpingGameII(data)
+
+            case "Merge Overlapping Intervals":
+                return this.MergeOverlappingIntervals(data)
+
+            case "Generate IP Addresses":
+                return this.GenerateIPAddresses(data)
+
+            case "Algorithmic Stock Trader I":
+                return this.AlgorithmicStockTraderI(data)
+
+            case "Algorithmic Stock Trader II":
+                return this.AlgorithmicStockTraderII(data)
+
+            case "Algorithmic Stock Trader III":
+                return this.AlgorithmicStockTraderIII(data)
+
+            case "Algorithmic Stock Trader IV":
+                return this.AlgorithmicStockTraderIV(data)
+
+            case "Minimum Path Sum in a Triangle":
+                return this.MinimumPathSumInATriangle(data)
+
+            case "Unique Paths in a Grid I":
+                return this.UniquePathsInAGridI(data)
+
+            case "Unique Paths in a Grid II":
+                return this.UniquePathsInAGridII(data)
+
+            case "Shortest Path in a Grid":
+                return this.ShortestPathInAGrid(data)
+
+            case "Sanitize Parentheses in Expression":
+                return this.SanitizeParenthesesInExpression(data)
+
+            case "Find All Valid Math Expressions":
+                return this.FindAllValidMathExpressions(data)
+
+            case "HammingCodes: Integer to Encoded Binary":
+                return this.HammingCodesIntegerToEncodedBinary(data)
+
+            case "HammingCodes: Encoded Binary to Integer":
+                return this.HammingCodesEncodedBinaryToInteger(data)
+
+            case "Proper 2-Coloring of a Graph":
+                return this.Proper2ColoringOfAGraph(data)
+
+            case "Compression I: RLE Compression":
+                return this.CompressionIRLECompression(data)
+
+            case "Compression II: LZ Decompression":
+                return this.CompressionIILZDecompression(data)
+
+            case "Compression III: LZ Compression":
+                return this.CompressionIIILZCompression(data)
+
+            case "Encryption I: Caesar Cipher":
+                return this.EncryptionICaesarCipher(data)
+
+            case "Encryption II: Vigenère Cipher":
+                return this.EncryptionIIVigenereCipher(data)
+
+            case "Square Root":
+                return this.SquareRoot(data)
+
+            case "Total Number of Primes":
+                return this.TotalPrimesInRange(data)
+
+            case "Largest Rectangle in a Matrix":
+                return this.LargestRectangleInAMatrix(data)
 
             default:
                 //log
                 log.info(ns, "Coding contract", "Uncaught contract_type: '" + JSON.stringify(contract_type) + "'")
                 return null
         }
+    }
+
+    FindLargestPrimeFactor(data) {
+        //stub
+        return null
+    }
+
+
+    SubarrayWithMaximumSum(data) {
+        //stub
+        return null
+    }
+
+
+    TotalWaysToSum(data) {
+        //stub
+        return null
+    }
+
+
+    TotalWaysToSumII(data) {
+        //stub
+        return null
+    }
+
+
+    SpiralizeMatrix(data) {
+        //stub
+        return null
+    }
+
+
+    ArrayJumpingGame(data) {
+        //stub
+        return null
+    }
+
+
+    ArrayJumpingGameII(data) {
+        //stub
+        return null
+    }
+
+
+    MergeOverlappingIntervals(data) {
+        //stub
+        return null
+    }
+
+
+    GenerateIPAddresses(data) {
+        //stub
+        return null
+    }
+
+
+    AlgorithmicStockTraderI(data) {
+        //stub
+    }
+
+
+    AlgorithmicStockTraderII(data) {
+        //stub
+        return null
+    }
+
+
+    AlgorithmicStockTraderIII(data) {
+        //stub
+        return null
+    }
+
+
+    AlgorithmicStockTraderIV(data) {
+        //stub
+        return null
+    }
+
+
+    MinimumPathSumInATriangle(data) {
+        //stub
+        return null
+    }
+
+
+    UniquePathsInAGridI(data) {
+        //stub
+        return null
+    }
+
+
+    UniquePathsInAGridII(data) {
+        //stub
+        return null
+    }
+
+
+    ShortestPathInAGrid(data) {
+        //stub
+        return null
+    }
+
+
+    SanitizeParenthesesInExpression(data) {
+        //stub
+        return null
+    }
+
+
+    FindAllValidMathExpressions(data) {
+        //stub
+        return null
+    }
+
+
+    HammingCodesIntegerToEncodedBinary(data) {
+        //stub
+        return null
+    }
+
+
+    HammingCodesEncodedBinaryToInteger(data) {
+        //stub
+        return null
+    }
+
+
+    Proper2ColoringOfAGraph(data) {
+        //stub
+        return null
+    }
+
+
+    CompressionIRLECompression(data) {
+        //stub
+        return null
+    }
+
+
+    CompressionIILZDecompression(data) {
+        //stub
+        return null
+    }
+
+
+    CompressionIIILZCompression(data) {
+        //stub
+        return null
+    }
+
+
+    EncryptionICaesarCipher(data) {
+        //stub
+        return null
+    }
+
+
+    EncryptionIIVigenereCipher(data) {
+        //stub
+        return null
+    }
+
+
+    SquareRoot(data) {
+        //stub
+        return null
+    }
+
+
+    TotalPrimesInRange(data) {
+        //stub
+        return null
+    }
+
+
+    LargestRectangleInAMatrix(data) {
+        //stub
+        return null
     }
 }
 
