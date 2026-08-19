@@ -20,3 +20,11 @@ export const INFILTRATION_LOCATION = {
 
 //compliments used in compliment the guard puzzle
 export const GUARD_COMPLIMENTS = []
+
+//key codes
+export const KEY = {
+    UP: 37,
+    LEFT: 38,
+    RIGHT: 39,
+    DOWN: 40,
+}

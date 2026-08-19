@@ -114,12 +114,12 @@ export class infiltration_obj {
                         //keep looping -> TODO: how to exit the loop when it fails / times out?
                         while (true) {
                             //get the data
-                            const data = ""
+                            const data = doc.getElementsByTagName("h4")[1].innerText //should contain: Guarding / Distracted /  Alerted 
                             //TODO: stop for now
                             log.info(ns, "Infiltration", "Guarding data: '" + data + "'", true)
                             //click(get_element("button", "Cancel"))
-                            ns.ui.openTail()
-                            ns.exit()
+                            //ns.ui.openTail()
+                            //ns.exit()
 
                             //wait until
                             if (data.includes("Distracted")) {
@@ -131,9 +131,15 @@ export class infiltration_obj {
                             //wait a little bit
                             await ns.sleep(CONSTANTS.TIME.WAIT)
                         }
+                        //debug
+                        ns.alert("Completed: 'Attack the sentinel'")
                         //stop
                         break
 
+
+
+
+                        
                     case "Say something nice about the guard":
                         //determine the element to press down on
                         const element = doc.getElementsByTagName("h5")[2]
@@ -144,7 +150,7 @@ export class infiltration_obj {
                             //if this is a complement
                             if (CONSTANTS.GUARD_COMPLIMENTS.includes(element.innerText)) {
                                 //send
-                                pressKey(" ")
+                                pressKey(CONSTANTS.KEY.UP)
                                 //debug
                                 log.success(ns, "Infiltration", "Send compliment: " + element.innerText, true)
                                 //next 
@@ -152,10 +158,12 @@ export class infiltration_obj {
                             } else {
                                 //go to next entry
                                 pressKey("w")
-                                //wait a little bit
+                                //TODO: needed? wait a little bit
                                 await ns.sleep(CONSTANTS.TIME.WAIT)
                             }
                         }
+                        //debug
+                        ns.alert("Completed: 'Say something nice'")
                         //stop (temporary)
                         ns.ui.openTail()
                         ns.exit()
@@ -166,17 +174,44 @@ export class infiltration_obj {
 
                         //multi-key
                     case "Enter the Code!":
-                        //get the code    
-                        const data = ""
-                        //TODO: stop for now
-                        log.info(ns, "Infiltration", "Code data: '" + data + "'", true)
-                        //click(get_element("button", "Cancel"))
-                        ns.ui.openTail()
-                        ns.exit()
+                        //TODO: how to determine when we're done?
+                        while (true) {
+                            //TODO: get the code    
+                            const data = ""
+                            //TODO: stop for now
+                            log.info(ns, "Infiltration", "Code data: '" + data + "'", true)
+                            //click(get_element("button", "Cancel"))
+                            ns.ui.openTail()
+                            ns.exit()
+                            //depending on the data: send key strokes
+                            switch (data) {
+                                case "":
+                                    pressKey(CONSTANTS.KEY.UP)
+                                    break
 
-                        //should work if the data is correct?
-                        //press the keys in the data order
-                        press_keys(data)
+                                case "":
+                                    pressKey(CONSTANTS.KEY.LEFT)
+                                    break
+
+                                case "":
+                                    pressKey(CONSTANTS.KEY.RIGHT)
+                                    break
+
+                                case "":
+                                    pressKey(CONSTANTS.KEY.DOWN)
+                                    break
+
+                                default:
+                                    log.error(ns, "Infiltration", "Enter the Code uncaught: " + data, true)
+                                    click(get_element("button", "Cancel"))
+                                    ns.ui.openTail()
+                                    ns.exit()
+                            }
+                            //temporary
+                            await ns.sleep(CONSTANTS.TIME.WAIT)
+                        }
+                        //debug
+                        ns.alert("Completed: 'Enter the code'")
                         //stop                    
                         break
 
@@ -193,6 +228,8 @@ export class infiltration_obj {
                         //should work when the correct data is selected
                         //press the keys in the data order
                         press_keys(data)
+                        //debug
+                        ns.alert("Completed: 'Cut the wires'")
                         //stop
                         break
 
@@ -212,6 +249,8 @@ export class infiltration_obj {
                         data = data.split('').reverse().join('')
                         //press the keys in the data order
                         press_keys(data)
+                        //debug
+                        ns.alert("Completed: 'Type it backward'")
                         //stop
                         break
 
@@ -229,6 +268,8 @@ export class infiltration_obj {
 
                         //press the keys in the data order
                         press_keys(data)
+                        //debug
+                        ns.alert("Completed: 'Close the brackets'")
                         //stop
                         break
 
@@ -268,15 +309,17 @@ export class infiltration_obj {
                             const column = 0
                             //move down to the row
                             for (let i = 0; i < row; i++) {
-                                pressKey("s")
+                                pressKey(CONSTANTS.KEY.DOWN)
                             }
                             //move right to the column
                             for (let i = 0; i < column; i++) {
-                                pressKey("d")
+                                pressKey(CONSTANTS.KEY.RIGHT)
                             }
                             //select
                             pressKey(" ")
                         }
+                        //debug
+                        ns.alert("Completed: 'Match the symbols!'")
                         //stop
                         break
 
@@ -291,6 +334,8 @@ export class infiltration_obj {
 
                         //requires more time, can learn from the symbols
 
+                        //debug
+                        ns.alert("Completed: 'Remember all the mines!'")
                         //stop
                         break
 
