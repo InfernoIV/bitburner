@@ -1,5 +1,5 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
 import * as log from "scripts/util/log.js"
 
@@ -12,7 +12,7 @@ export class go_obj {
     //getting the game to a steady state
     init(ns) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
         //Returns the color of the current player ("White" | "Black"), or 'None' if the game is over.
         const current_player = ns.go.getCurrentPlayer()
         //if not our turn

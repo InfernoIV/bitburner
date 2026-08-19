@@ -1,5 +1,5 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
 import * as log from "scripts/util/log.js"
 
@@ -7,7 +7,7 @@ import * as log from "scripts/util/log.js"
 /** @param {NS} ns */
 export function share_exec(ns, ram_reserve = 0) {
     //disable logging
-    log.disable(CONFIG.DISABLE_LOGGING)
+    log.disable(ns, CONFIG.DISABLE_LOGGING)
     //get home information
     const server_home = ns.getServer(CONSTANTS.SERVER.HOME)
     //get the available ram

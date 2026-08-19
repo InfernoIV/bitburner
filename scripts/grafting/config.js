@@ -1,2 +1,2 @@
-//disable logging
-log.disable(CONFIG.DISABLE_LOGGING)
+//logging to be disabled 
+export const DISABLE_LOGGING = null

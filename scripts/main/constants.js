@@ -1,1 +1,6 @@
-import "scripts/constants.js"
+import {
+    TIME
+} from "scripts/constants.js"
+export {
+    TIME
+}

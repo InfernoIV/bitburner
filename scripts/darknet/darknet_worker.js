@@ -1,4 +1,4 @@
-import * as CONSTANTS from "constants.js"
+import * as CONSTANTS from "./constants.js"
 
 import * as log from "scripts/util/log.js"
 

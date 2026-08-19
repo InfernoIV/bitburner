@@ -1,2 +1,2 @@
 //logging to be disabled 
-export const DISABLE_LOGGING = ["kill"]
+export const DISABLE_LOGGING = ["kill", "exec"]

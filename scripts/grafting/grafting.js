@@ -1,5 +1,5 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
 import * as log from "scripts/util/log.js"
 
@@ -10,8 +10,8 @@ export class grafting_obj {
 
     
     init(ns) {
-        //logging to be disabled 
-        export const DISABLE_LOGGING = null
+        //disable logging
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
     }
 
     

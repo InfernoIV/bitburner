@@ -1,6 +1,6 @@
 //imports
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 //log
 import * as log from "scripts/util/log.js"
 import { formatNumber } from "scripts/util/format.js"
@@ -15,7 +15,7 @@ export class stock_obj {
 
     init(ns) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
         //create port
         this.port = ns.getPortHandle(CONSTANTS.PORT.HACK_REQUEST)
         //remove the data from the port

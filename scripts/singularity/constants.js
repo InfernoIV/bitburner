@@ -1,4 +1,5 @@
-import "scripts/constants.js"
+import { SERVER, TOOLS, HANDLE, SCRIPT, FILE_EXTENSION, AUGMENT } from "scripts/constants.js"
+export { SERVER, TOOLS, HANDLE, SCRIPT, FILE_EXTENSION, AUGMENT }
 
 //gym per city
 export const GYMS = {

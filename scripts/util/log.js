@@ -59,15 +59,11 @@ function print_message(ns, message, type, prefix, print_in_terminal = false) {
         //print in the terminal
         ns.tprint(formatted_message)
     }
-    //if also log to file
-    if (log_to_file) {
-        //append to file
-        ns.write(file_name, formatted_message, "a")
-    }
 }
 
 
 export function disable(ns, types) {
+    
     //guard first
     if (types == null || types == undefined) {
         //stop

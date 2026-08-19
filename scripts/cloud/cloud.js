@@ -1,5 +1,5 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 import * as log from "scripts/util/log.js"
 
 // Declaration
@@ -12,7 +12,7 @@ export class cloud_obj {
     //
     init(ns, currentNodeMults = {CloudServerLimit: 1, CloudServerMaxRam: 1}) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)                
+        log.disable(ns, CONFIG.DISABLE_LOGGING)                
         //map of servers owned
         this.servers_owned = new Map()
         //variables that are set once

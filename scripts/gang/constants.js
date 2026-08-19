@@ -1,5 +1,7 @@
 import "scripts/constants.js"
 
+//default name of gang members
+export const GANG_MEMBER_NAME = "Thug-"
 
 
 

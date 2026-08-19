@@ -1,5 +1,5 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
 import * as log from "scripts/util/log.js"
 
@@ -82,7 +82,9 @@ export class ram_obj {
     //sets the basic information
     async init(ns) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        //log.info(ns, "Ram", "CONSTANTS.RAM: " + JSON.stringify(CONSTANTS.RAM), true)
+        //ns.ui.openTail()
         //save initial ram cost
         this.ram_used = Math.ceil((CONSTANTS.RAM.MAIN + CONSTANTS.RAM.RAM) * 100) / 100
         //allocate ram

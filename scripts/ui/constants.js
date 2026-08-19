@@ -1,4 +1,5 @@
-import "scripts/constants.js"
+import { HANDLE, PORT, AUGMENT } from "scripts/constants.js"
+export { HANDLE, PORT, AUGMENT }
 
 //requirements for deadalus
 export const DEADALUS = {

@@ -1,5 +1,5 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 import * as log from "scripts/util/log.js"
 import {
     formatNumber
@@ -46,7 +46,7 @@ export class ui_obj {
     //TODO: how to handle added handles (e.g. home grows in ram and another functionality is launched) -> how to trigger / add?
     init(ns, handles) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
         //align text left
         doc.getElementById("overview-money-hook").style.textAlign = "left"
         doc.getElementById("overview-hack-hook").style.textAlign = "left"

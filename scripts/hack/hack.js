@@ -1,5 +1,5 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
 import * as log from "scripts/util/log.js"
 import { format_time } from "scripts/util/format.js"
@@ -19,7 +19,7 @@ export class hack_obj {
 
     init(ns, handles) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
         //create port objects
         this.port_hack_request = ns.getPortHandle(CONSTANTS.PORT.HACK_REQUEST)
         this.port_hack_target = ns.getPortHandle(CONSTANTS.PORT.HACK_TARGET)

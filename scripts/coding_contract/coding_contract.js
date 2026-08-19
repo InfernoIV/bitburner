@@ -1,6 +1,6 @@
 
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
 import * as log from "scripts/util/log.js"
 
@@ -13,7 +13,7 @@ export class coding_contract_obj {
 
     init(ns) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
         //create port object
         this.port = ns.getPortHandle(CONSTANTS.PORT.CODING_CONTRACT)
         //clear the data from the port

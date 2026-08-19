@@ -1,5 +1,5 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
 
 import * as log from "scripts/util/log.js"
@@ -19,7 +19,7 @@ export class infiltration_obj {
 
     init(ns) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
     }
 
 
@@ -102,6 +102,8 @@ export class infiltration_obj {
                 await ns.sleep(CONFIG.TIME_BETWEEN_ROUNDS)
                 //get the type
                 const type = doc.getElementsByTagName("h4")[1].innerText
+                //placeholder
+                var data = null
                 //check what to do
                 switch (type) {
 
@@ -114,7 +116,7 @@ export class infiltration_obj {
                         //keep looping -> TODO: how to exit the loop when it fails / times out?
                         while (true) {
                             //get the data
-                            const data = doc.getElementsByTagName("h4")[1].innerText //should contain: Guarding / Distracted /  Alerted 
+                            data = doc.getElementsByTagName("h4")[1].innerText //should contain: Guarding / Distracted /  Alerted 
                             //TODO: stop for now
                             log.info(ns, "Infiltration", "Guarding data: '" + data + "'", true)
                             //click(get_element("button", "Cancel"))
@@ -177,7 +179,7 @@ export class infiltration_obj {
                         //TODO: how to determine when we're done?
                         while (true) {
                             //TODO: get the code    
-                            const data = ""
+                            data = ""
                             //TODO: stop for now
                             log.info(ns, "Infiltration", "Code data: '" + data + "'", true)
                             //click(get_element("button", "Cancel"))
@@ -218,7 +220,7 @@ export class infiltration_obj {
 
                     case "Cut the wires with the following properties! (keyboard 1 to 9)":
                         //determine the data (array of numbers between 1 to 9)
-                        const data = []
+                        data = []
                         //TODO: stop for now
                         log.info(ns, "Infiltration", "Cut the wires data: '" + data + "'", true)
                         //click(get_element("button", "Cancel"))
@@ -236,7 +238,7 @@ export class infiltration_obj {
 
                     case "Type it backward":
                         //get the data    
-                        var data = ""
+                        data = ""
                         //TODO: stop for now
                         log.info(ns, "Infiltration", "Backward data: '" + data + "'", true)
                         //click(get_element("button", "Cancel"))
@@ -257,7 +259,7 @@ export class infiltration_obj {
 
                     case "Close the brackets":
                         //get the data    
-                        var data = ""
+                        data = ""
                         //TODO: stop for now
                         log.info(ns, "Infiltration", "Brackets data: '" + data + "'", true)
                         //click(get_element("button", "Cancel"))
@@ -282,7 +284,7 @@ export class infiltration_obj {
                         //get the raw data
                         const data_raw = doc.getElementsByTagName("h5")[1].innerText
                         //remove the extra text
-                        var data = data_raw.replace("Targets: ", "")
+                        data = data_raw.replace("Targets: ", "")
                         //split into array
                         data = data.match(new RegExp(String.raw`[A-Za-z0-9]{2}`, "g"))
                         //TODO: stop for now
@@ -325,7 +327,7 @@ export class infiltration_obj {
 
                     case "Remember all the mines!":
                         //list of mines and their coordinates?
-                        const data = []
+                        data = []
                         //TODO: stop for now
                         log.info(ns, "Infiltration", "Mines data: '" + data + "'", true)
                         //click(get_element("button", "Cancel"))

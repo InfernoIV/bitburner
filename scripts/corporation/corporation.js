@@ -1,5 +1,5 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
 import * as log from "scripts/util/log.js"
 
@@ -12,7 +12,7 @@ export class corporation_obj {
 
     init(ns, handles) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
         //maximum amount of divisions
         this.max_divisions = CONSTANTS.DIVISIONS_MAX //TODO: check how this works outside of BN3
         //this.investment_round = 0

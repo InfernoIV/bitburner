@@ -1,5 +1,5 @@
-import "scripts/constants.js"
-
+import { PORT } from "scripts/constants.js"
+export { PORT }
 //fee per stock trade
 export const COMMISSION_FEE = 100e3 //$100.00k
 

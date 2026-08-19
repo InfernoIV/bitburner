@@ -1,8 +1,9 @@
-import * as CONSTANTS from "scripts/constants.js"
-import * as log from "scripts/sub/log.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
 
-import { sell_all_stocks } from "scripts/log/stock.js"
+import * as log from "scripts/util/log.js"
+import { sell_all_stocks } from "scripts/stock/stock.js"
 
 
 export class singularity_obj {
@@ -18,7 +19,7 @@ export class singularity_obj {
     */
     init(ns, handles) {
         //disable logging
-        log.disable(CONFIG.DISABLE_LOGGING)
+        log.disable(ns, CONFIG.DISABLE_LOGGING)
         //get tools
         const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
         this.brute_ssh = executables.includes(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)

@@ -1,5 +1,6 @@
 import * as CONSTANTS from "scripts/constants.js"
 import * as log from "scripts/util/log.js"
+import {RAM} from "scripts/ram/constants.js"
 import {scan_servers, scan_server} from "scripts/root/root.js"
 
 
@@ -17,5 +18,5 @@ export async function main(ns) {
     //HOW TO REACH ALL DARKNET SERVER OR DARKNET SCRIPTS RUNNING?
 
     //boot main
-    ns.spawn(CONSTANTS.SCRIPT.MAIN, {threads: 1, spawnDelay: 0, ramOverride: CONSTANTS.RAM.MAIN})
+    ns.spawn(CONSTANTS.SCRIPT.MAIN, {threads: 1, spawnDelay: 0, ramOverride: RAM.MAIN})
 }

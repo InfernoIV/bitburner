@@ -1,13 +1,13 @@
-import * as CONSTANTS from "constants.js"
-import * as CONFIG from "config.js"
+import * as CONSTANTS from "./constants.js"
+import * as CONFIG from "./config.js"
 
-import * as log from "scripts/sub/log.js"
-
+import * as log from "scripts/util/log.js"
+import { RAM } from "scripts/ram/constants.js"
 
 //ram manager
 import {
     ram_obj
-} from "scripts/ram.js"
+} from "scripts/ram/ram.js"
 
 
 /** @param {NS} ns */
@@ -17,7 +17,7 @@ export async function main(ns) {
     //init ram manager
     var ram_manager = new ram_obj()
     //init ram manager
-    await ram_manager.init(ns, CONSTANTS.RAM.MAIN)
+    await ram_manager.init(ns, RAM.MAIN)
     //log
     log.info(ns, "Main", "Starting main loop", true)
 
@@ -36,7 +36,7 @@ export async function main(ns) {
 /** @param {NS} ns */
 async function init(ns) {
     //disable logging
-    log.disable(CONFIG.DISABLE_LOGGING)
+    log.disable(ns, CONFIG.DISABLE_LOGGING)
 }
 
 
