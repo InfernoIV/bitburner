@@ -6,3 +6,12 @@ export const MARKET_DEMAND_MIN = 0.5
 
 //maximum number of loops to run (to prevent infinite loops)
 export const LOOPS_MAX = 10
+
+//time to wait between rounds
+export const TIME_BETWEEN_ROUNDS = 1000
+
+//duration of a click 
+export const CLICK_SLEEP_TIME = null
+
+//time between key presses
+export const TIME_BETWEEN_KEYS = 5

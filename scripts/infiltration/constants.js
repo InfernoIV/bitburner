@@ -18,4 +18,5 @@ export const INFILTRATION_LOCATION = {
     ],
 }
 
+//compliments used in compliment the guard puzzle
 export const GUARD_COMPLIMENTS = []
