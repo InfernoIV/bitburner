@@ -1,4 +1,5 @@
-import "scripts/constants.js"
+import { TIME } from "scripts/constants.js"
+export { TIME }
 
 //available infiltration locations
 export const INFILTRATION_LOCATION = {
@@ -19,12 +20,16 @@ export const INFILTRATION_LOCATION = {
 }
 
 //compliments used in compliment the guard puzzle
-export const GUARD_COMPLIMENTS = []
+export const GUARD_COMPLIMENTS = ["dynamic"]
 
 //key codes
 export const KEY = {
-    UP: 37,
-    LEFT: 38,
-    RIGHT: 39,
-    DOWN: 40,
+    UP: '↑', //"Up",
+    LEFT: '←', //"Left",
+    RIGHT: '→', //"Right",
+    DOWN: '↓', //"Down",
+    SPACE: '_', //"Space",
+    
+    //ENTER: '', //"Enter",
+    //TAB: "Tab",
 }

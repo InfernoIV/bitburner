@@ -186,7 +186,7 @@ export class ui_obj {
         this.add_data(ns, CONFIG.COLOR.HACK, "Hack_target",
             "ns.peek(CONSTANTS.PORT.HACK_TARGET).target", true,
             "ns.peek(CONSTANTS.PORT.HACK_TARGET).activity", true,
-            "=>"
+            ":"
         )
         //add a border
         this.add_border("Hack_target")

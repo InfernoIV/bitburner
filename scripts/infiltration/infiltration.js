@@ -41,23 +41,25 @@ export class infiltration_obj {
             //get difficulty
             const difficulty = parseInt(get_element("h6", "Difficulty").innerText.match(new RegExp(String
                 .raw`\d{1,}`, "g"))[0])
+
             //debug
-            log.info(ns, "Infiltration", "Difficulty: " + difficulty, true)
+            //log.info(ns, "Infiltration", "Difficulty: " + difficulty, true)
             //if impossible
             if (difficulty >= 100) {
                 //go to next location
                 continue
             }
+            const market_demand = parseFloat(get_element("li", "Market demand").innerText.match(new RegExp(String
+                .raw`\d{1,3}\.\d{1,3}`, "g"))[0])
             //get maxClearanceLevel
             const max_clearance_level = parseInt(get_element("h6", "clearance").innerText.match(new RegExp(String
                 .raw`\d{1,}`, "g"))[0])
 
-            //TODO: check for market demand (between 0 and 1)
-            //HOW TO CHECK?
-            /*if (CONFIG.MARKET_DEMAND_MIN < 0 && false) {
+            //if market demand is too low
+            if (market_demand < CONFIG.MARKET_DEMAND_MIN) {
                 //go to next
                 continue
-            }*/
+            }
 
             try {
                 //perform infiltration
@@ -98,12 +100,16 @@ export class infiltration_obj {
             click(get_element("button", "Start"))
             //loop 
             for (var i = 0; i < max_clearance_level; i++) {
+                log.info(ns, "Singularity", "Round " + i, true)
                 //wait a little bit
                 await ns.sleep(CONFIG.TIME_BETWEEN_ROUNDS)
+                var header = doc.getElementsByTagName("h4")[1]
                 //get the type
-                const type = doc.getElementsByTagName("h4")[1].innerText
+                const type = header.innerText
                 //placeholder
                 var data = null
+                //debug
+                log.info(ns, "Infiltration", "Starting " + type, true)
                 //check what to do
                 switch (type) {
 
@@ -115,18 +121,13 @@ export class infiltration_obj {
                     case "Guarding ...":
                         //keep looping -> TODO: how to exit the loop when it fails / times out?
                         while (true) {
-                            //get the data
-                            data = doc.getElementsByTagName("h4")[1].innerText //should contain: Guarding / Distracted /  Alerted 
-                            //TODO: stop for now
-                            log.info(ns, "Infiltration", "Guarding data: '" + data + "'", true)
-                            //click(get_element("button", "Cancel"))
-                            //ns.ui.openTail()
-                            //ns.exit()
-
+                            //get data
+                            const status = doc.getElementsByTagName("h4")[1].innerText
+                            log.info(ns, "Infiltration", "Guard: " + status, true)
                             //wait until
-                            if (data.includes("Distracted")) {
+                            if (status.includes("Distracted")) { //should contain: Guarding / Distracted /  Alerted 
                                 //attack
-                                pressKey(" ")
+                                await pressKey(ns, CONSTANTS.KEY.SPACE)
                                 //stop
                                 break
                             }
@@ -135,33 +136,37 @@ export class infiltration_obj {
                         }
                         //debug
                         ns.alert("Completed: 'Attack the sentinel'")
+                        ns.ui.openTail()
+                        await ns.sleep(CONSTANTS.TIME.WAIT)
+                        ns.exit()
                         //stop
                         break
 
 
 
 
-                        
+
                     case "Say something nice about the guard":
                         //determine the element to press down on
-                        const element = doc.getElementsByTagName("h5")[2]
+                        const text_box = doc.getElementsByTagName("h5")[2]
                         //where to press down on?
                         for (let i = 0; i < 50; i++) { //while (true) {
+                            const text = text_box.innerText
                             //log the information found
-                            log.info(ns, "Infiltration", "Text: " + element.innerText, true)
+                            log.info(ns, "Infiltration", "Text: " + text + " (" + CONSTANTS.GUARD_COMPLIMENTS
+                                .includes(text) + ") => " + JSON.stringify(CONSTANTS.GUARD_COMPLIMENTS), true)
                             //if this is a complement
-                            if (CONSTANTS.GUARD_COMPLIMENTS.includes(element.innerText)) {
+                            if (CONSTANTS.GUARD_COMPLIMENTS.includes(text)) {
                                 //send
-                                pressKey(CONSTANTS.KEY.UP)
+                                await pressKey(ns, CONSTANTS.KEY.SPACE)
                                 //debug
-                                log.success(ns, "Infiltration", "Send compliment: " + element.innerText, true)
+                                log.success(ns, "Infiltration", "Send compliment: " + text_box.innerText, true)
                                 //next 
                                 break
                             } else {
+                                log.info(ns, "Infiltration", "Go to next compliment", true)
                                 //go to next entry
-                                pressKey("w")
-                                //TODO: needed? wait a little bit
-                                await ns.sleep(CONSTANTS.TIME.WAIT)
+                                await pressKey(ns, CONSTANTS.KEY.UP)
                             }
                         }
                         //debug
@@ -176,42 +181,44 @@ export class infiltration_obj {
 
                         //multi-key
                     case "Enter the Code!":
-                        //TODO: how to determine when we're done?
-                        while (true) {
-                            //TODO: get the code    
-                            data = ""
-                            //TODO: stop for now
-                            log.info(ns, "Infiltration", "Code data: '" + data + "'", true)
-                            //click(get_element("button", "Cancel"))
-                            ns.ui.openTail()
-                            ns.exit()
-                            //depending on the data: send key strokes
-                            switch (data) {
-                                case "":
-                                    pressKey(CONSTANTS.KEY.UP)
-                                    break
+                        //get the data    
+                        data = header.parentElement.children[1].innerText.split("\n")
+                        log.info(ns, "Infiltration", "Code of " + data.length + ", data:  '" + data + "'", true)
 
-                                case "":
-                                    pressKey(CONSTANTS.KEY.LEFT)
-                                    break
-
-                                case "":
-                                    pressKey(CONSTANTS.KEY.RIGHT)
-                                    break
-
-                                case "":
-                                    pressKey(CONSTANTS.KEY.DOWN)
-                                    break
-
-                                default:
-                                    log.error(ns, "Infiltration", "Enter the Code uncaught: " + data, true)
-                                    click(get_element("button", "Cancel"))
-                                    ns.ui.openTail()
-                                    ns.exit()
-                            }
-                            //temporary
-                            await ns.sleep(CONSTANTS.TIME.WAIT)
+                        for (let i = 0; i < data.length; i++) {
+                            //get the direction
+                            const direction = header.parentElement.children[1].innerText.split("\n")[i]
                         }
+                        //click(get_element("button", "Cancel"))
+                        ns.ui.openTail()
+                        ns.exit()
+                        //depending on the data: send key strokes
+                        switch (direction) {
+                            case "↑":
+                                await pressKey(ns, CONSTANTS.KEY.UP)
+                                break
+
+                            case "←":
+                                await pressKey(ns, CONSTANTS.KEY.LEFT)
+                                break
+
+                            case "→":
+                                await pressKey(ns, CONSTANTS.KEY.RIGHT)
+                                break
+
+                            case "↓":
+                                await pressKey(ns, CONSTANTS.KEY.DOWN)
+                                break
+
+                            default:
+                                log.error(ns, "Infiltration", "Enter the Code uncaught: " + data, true)
+                                click(get_element("button", "Cancel"))
+                                ns.ui.openTail()
+                                ns.exit()
+                        }
+                        //temporary
+                        await ns.sleep(CONSTANTS.TIME.WAIT)
+
                         //debug
                         ns.alert("Completed: 'Enter the code'")
                         //stop                    
@@ -220,16 +227,21 @@ export class infiltration_obj {
 
                     case "Cut the wires with the following properties! (keyboard 1 to 9)":
                         //determine the data (array of numbers between 1 to 9)
-                        data = []
+                        data = header.parentElement.children
+                        for (const entry of data) {
+                            log.info(ns, "Infiltration", "Cut the wires data entry: '" + entry.innerText + "'",
+                                true)
+                        }
                         //TODO: stop for now
-                        log.info(ns, "Infiltration", "Cut the wires data: '" + data + "'", true)
+
                         //click(get_element("button", "Cancel"))
                         ns.ui.openTail()
+                        await ns.sleep(CONSTANTS.TIME.WAIT)
                         ns.exit()
 
                         //should work when the correct data is selected
                         //press the keys in the data order
-                        press_keys(data)
+                        await press_keys(ns, data)
                         //debug
                         ns.alert("Completed: 'Cut the wires'")
                         //stop
@@ -238,19 +250,12 @@ export class infiltration_obj {
 
                     case "Type it backward":
                         //get the data    
-                        data = ""
-                        //TODO: stop for now
+                        data = header.parentElement.children[1].innerText
+                        //log
                         log.info(ns, "Infiltration", "Backward data: '" + data + "'", true)
-                        //click(get_element("button", "Cancel"))
-                        ns.ui.openTail()
-                        ns.exit()
-
-                        //should work if the data is correct?
-
-                        //reverse the data
-                        data = data.split('').reverse().join('')
                         //press the keys in the data order
-                        press_keys(data)
+                        await press_keys(ns, data)
+                        await ns.sleep(5000)
                         //debug
                         ns.alert("Completed: 'Type it backward'")
                         //stop
@@ -259,17 +264,17 @@ export class infiltration_obj {
 
                     case "Close the brackets":
                         //get the data    
-                        data = ""
-                        //TODO: stop for now
-                        log.info(ns, "Infiltration", "Brackets data: '" + data + "'", true)
-                        //click(get_element("button", "Cancel"))
+                        data = header.parentNode.children[1].innerText
+                        /*
+                        for (const entry of data) {
+                            log.info(ns, "Infiltration", "brackets entry: '" + entry.innerText + "'",
+                                true)
+                        }
                         ns.ui.openTail()
-                        ns.exit()
-
-                        //should work if the data is correct?
-
+                        ns.exit()*/
+                        //data = data.split('').reverse().join('')
                         //press the keys in the data order
-                        press_keys(data)
+                        await press_keys(ns, data)
                         //debug
                         ns.alert("Completed: 'Close the brackets'")
                         //stop
@@ -311,14 +316,14 @@ export class infiltration_obj {
                             const column = 0
                             //move down to the row
                             for (let i = 0; i < row; i++) {
-                                pressKey(CONSTANTS.KEY.DOWN)
+                                await pressKey(ns, CONSTANTS.KEY.DOWN)
                             }
                             //move right to the column
                             for (let i = 0; i < column; i++) {
-                                pressKey(CONSTANTS.KEY.RIGHT)
+                                await pressKey(ns, CONSTANTS.KEY.RIGHT)
                             }
                             //select
-                            pressKey(" ")
+                            await pressKey(ns, CONSTANTS.KEY.SPACE)
                         }
                         //debug
                         ns.alert("Completed: 'Match the symbols!'")
@@ -354,10 +359,15 @@ export class infiltration_obj {
                         //indicate failure
                         return false
                 }
+                log.info(ns, "Infiltration", "Finished loop", true)
             }
         } catch (err) {
             //log
             log.error(ns, "Infiltration", "manage_infiltration error: " + err, true)
+            await ns.sleep(CONSTANTS.TIME.WAIT)
+            ns.ui.openTail()
+            ns.exit()
+
             //indicate failure
             return false
         }
@@ -366,16 +376,6 @@ export class infiltration_obj {
     }
 }
 
-
-async function press_keys(data) {
-    //for each entry
-    for (const entry in data) {
-        //send this number
-        pressKey(entry)
-        //wait a little bit
-        await ns.sleep(CONFIG.TIME_BETWEEN_KEYS)
-    }
-}
 
 
 function get_element(type, text = "") {
@@ -407,38 +407,63 @@ const click = async elem => {
 }
 
 
-function pressKey(keyOrCode) {
-    //variables to fill
-    let keyCode = 0
-    let key = ""
-    //if a string and set
-    if ("string" === typeof keyOrCode && keyOrCode.length > 0) {
-        //get the first character in lowercase
-        key = keyOrCode.toLowerCase().substr(0, 1)
-        //generate the keycode
-        keyCode = key.charCodeAt(0)
-        //if number
-    } else if ("number" === typeof keyOrCode) {
-        //copy the number
-        keyCode = keyOrCode
-        //generate the key
-        key = String.fromCharCode(keyCode)
+
+async function press_keys(ns, data) {
+    //for each entry
+    for (const entry of data) {
+        //send this number
+        const key = await pressKey(ns, entry)
+        log.info(ns, "Infiltration", "Send key: '" + key + "'", true)
     }
-    //if key is not set
-    if (!keyCode || key.length !== 1) {
-        //stop
-        return
+}
+
+
+async function pressKey(ns, char) {
+   let charToSend = char.toLowerCase()
+
+    if (char === '{') {
+        charToSend = '%'
+
+    } else if (char === '}') {
+        charToSend = '&'
+
+    } else if (char === 'Space') {
+        charToSend = '_'
+
+    } else if (char === 'Tab') {
+        charToSend = '^'
+
+    } else if (char === 'Up') {
+        charToSend = '↑'
+
+    } else if (char === 'Down') {
+        charToSend = '↓'
+
+    } else if (char === 'Left') {
+        charToSend = '←'
+
+    } else if (char === 'Right') {
+        charToSend = '→'
+        
+    } else if (char === 'Enter') {
+        charToSend = '§'
     }
-    //function to send the event
-    function sendEvent(event) {
-        //create the keyboard event
-        const keyboardEvent = new KeyboardEvent(event, {
-            key,
-            keyCode,
-        });
-        //dispatch the event with the key and key code
-        doc.dispatchEvent(keyboardEvent)
+
+    // ns.printf('charToSend: %s', JSON.stringify(charToSend, null, 4));
+    const options = {
+        method: 'GET',
+        mode: 'no-cors'
+    };
+    const url = 'http://localhost:42800/send/SendKeyToBitburner' + charToSend;
+    // console.log('Sending', charToSend);
+
+    try {
+        await fetch(url, options)
+    } catch (error) {
+        console.error(error)
     }
-    //sent the actual event
-    sendEvent("keydown")
+
+    await ns.sleep(120) //110
+    //debug
+    return char
 }

@@ -189,7 +189,7 @@ export class hack_obj {
                         format_time(
                             time_wait), true)
                     //write to port
-                    this.write_data_to_port(ns, "Weaken " + percentage + "%")
+                    this.write_data_to_port(ns, "W: " + percentage + "%")
                     //stop
                     break
 
@@ -205,7 +205,7 @@ export class hack_obj {
                         format_time(time_wait),
                         true)
                     //write to port
-                    this.write_data_to_port(ns, "Grow " + percentage + "%")
+                    this.write_data_to_port(ns, "G " + percentage + "%")
                     //stop
                     break
 
