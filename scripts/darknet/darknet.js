@@ -78,6 +78,7 @@ export class darknet_obj {
             //log
             log.success(ns, "Darkweb", "Initial darkweb worker deployed")
         }
+        
     }
     
 

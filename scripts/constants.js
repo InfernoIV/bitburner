@@ -54,7 +54,7 @@ export const SCRIPT = {
     TO_COPY: {
         HACK: ["scripts/util/log.js", "scripts/constants.js",
             "scripts/hack/constants.js", "scripts/hack/worker_grow.js", "scripts/hack/worker_weaken.js", "scripts/hack/worker_hack.js"],
-        DARKNET: ["scripts/util/log.js", "scripts/constants.js", 
+        DARKNET: ["scripts/util/log.js", "scripts/constants.js", "scripts/ram/constants.js",
             "scripts/darknet/constants.js", "scripts/darknet/worker_darknet.js", ]
     },
 }

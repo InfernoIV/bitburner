@@ -1,5 +1,6 @@
 import * as CONSTANTS from "./constants.js"
 import * as CONFIG from "./config.js"
+
 import * as log from "scripts/util/log.js"
 
 // Declaration
@@ -10,7 +11,7 @@ export class cloud_obj {
 
 
     //
-    init(ns, currentNodeMults = {CloudServerLimit: 1, CloudServerMaxRam: 1}) {
+    init(ns, handles) {
         //disable logging
         log.disable(ns, CONFIG.DISABLE_LOGGING)                
         //map of servers owned
