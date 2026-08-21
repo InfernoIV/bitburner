@@ -29,7 +29,7 @@ export class singularity_obj {
         this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
         this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
         //determine next bitnode
-        this.next_bitnode = this.determine_next_bitnode(ns)
+        this.next_bitnode = determine_next_bitnode(ns)[0]
         //log
         log.info(ns, "Singularity", "Next bitnode target: " + this.next_bitnode, true)
         //debug
@@ -1122,8 +1122,17 @@ export class singularity_obj {
     }
 
 
-    //function that determines the next bitnode, following the described path
-    determine_next_bitnode(ns) {
+
+
+
+   
+
+    //end of object
+}
+
+
+//function that determines the next bitnode, following the described path
+export function determine_next_bitnode(ns) {
         //plot a path
         const bitnode_path = [
             //start
@@ -1278,7 +1287,7 @@ export class singularity_obj {
         //if we foresee the need for a SF 12
         if (sum_sf > Math.floor(sf_12_owned * CONFIG.SF_12_MULT)) {
             //focus SF12
-            return 12
+            return [12,sf_12_owned+1]
         }
 
         //for each planned step
@@ -1294,11 +1303,11 @@ export class singularity_obj {
             //check if we have a target
             if (owned_source_files.get(bitnode) < level) {
                 //return this bitnode number
-                return bitnode
+                return [bitnode,level]
             }
         }
         //default to 12 (endless) if no steps found
-        return 12
+        return [12,sf_12_owned+1]
 
         /*
         bitNodeOptions		BitNodeOptions			Current BitNode options
@@ -1311,14 +1320,6 @@ export class singularity_obj {
         If the active level of a source file is 0, that source file won't be included in the result.
         */
     }
-
-
-   
-
-    //end of object
-}
-
-
 
 //function that gets current bitnode level
 export function get_bitnode_level(ns) {

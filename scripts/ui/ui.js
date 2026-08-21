@@ -23,7 +23,7 @@ import {
 } from "scripts/gang/gang.js"
 
 import { 
-    get_bitnode_level
+    get_bitnode_level, determine_next_bitnode
 } from "scripts/singularity/singularity.js"
 
 
@@ -274,6 +274,11 @@ export class ui_obj {
         this.add_data(ns, CONFIG.COLOR.BITNODE, "Bitnode",
             "ns.getResetInfo().currentNode", true,
             "get_bitnode_level(ns)", true,
+            "."
+        )
+        this.add_data(ns, CONFIG.COLOR.BITNODE, "Next BN",
+            "determine_next_bitnode(ns)[0]", true,
+            "determine_next_bitnode(ns)[1]", true,
             "."
         )
         //if we have singularity

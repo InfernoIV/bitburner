@@ -143,13 +143,7 @@ async function authenticate_servers(ns, hostname_self) {
             //not successfull
         } else if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //perform heartbleed for more information
-            var heartbleed = await ns.dnet.heartbleed(darknet_hostname)
-            //if server became unavailable
-            if (heartbleed.code == ns.enums.DarknetResponseCode.ServiceUnavailable ||
-                heartbleed.code == ns.enums.DarknetResponseCode.DirectConnectionRequired) {
-                //next
-                continue
-            }
+            var heartbleed = await get_heartbleed(ns, darknet_hostname)
             //print message
             ns.alert("Auth failed for '" + darknet_hostname + "': '" + JSON.stringify(result) +
                 "', getServerDetails: '" + JSON
@@ -185,10 +179,10 @@ async function authenticate_server(ns, server_details, hostname) {
     const hint = server_details.passwordHint
     //decide what to do on model
     switch (model) {
-        case "ZeroLogon": //works
+        case "ZeroLogon":
             return await authenticate(ns, hostname, "")
 
-        case "Laika4": //works
+        case "Laika4":
             //decide on length
             switch (length) {
                 case 3:
@@ -203,54 +197,51 @@ async function authenticate_server(ns, server_details, hostname) {
                     log.error(ns, ns.pid, "Uncaught length: " + length)
             }
 
-        case "DeskMemo_3.1": //works
+        case "DeskMemo_3.1":
             return await authenticate(ns, hostname, get_password(hint, length))
 
-        case "CloudBlare(tm)": //works
+        case "CloudBlare(tm)":
             return await authenticate(ns, hostname, extract_numbers(data))
 
-        case "OctantVoxel": //works
+        case "OctantVoxel":
             return await authenticate(ns, hostname, calculate_base(data))
 
-        case "Pr0verFl0": //works
+        case "Pr0verFl0":
             return await authenticate(ns, hostname, "_".repeat(length * 2))
 
-        case "BellaCuore": //works
+        case "BellaCuore":
             return await authenticate(ns, hostname, convert_roman_numerals(ns, hint, length))
 
-        case "FreshInstall_1.0": //works
+        case "FreshInstall_1.0":
             return await try_default_passwords(ns, hostname, format, length)
 
-        case "PHP 5.4": //works
+        case "PHP 5.4": 
             return await sort_password(ns, hostname, data, length)
 
-        case "Factori-Os": //works
+        case "Factori-Os": 
             return await find_number_divisible(ns, hostname, length)
 
-        case "AccountsManager_4.2": //works
+        case "AccountsManager_4.2":
             return await find_number_higher_lower(ns, hostname, length)
 
-        case "NIL": //works
+        case "NIL":
             return await increment_password(ns, hostname, length)
 
-        case "OpenWebAccessPoint": //works
+        case "OpenWebAccessPoint":
             return await derive_password_from_heartbleed(ns, hostname, length)
 
-        case "DeepGreen": //works
+        case "DeepGreen":
             return await mastermind_password(ns, hostname, length)
 
         default:
-            /*
             //heartbleed for more information
-            var heartbleed = await ns.dnet.heartbleed(hostname)
+            var heartbleed = await get_heartbleed(ns, hostname)
             //log extra information
             log.error(ns, "", hostname + "-> unknown model '" + model +
                 "', server details: '" + JSON.stringify(server_details) + "', heartbleed: '" + JSON
                 .stringify(heartbleed) + "'", true)
             //open logs
             ns.ui.openTail()
-            //stop for now
-            ns.exit()*/
     }
     return false
 }
@@ -380,20 +371,13 @@ async function mastermind_password(ns, hostname, lenght) {
         //if failed
         if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //heartbleed for more information
-            const heartbleed = await ns.dnet.heartbleed(hostname)
-            //log
-            log.info(ns, ns.pid, "heartbleed: " + JSON.stringify(heartbleed))
+            const heartbleed = await get_heartbleed(ns, hostname)
             //check if successfull
             if (heartbleed.success == true) {
                 //check if we have logs (we should..)
                 if (heartbleed.logs.length == 0) {
                     //go next
                     continue
-                }
-                //if server is restarting.. heartbleed: '{"success":true,"code":200,"message":"Success","logs":["Server restarting, terminating scripts..."]}'
-                if (heartbleed.logs[0].includes("restarting")) {
-                    //stop
-                    return
                 }
                 const heartbleed_log = JSON.parse(heartbleed.logs[0])
                 const data = heartbleed_log.data
@@ -417,17 +401,13 @@ async function mastermind_password(ns, hostname, lenght) {
                 //\"data\":\"0,0\
             } else {
                 //stop
-                return result
+                return heartbleed
             }
             //success, offline or moved
         } else {
             //return the result
             return result
         }
-    }
-    //WIP
-    return {
-        code: ns.enums.DarknetResponseCode.AuthFailure
     }
 }
 
@@ -444,7 +424,7 @@ async function increment_password(ns, hostname, length) {
         //if failed
         if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //heartbleed for more information
-            var heartbleed = await ns.dnet.heartbleed(hostname)
+            var heartbleed = await get_heartbleed(ns, hostname)
             //check if successfull
             if (heartbleed.success == true) {
                 log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(heartbleed) + "'")
@@ -480,11 +460,6 @@ async function increment_password(ns, hostname, length) {
             return result
         }
     }
-    //failsafe
-    return {
-        code: ns.enums.DarknetResponseCode.AuthFailure,
-        success: false
-    }
 }
 
 
@@ -502,16 +477,13 @@ async function derive_password_from_heartbleed(ns, hostname, length) {
     //if not succesfull
     if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
         //dummy value
-        var heartbleed = {
-            success: true
-        }
+        var heartbleed = await get_heartbleed(ns, hostname)
         //keep track of loops
         var loop = 1
         //keep looping until success
         while (heartbleed.success) {
             log.info(ns, ns.pid, "try_passwords - Heartbleeding for more information")
-            //heartbleed for more information
-            heartbleed = await ns.dnet.heartbleed(hostname)
+            
             log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(heartbleed) + "'")
             //for each log
             for (const log_raw of heartbleed.logs) {
@@ -547,6 +519,13 @@ async function derive_password_from_heartbleed(ns, hostname, length) {
             }
             //up the loop   
             loop += 1
+            //heartbleed for more information
+            heartbleed = await get_heartbleed(ns, hostname)
+        }
+        //if heartbleed failed
+        if (!heartbleed.success) {
+            //return the information
+            return heartbleed
         }
     }
     //return result
@@ -660,8 +639,8 @@ async function find_number_higher_lower(ns, hostname, length) {
         //
         if (result.code == ns.enums.DarknetResponseCode.AuthFailure) {
             //heartbleed for more information
-            result = await ns.dnet.heartbleed(hostname)
-            if (result.code == ns.enums.DarknetResponseCode.Success) {
+            result = await get_heartbleed(ns, hostname)
+            if (result.success == true) {
                 //log
                 log.info(ns, ns.pid, "heartbleed: '" + JSON.stringify(result) + "'")
                 //check if we have logs
@@ -703,11 +682,6 @@ async function find_number_higher_lower(ns, hostname, length) {
         //adjust the number smaller
         number_change = Math.ceil(number_change / 2)
     }
-    //failsafe
-    return {
-        code: ns.enums.DarknetResponseCode.AuthFailure,
-        success: false
-    }
 }
 
 
@@ -722,9 +696,9 @@ async function find_number_divisible(ns, hostname, length) {
     //if incorrect
     if (result == ns.enums.DarknetResponseCode.AuthFailure) {
         //get heartbleed
-        var heartbleed = await ns.dnet.heartbleed(hostname)
+        var heartbleed = await get_heartbleed(ns, hostname)
         //if successfull
-        if (heartbleed.code == ns.enums.DarknetResponseCode.Success) {
+        if (heartbleed.success == true) {
             //check logs
             for (const log of heartbleed.logs) {
                 //get the number
@@ -739,6 +713,9 @@ async function find_number_divisible(ns, hostname, length) {
                     not_divisible.push(number)
                 }
             }
+        } else {
+            //return the heartbleed information
+            return heartbleed
         }
         log.info(ns, ns.pid, "Found divisible: " + divisible)
         log.info(ns, ns.pid, "Found non-divisible: " + not_divisible)
@@ -1059,6 +1036,58 @@ function open_caches(ns, hostname_self) {
                 log.error(ns, ns.pid, "Uncaught condition 'file_extension': '" + file_extension + "'")
         }
     }
+}
+
+
+//get and handle heartbleed information
+async function get_heartbleed(ns, hostname) {
+    //create log variable
+    var logs = []
+    //check if server is online
+    /*if(ns.getServer(hostname)) {
+        return {success: false, logs: logs}
+    }*/
+    //"Server restarting, terminating scripts..."
+    //get heartbleed
+    const heartbleed = await ns.dnet.heartbleed(hostname)
+    
+    switch (heartbleed.code) {
+        //if successfull
+        case ns.enums.DarknetResponseCode.Success: 
+        //continue
+        break
+
+        /*
+        //if timeout due to instability
+        case ns.enums.DarknetResponseCode.RequestTimeOut: 
+        //try again
+        return await get_heartbleed(ns, hostname)
+        */
+        /*
+        case ns.enums.DarknetResponseCode.DirectConnectionRequired:
+        case ns.enums.DarknetResponseCode.AuthFailure:
+        case ns.enums.DarknetResponseCode.Forbidden: 
+        case ns.enums.DarknetResponseCode.NotFound: 
+        case ns.enums.DarknetResponseCode.RequestTimeOut: 
+        case ns.enums.DarknetResponseCode.NotEnoughCharisma: 
+        case ns.enums.DarknetResponseCode.StasisLinkLimitReached: 
+        case ns.enums.DarknetResponseCode.NoBlockRAM: 
+        case ns.enums.DarknetResponseCode.PhishingFailed: 
+        case ns.enums.DarknetResponseCode.ServiceUnavailable: 
+        */
+        default: 
+            return {success: false, code: heartbleed.code, logs: logs}
+    }
+    //for each log
+    for (const log of heartbleed.logs) {
+        //if the log is not a 'restart' log
+        if (log != "Server restarting, terminating scripts...") {
+            //add it to the logs
+            logs.push(log)
+        }
+    }
+    //return success and logs
+    return {success: true, logs: logs, code: heartbleed.code}
 }
 
 
