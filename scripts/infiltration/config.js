@@ -14,4 +14,4 @@ export const TIME_BETWEEN_ROUNDS = 1100
 export const CLICK_SLEEP_TIME = null
 
 //time between key presses
-export const TIME_BETWEEN_KEYS = 1000
+export const TIME_BETWEEN_KEYS = 1100

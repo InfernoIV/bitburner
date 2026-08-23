@@ -14,6 +14,7 @@ export class infiltration_obj {
     constructor() {
         //debug
         this.loop = 0
+        this.printOnce = true
     }
 
 
@@ -24,9 +25,16 @@ export class infiltration_obj {
 
 
     async manage(ns) {
+        //keep track if we did anything
+        var performed_any_infiltration = false
         //debug
         if (this.loop >= CONFIG.LOOPS_MAX) {
-            ns.exit()
+            if(this.printOnce) {
+                this.printOnce = false
+                ns.alert("Stopping Infiltration")
+                ns.toast("Stopping Infiltration")
+            }
+            //ns.exit()
             //stop
             return
         }
@@ -64,6 +72,7 @@ export class infiltration_obj {
             try {
                 //perform infiltration
                 var result = await this.manage_infiltration(ns, max_clearance_level)
+                
                 //if successfull            
                 if (result == true) {
                     //log
@@ -82,8 +91,10 @@ export class infiltration_obj {
             } catch (err) {
                 //log
                 log.error(ns, "Infiltration", "Error with infiltration: " + err, true)
+                //debug
+                this.loop += 1
                 //stop
-                ns.exit()
+                //ns.exit()
             }
 
             //debug
@@ -91,6 +102,10 @@ export class infiltration_obj {
             //stop (unblocks main)
             return
         }
+        //debug
+        this.loop += 1
+        //stop (unblocks main)
+        return
     }
 
 
@@ -467,3 +482,34 @@ async function pressKey(ns, char) {
     //debug
     return char
 }
+
+async function pressKeyEvent(ns, char) {
+    var keyboardEvent = document.createEvent('KeyboardEvent');
+    var initMethod = typeof keyboardEvent.initKeyboardEvent !== 'undefined' ? 'initKeyboardEvent' : 'initKeyEvent';
+    
+    keyboardEvent[initMethod](
+    'keydown', // event type: keydown, keyup, keypress
+    true, // bubbles
+    true, // cancelable
+    window, // view: should be window
+    false, // ctrlKey
+    false, // altKey
+    false, // shiftKey
+    false, // metaKey
+    40, // keyCode: unsigned long - the virtual key code, else 0
+    0, // charCode: unsigned long - the Unicode character associated with the depressed key, else 0
+    )
+    document.dispatchEvent(keyboardEvent)
+
+    
+}
+
+
+//https://github.com/bitburner-official/bitburner-src/blob/dev/src/Infiltration/ui/InfiltrationRoot.tsx#L75
+/*
+const press = (event: KeyboardEvent) => {
+      if (!event.isTrusted || !(event instanceof KeyboardEvent)) {
+        state.onFailure({ automated: true });
+        return;
+      }
+        */

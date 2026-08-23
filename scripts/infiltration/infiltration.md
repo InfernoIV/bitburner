@@ -2,6 +2,8 @@
 //https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.locationnameenumtype.md
 
 
+https://github.com/bitburner-official/bitburner-src/blob/dev/src/Infiltration/ui/InfiltrationRoot.tsx#L75
+
 https://github.com/kuehnert/mrk-bitburner-scripts/blob/08b531f247ef5fe366bd515137b1fa2bedbba50e/scripts/infiltrate.js#L4
 
 Infiltration			Infiltration API.
