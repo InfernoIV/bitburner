@@ -32,9 +32,13 @@ export async function main(ns) {
     }
     //destroy world deamon and start with boot script on next target bitnode
     ns.singularity.destroyW0r1dD43m0n(next_bitnode, SCRIPT.BOOT)
+    //wait a little bit
+    await ns.sleep(10*1000) //10 seconds
     //log
     log.error(ns, "DESTROY", "IF YOU SEE THIS MESSAGE, THEN DESTROY BITNODE WAS TRIGGERED BUT NOT SUCCESSFULL!",
         true)
+    //alert
+    ns.alert("IF YOU SEE THIS MESSAGE, THEN DESTROY BITNODE WAS TRIGGERED BUT NOT SUCCESSFULL!")
     //failsafe: restart with boot script
     ns.spawn(SCRIPT.BOOT)
 }

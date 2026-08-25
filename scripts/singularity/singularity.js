@@ -1,21 +1,51 @@
 //config
-import { DISABLE_LOGGING, TIME_WAIT, CRIME_CHANCE_MIN, CRIME_TIME_MAX, SF_12_MULT, SKILL_MIN, AUGMENTS_INSTALL_MIN, KILLS_MIN  } from "./config.js"
+import {
+    DISABLE_LOGGING,
+    TIME_WAIT,
+    CRIME_CHANCE_MIN,
+    CRIME_TIME_MAX,
+    SF_12_MULT,
+    SKILL_MIN,
+    AUGMENTS_INSTALL_MIN,
+    KILLS_MIN
+} from "./config.js"
 
 
 //constants
-import { GYMS, UNIVERSITIES, WORK_TYPE, COMPANY_FACTIONS } from "./constants.js"
-import { SERVER } from "scripts/constants/servers.js"
-import { FILE_EXTENSION } from "scripts/constants/files.js"
-import { TOOLS } from "scripts/constants/tools.js"
-import { HANDLE } from "scripts/constants/handles.js"
-import { AUGMENT } from "scripts/constants/augments.js"
-import { SCRIPT } from "scripts/constants/scripts.js"
-import { FACTION } from "scripts/constants/factions.js"
+import {
+    GYMS,
+    UNIVERSITIES,
+    WORK_TYPE,
+    COMPANY_FACTIONS
+} from "./constants.js"
+import {
+    SERVER
+} from "scripts/constants/servers.js"
+import {
+    FILE_EXTENSION
+} from "scripts/constants/files.js"
+import {
+    TOOLS
+} from "scripts/constants/tools.js"
+import {
+    HANDLE
+} from "scripts/constants/handles.js"
+import {
+    AUGMENT
+} from "scripts/constants/augments.js"
+import {
+    SCRIPT
+} from "scripts/constants/scripts.js"
+import {
+    FACTION
+} from "scripts/constants/factions.js"
 
 
 //functions
 import * as log from "scripts/util/log.js"
-import { sell_all_stocks } from "scripts/stock/stock.js"
+import {
+    sell_all_stocks
+} from "scripts/stock/stock.js"
 
 
 export class singularity_obj {
@@ -98,7 +128,7 @@ export class singularity_obj {
     destroy_bitnode(ns, bitnode_multipliers_available, bladeburner_available) {
         //if we have the red pill installed
         if (ns.singularity.getOwnedAugmentations(false).includes(AUGMENT
-            .TRP)) {
+                .TRP)) {
             //get the required hacking level
             let world_deamon_hacking = ns.getServer(SERVER.WORLD_DEAMON).requiredHackingSkill
             //log.info(ns, "Singularity", "world_deamon_hacking: " + world_deamon_hacking, true)
@@ -106,9 +136,14 @@ export class singularity_obj {
             const level_hacking = ns.getPlayer().skills.hacking
             //if bladeburner completed the final black op or enough hacking level
             if (level_hacking >= world_deamon_hacking || false) {
-                //replace this script with the destroy script
-                ns.spawn(SCRIPT.DESTROY, 1, 
-                    this.next_bitnode, level_hacking >= world_deamon_hacking)
+                //get current bitnode
+                const current_bitnode = ns.getResetInfo().currentNode
+                //check if we are not in BN10.1 (which should be manually destroyed for maximum profitability)
+                if (!(current_bitnode == 10 && get_bitnode_level(ns) == 1)) {
+                    //replace this script with the destroy script
+                    ns.spawn(SCRIPT.DESTROY, 1,
+                        this.next_bitnode, level_hacking >= world_deamon_hacking)
+                }
             }
         }
     }
@@ -570,9 +605,10 @@ export class singularity_obj {
         //get augments installed
         let augments_owned = ns.singularity.getOwnedAugmentations(false)
         //if we have bought at least 5 augments or we have the red pill
-        if (((augments_bought.length - augments_owned.length) >= AUGMENTS_INSTALL_MIN) || 
-        //we have bought the red pill but not yet installed
-            (ns.singularity.getOwnedAugmentations(true).includes(AUGMENT.TRP) && !ns.singularity.getOwnedAugmentations(false).includes(AUGMENT.TRP))) {
+        if (((augments_bought.length - augments_owned.length) >= AUGMENTS_INSTALL_MIN) ||
+            //we have bought the red pill but not yet installed
+            (ns.singularity.getOwnedAugmentations(true).includes(AUGMENT.TRP) && !ns.singularity
+                .getOwnedAugmentations(false).includes(AUGMENT.TRP))) {
             //get factions
             const factions = ns.getPlayer().factions
             //get best rep
@@ -644,86 +680,12 @@ export class singularity_obj {
     Singularity.getFactionFavor 1
     */
     work_for_faction(ns, formulas_available, ignore_favor = false) {
-        //bought red pill
-        const have_red_pill = ns.singularity.getOwnedAugmentations(true).includes(AUGMENT.TRP)
-        //if red pill is not yet gotten and daedalus is unlocked
-        if (!have_red_pill && ns.getPlayer().factions.includes(FACTION.DAEDALUS)) {
-            //set to work for faction
-            this.perform_action(ns, WORK_TYPE.FACTION, FACTION.DAEDALUS, formulas_available)
-            //indicate sucess
-            return true
-        }
-
-        //get augments owned
-        const augments_owned = ns.singularity.getOwnedAugmentations(true)
-        //get factions
-        const factions = ns.getPlayer().factions
-        //letiable to fill
-        let target_faction = ""
-        //for each faction
-        for (const faction of factions) {
-            //save highest rep needed
-            let rep_highest = 0
-            //check if we have enough rep for the augments
-            //get augmnets
-            const augments = ns.singularity.getAugmentationsFromFaction(faction)
-            //for each augment the faction offers
-            for (const augment of augments) {
-                //if neurflux governor
-                if (augment == AUGMENT.NFG) {
-                    //ignore
-                    continue
-                }
-                //if not owned
-                if (!augments_owned.includes(augment)) {
-                    //get rep requirement
-                    const augment_rep = ns.singularity.getAugmentationRepReq(augment)
-                    //if higher than what we have saved
-                    if (augment_rep > rep_highest) {
-                        //save the rep
-                        rep_highest = augment_rep
-                    }
-                }
-            }
-            //get rep
-            const rep = ns.singularity.getFactionRep(faction)
-            //if we have enough rep for all augments
-            if (rep >= rep_highest) {
-                //go to next
-                continue
-            }
-            //if we ignore favor (aka donate)
-            if (ignore_favor) {
-                //set as target faction
-                target_faction = faction
-                //stop
-                break
-            }
-            //get favor
-            const favor = ns.singularity.getFactionFavor(faction)
-            const rep_to_favor = Math.log1p(rep / 30000) /
-                0.019802627296179712 //(rep / 25000) / 0.019802627296179712
-            let favor_for_donate = 150
-            //if we can use bitnode multipliers
-            if (formulas_available) {
-                //adjust the number
-                favor_for_donate * ns.getBitNodeMultipliers().FavorToDonateToFaction
-            }
-
-            const favor_needed = favor_for_donate - favor - rep_to_favor
-
-            //if we need to get more rep or favor
-            if (favor_needed > 0) {
-                //set as target faction
-                target_faction = faction
-                //stop
-                break
-            }
-        }
+        //get a list of faction we should work for
+        const factions = get_factions_to_work_for(ns, ignore_favor)
         //if a target faction is set
-        if (target_faction != "") {
-            //set to work for faction
-            this.perform_action(ns, WORK_TYPE.FACTION, target_faction, formulas_available)
+        if (target_faction >= 1) {
+            //set to work for the first faction on the list
+            this.perform_action(ns, WORK_TYPE.FACTION, target_faction[0], formulas_available)
             //indicate sucess
             return true
         }
@@ -816,7 +778,7 @@ export class singularity_obj {
         this.perform_action(ns, WORK_TYPE.CRIME, best_crime)
     }
 
-    
+
     commit_murder(ns) {
         //letiable for preferred crime
         let best_crime = ""
@@ -1052,7 +1014,7 @@ export class singularity_obj {
             gains_business = ns.formulas.companyGains(player,company,"Business",1).reputation
         }*/
         //check if business is better
-        if (gains_business > gains_business) {
+        if (gains_business > gains_software) {
             //set to business
             jobfield = "Business"
         }
@@ -1135,204 +1097,208 @@ export class singularity_obj {
     }
 
 
-
-
-
-   
-
     //end of object
 }
 
 
 //function that determines the next bitnode, following the described path
 export function determine_next_bitnode(ns) {
-        //plot a path
-        const bitnode_path = [
-            //start
-            [1, 1], //This Source-File lets the player start with 32GB of RAM on their home computer when entering a new BitNode
-            //increases all of the player's multipliers by: 16%			
+    //plot a path
+    const bitnode_path = [
+        //start
+        [1,
+        1], //This Source-File lets the player start with 32GB of RAM on their home computer when entering a new BitNode
+        //increases all of the player's multipliers by: 16%			
 
-            //automation
-            [4, 1], //This Source-File lets you access and use the Singularity functions outside of this BitNode.
-            //reduces the RAM cost of singularity functions in other BitNodes: 16x
-            [4, 2], //reduces the RAM cost of singularity functions in other BitNodes: 4x
-            [4, 3], //reduces the RAM cost of singularity functions in other BitNodes: 1x
+        //automation
+        [4, 1], //This Source-File lets you access and use the Singularity functions outside of this BitNode.
+        //reduces the RAM cost of singularity functions in other BitNodes: 16x
+        [4, 2], //reduces the RAM cost of singularity functions in other BitNodes: 4x
+        [4, 3], //reduces the RAM cost of singularity functions in other BitNodes: 1x
 
-            //general boost
-            [1, 2], //increases all of the player's multipliers by: 24%
-            [1, 3], //increases all of the player's multipliers by: 28%
+        //general boost
+        [1, 2], //increases all of the player's multipliers by: 24%
+        [1, 3], //increases all of the player's multipliers by: 28%
 
-            //permanent stat
-            [5, 1], //This Source-File grants you a new stat called Intelligence. Intelligence is unique because it is permanent and persistent (it never gets reset back to 1). However, gaining Intelligence experience is much slower than other stats. Higher Intelligence levels will boost your production for many actions in the game.
-            //In addition, this Source-File will unlock: getBitNodeMultipliers(), Permanent access to formulas, Access to BitNode multiplier information on the Stats page
-            //It will also raise all of your hacking-related multipliers by: 8%
-            
-            [15, 1], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
-            //increase all of your Bladeburner multipliers by: 8%
-            [8, 1], //Permanent access to WSE and TIX API
-            //increases your hacking growth multipliers by: 12%
+        //permanent stat
+        [5,
+        1], //This Source-File grants you a new stat called Intelligence. Intelligence is unique because it is permanent and persistent (it never gets reset back to 1). However, gaining Intelligence experience is much slower than other stats. Higher Intelligence levels will boost your production for many actions in the game.
+        //In addition, this Source-File will unlock: getBitNodeMultipliers(), Permanent access to formulas, Access to BitNode multiplier information on the Stats page
+        //It will also raise all of your hacking-related multipliers by: 8%
 
-            //sleeves
-            [10, 1], //Unlocks Sleeve and Grafting API in other BitNodes. 
+        [15,
+        1], //Permanently start with the TOR router and darkscape, and unlock the full dark web on all BitNodes.
+        //increase all of your Bladeburner multipliers by: 8%
+        [8, 1], //Permanent access to WSE and TIX API
+        //increases your hacking growth multipliers by: 12%
 
-            //(more) money
-            [2, 1], //This Source-File allows you to form gangs in other BitNodes once your karma decreases to a certain value. It
-            //also increases your crime success rate, crime money, and charisma multipliers by: 24%
-            [3, 1], //This Source-File lets you create corporations on other BitNodes (although some BitNodes will disable this mechanic)
-            //increases your charisma and	company salary multipliers by: 8%
-            [3, 2], //increases your charisma and	company salary multipliers by: 12%
-            [3, 3], //increases your charisma and	company salary multipliers by: 14%
-            //permanently unlocks the full API (warehouse & office API)
+        //sleeves
+        [10, 1], //Unlocks Sleeve and Grafting API in other BitNodes. 
 
-            //all the sleeves
-            [10, 2], //grants extra sleeve
-            [10, 3], //grants extra sleeve
+        //(more) money
+        [2,
+        1], //This Source-File allows you to form gangs in other BitNodes once your karma decreases to a certain value. It
+        //also increases your crime success rate, crime money, and charisma multipliers by: 24%
+        [3,
+        1], //This Source-File lets you create corporations on other BitNodes (although some BitNodes will disable this mechanic)
+        //increases your charisma and	company salary multipliers by: 8%
+        [3, 2], //increases your charisma and	company salary multipliers by: 12%
+        [3, 3], //increases your charisma and	company salary multipliers by: 14%
+        //permanently unlocks the full API (warehouse & office API)
 
-
-            [6, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes. 
-            //raise both the level and experience gain rate of all your combat stats by: 8%
-
-            [9, 1], //Permanently unlocks the Hacknet Server in other BitNodes
-            //increases hacknet production and reduces hacknet costs by: 12%
-            [9, 2], //You start with 128GB of RAM on your home computer when entering a new BitNode
-            //increases hacknet production and reduces hacknet costs by: 18%
-            [9, 3], //Grants a highly-upgraded Hacknet Server when entering a new BitNode	(Note that the Level 3 effect of this Source-File only applies when entering a new BitNode, NOT when installing
-            //increases hacknet production and reduces hacknet costs by: 21%
-
-            [11, 1], //company favor increases BOTH the player's salary and reputation gain rate at that company by 1% per favor (rather than just the reputation gain)
-            //increases the player's company salary and reputation gain multipliers by: 32%
-            //reduces the price increase for every augmentation bought by: 4%		
-            [11, 2], //increases the player's company salary and reputation gain multipliers by: 48%
-            //reduces the price increase for every augmentation bought by: 6%
-            [11, 3], //increases the player's company salary and reputation gain multipliers by: 56%
-            //reduces the price increase for every augmentation bought by: 7%
+        //all the sleeves
+        [10, 2], //grants extra sleeve
+        [10, 3], //grants extra sleeve
 
 
+        [6, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes. 
+        //raise both the level and experience gain rate of all your combat stats by: 8%
 
-            [13, 1], //Unlock Stanek's gift
+        [9, 1], //Permanently unlocks the Hacknet Server in other BitNodes
+        //increases hacknet production and reduces hacknet costs by: 12%
+        [9, 2], //You start with 128GB of RAM on your home computer when entering a new BitNode
+        //increases hacknet production and reduces hacknet costs by: 18%
+        [9,
+        3], //Grants a highly-upgraded Hacknet Server when entering a new BitNode	(Note that the Level 3 effect of this Source-File only applies when entering a new BitNode, NOT when installing
+        //increases hacknet production and reduces hacknet costs by: 21%
 
-            [15, 2], //Your charisma level increases job salary and rep gain. Also increases authentication speed by 20%
-            [15, 3], //Your charisma level increases faction work rep gain. Also increases the xp and money gained from .cache files by 50%.
-
-            [2, 2], //increases your crime success rate, crime money, and charisma multipliers by: 36%
-            [2, 3], //increases your crime success rate, crime money, and charisma multipliers by: 42%
-
-
-            [14, 1], //100% increased stat multipliers from Node Power
-            //max favor for winstreak: 200k rep equivalent
-            //reputation converted to favor for winning two games in a row to: 1000 rep to favor	
-            [14, 2], //Permanently unlocks the go.cheat API
-            //max favor for winstreak: 300k rep equivalent
-            //reputation converted to favor for winning two games in a row to: 1500 rep to favor
-            [14, 3], //25% additive increased success rate for the go.cheat API
-            //max favor for winstreak: 400k rep equivalent
-            //reputation converted to favor for winning two games in a row to: 2000 rep to favor
-
-            //unlocks
-            [13, 2], //increases Stanek's size
-            [13, 3], //increases Stanek's size
-
-            [6, 2], //raise both the level and experience gain rate of all your combat stats by: 12%
-            [6, 3], //raise both the level and experience gain rate of all your combat stats by: 14%
-
-            [7, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes
-            [7, 2], //increase all of your Bladeburner multipliers by: 12%
-            [7, 3], //increase all of your Bladeburner multipliers by: 14%
-            //immediately receive "BladesSimulacrum" augmentation after joining the Bladeburner division
-
-            //boosts
-            [5, 2], //raises all of your hacking-related multipliers by: 12%
-            [5, 3], //raises all of your hacking-related multipliers by: 14%
-
-            [8, 2], //Ability to short stocks in other BitNodes
-            //increases your hacking growth multipliers by: 18%
-            [8, 3], //Ability to use limit/stop orders in other BitNodes
-            //increases your hacking growth multipliers by: 21%
-            
-
-            [12, 999], //This Source-File lets you start any BitNodes with Neuroflux Governor equal to the level of this Source-File
-        ]
-
-        //14: does go winning 2 times in a row changes converts rep to favor, eliminating the need for resets (only for installations of augments?)
-        //which factions can do this?
-        //can we get away without installing augments? e.g. grafting?
+        [11,
+        1], //company favor increases BOTH the player's salary and reputation gain rate at that company by 1% per favor (rather than just the reputation gain)
+        //increases the player's company salary and reputation gain multipliers by: 32%
+        //reduces the price increase for every augmentation bought by: 4%		
+        [11, 2], //increases the player's company salary and reputation gain multipliers by: 48%
+        //reduces the price increase for every augmentation bought by: 6%
+        [11, 3], //increases the player's company salary and reputation gain multipliers by: 56%
+        //reduces the price increase for every augmentation bought by: 7%
 
 
-        //get rest information
-        const reset_info = ns.getResetInfo()
-        //get the map of source files owned
-        let owned_source_files = reset_info.ownedSF
-        //if we already have an entry for this source file
-        if (owned_source_files.has(reset_info.currentNode)) {
-            //add to existing index
-            let new_level = owned_source_files.get(reset_info.currentNode) + 1
-            //check if we need to limit (12 is unlimited
-            if (new_level > 3 && reset_info.currentNode != 12) {
-                //cap to 3
-                new_level = 3
-            }
-            //save the new level
-            owned_source_files.set(reset_info.currentNode, new_level)
-            //source file is not in owned source files
-        } else {
-            //add to owned source files
-            owned_source_files.set(reset_info.currentNode, 1)
+
+        [13, 1], //Unlock Stanek's gift
+
+        [15, 2], //Your charisma level increases job salary and rep gain. Also increases authentication speed by 20%
+        [15,
+        3], //Your charisma level increases faction work rep gain. Also increases the xp and money gained from .cache files by 50%.
+
+        [2, 2], //increases your crime success rate, crime money, and charisma multipliers by: 36%
+        [2, 3], //increases your crime success rate, crime money, and charisma multipliers by: 42%
+
+
+        [14, 1], //100% increased stat multipliers from Node Power
+        //max favor for winstreak: 200k rep equivalent
+        //reputation converted to favor for winning two games in a row to: 1000 rep to favor	
+        [14, 2], //Permanently unlocks the go.cheat API
+        //max favor for winstreak: 300k rep equivalent
+        //reputation converted to favor for winning two games in a row to: 1500 rep to favor
+        [14, 3], //25% additive increased success rate for the go.cheat API
+        //max favor for winstreak: 400k rep equivalent
+        //reputation converted to favor for winning two games in a row to: 2000 rep to favor
+
+        //unlocks
+        [13, 2], //increases Stanek's size
+        [13, 3], //increases Stanek's size
+
+        [6, 2], //raise both the level and experience gain rate of all your combat stats by: 12%
+        [6, 3], //raise both the level and experience gain rate of all your combat stats by: 14%
+
+        [7, 1], //This Source-File allows you to access the NSA's Bladeburner division in other BitNodes
+        [7, 2], //increase all of your Bladeburner multipliers by: 12%
+        [7, 3], //increase all of your Bladeburner multipliers by: 14%
+        //immediately receive "BladesSimulacrum" augmentation after joining the Bladeburner division
+
+        //boosts
+        [5, 2], //raises all of your hacking-related multipliers by: 12%
+        [5, 3], //raises all of your hacking-related multipliers by: 14%
+
+        [8, 2], //Ability to short stocks in other BitNodes
+        //increases your hacking growth multipliers by: 18%
+        [8, 3], //Ability to use limit/stop orders in other BitNodes
+        //increases your hacking growth multipliers by: 21%
+
+
+        [12,
+        999], //This Source-File lets you start any BitNodes with Neuroflux Governor equal to the level of this Source-File
+    ]
+
+    //14: does go winning 2 times in a row changes converts rep to favor, eliminating the need for resets (only for installations of augments?)
+    //which factions can do this?
+    //can we get away without installing augments? e.g. grafting?
+
+
+    //get rest information
+    const reset_info = ns.getResetInfo()
+    //get the map of source files owned
+    let owned_source_files = reset_info.ownedSF
+    //if we already have an entry for this source file
+    if (owned_source_files.has(reset_info.currentNode)) {
+        //add to existing index
+        let new_level = owned_source_files.get(reset_info.currentNode) + 1
+        //check if we need to limit (12 is unlimited
+        if (new_level > 3 && reset_info.currentNode != 12) {
+            //cap to 3
+            new_level = 3
         }
-        //debug
-        //log.info(ns, "Singularity", "owned_source_files: '" + JSON.stringify([...owned_source_files.entries()]) + "'", true)
-
-        //get the number of SF 12 owned
-        const sf_12_owned = 0
-        //check if focus is on 12
-        if (owned_source_files.has(12)) {
-            //we need to have at least 1x 12
-            sf_12_owned = owned_source_files.get(12)
-        }
-        //keep track of sum of all owned SF
-        let sum_sf = 0
-        //for each source files
-        for (let sf of owned_source_files.keys()) {
-            //add it to the sum
-            sum_sf += owned_source_files[sf]
-        }
-        //reduce by SF 12
-        sum_sf -= sf_12_owned
-        //if we foresee the need for a SF 12
-        if (sum_sf > Math.floor(sf_12_owned * SF_12_MULT)) {
-            //focus SF12
-            return [12,sf_12_owned+1]
-        }
-
-        //for each planned step
-        for (const step of bitnode_path) {
-            //gather the information to check
-            const bitnode = step[0]
-            const level = step[1]
-            //if we don't have this bitnode
-            if (!owned_source_files.has(bitnode)) {
-                //return this bitnode number
-                return bitnode
-            }
-            //check if we have a target
-            if (owned_source_files.get(bitnode) < level) {
-                //return this bitnode number
-                return [bitnode,level]
-            }
-        }
-        //default to 12 (endless) if no steps found
-        return [12,sf_12_owned+1]
-
-        /*
-        bitNodeOptions		BitNodeOptions			Current BitNode options
-        currentNode			number					The current BitNode
-        lastAugReset		number					Numeric timestamp (from Date.now()) of last augmentation reset
-        lastNodeReset		number					Numeric timestamp (from Date.now()) of last BitNode reset
-        ownedAugs			Map<string, number>		A map of owned augmentations to their levels. Keyed by the augmentation name. Map values are the augmentation level (e.g. for NeuroFlux governor).
-        ownedSF				Map<number, number>		A map of owned source files. Its keys are the SF numbers. Its values are the active SF levels. This map takes BitNode options into account.
-        For example, let's say you have SF 1.3, but you overrode the active level of SF1 and set it to level 1. In this case, this map contains this entry: Key: 1 => Value: 1.
-        If the active level of a source file is 0, that source file won't be included in the result.
-        */
+        //save the new level
+        owned_source_files.set(reset_info.currentNode, new_level)
+        //source file is not in owned source files
+    } else {
+        //add to owned source files
+        owned_source_files.set(reset_info.currentNode, 1)
     }
+    //debug
+    //log.info(ns, "Singularity", "owned_source_files: '" + JSON.stringify([...owned_source_files.entries()]) + "'", true)
+
+    //get the number of SF 12 owned
+    const sf_12_owned = 0
+    //check if focus is on 12
+    if (owned_source_files.has(12)) {
+        //we need to have at least 1x 12
+        sf_12_owned = owned_source_files.get(12)
+    }
+    //keep track of sum of all owned SF
+    let sum_sf = 0
+    //for each source files
+    for (let sf of owned_source_files.keys()) {
+        //add it to the sum
+        sum_sf += owned_source_files[sf]
+    }
+    //reduce by SF 12
+    sum_sf -= sf_12_owned
+    //if we foresee the need for a SF 12
+    if (sum_sf > Math.floor(sf_12_owned * SF_12_MULT)) {
+        //focus SF12
+        return [12, sf_12_owned + 1]
+    }
+
+    //for each planned step
+    for (const step of bitnode_path) {
+        //gather the information to check
+        const bitnode = step[0]
+        const level = step[1]
+        //if we don't have this bitnode
+        if (!owned_source_files.has(bitnode)) {
+            //return this bitnode number
+            return bitnode
+        }
+        //check if we have a target
+        if (owned_source_files.get(bitnode) < level) {
+            //return this bitnode number
+            return [bitnode, level]
+        }
+    }
+    //default to 12 (endless) if no steps found
+    return [12, sf_12_owned + 1]
+
+    /*
+    bitNodeOptions		BitNodeOptions			Current BitNode options
+    currentNode			number					The current BitNode
+    lastAugReset		number					Numeric timestamp (from Date.now()) of last augmentation reset
+    lastNodeReset		number					Numeric timestamp (from Date.now()) of last BitNode reset
+    ownedAugs			Map<string, number>		A map of owned augmentations to their levels. Keyed by the augmentation name. Map values are the augmentation level (e.g. for NeuroFlux governor).
+    ownedSF				Map<number, number>		A map of owned source files. Its keys are the SF numbers. Its values are the active SF levels. This map takes BitNode options into account.
+    For example, let's say you have SF 1.3, but you overrode the active level of SF1 and set it to level 1. In this case, this map contains this entry: Key: 1 => Value: 1.
+    If the active level of a source file is 0, that source file won't be included in the result.
+    */
+}
 
 //function that gets current bitnode level
 export function get_bitnode_level(ns) {
@@ -1352,4 +1318,95 @@ export function get_bitnode_level(ns) {
     }
     //give the level
     return level
+}
+
+
+//function that returns a list of factions to work for
+export function get_factions_to_work_for(ns, ignore_favor = false) {
+    //create a variable to fill
+    let factions_to_work_for = []
+
+    //bought red pill
+    const have_red_pill = ns.singularity.getOwnedAugmentations(true).includes(AUGMENT.TRP)
+    //if red pill is not yet gotten and daedalus is unlocked
+    if (!have_red_pill && ns.getPlayer().factions.includes(FACTION.DAEDALUS)) {
+        //set to work for faction
+        this.perform_action(ns, WORK_TYPE.FACTION, FACTION.DAEDALUS, formulas_available)
+        //indicate sucess
+        return true
+    }
+
+    //get augments owned
+    const augments_owned = ns.singularity.getOwnedAugmentations(true)
+    //get factions
+    const factions = ns.getPlayer().factions
+    //letiable to fill
+    let target_faction = ""
+    //for each faction
+    for (const faction of factions) {
+        //save highest rep needed
+        let rep_highest = 0
+        //check if we have enough rep for the augments
+        //get augmnets
+        const augments = ns.singularity.getAugmentationsFromFaction(faction)
+        //for each augment the faction offers
+        for (const augment of augments) {
+            //if neurflux governor
+            if (augment == AUGMENT.NFG) {
+                //ignore
+                continue
+            }
+            //if not owned
+            if (!augments_owned.includes(augment)) {
+                //get rep requirement
+                const augment_rep = ns.singularity.getAugmentationRepReq(augment)
+                //if higher than what we have saved
+                if (augment_rep > rep_highest) {
+                    //save the rep
+                    rep_highest = augment_rep
+                }
+            }
+        }
+        //get rep
+        const rep = ns.singularity.getFactionRep(faction)
+        //if we have enough rep for all augments
+        if (rep >= rep_highest) {
+            //go to next
+            continue
+        }
+        //if we ignore favor (aka donate)
+        if (ignore_favor) {
+            //add to list
+            factions_to_work_for.push(faction)
+            //go to next
+            continue
+        }
+        //get favor
+        const favor = ns.singularity.getFactionFavor(faction)
+        const rep_to_favor = Math.log1p(rep / 30000) /
+            0.019802627296179712 //(rep / 25000) / 0.019802627296179712
+        let favor_for_donate = 150
+        //if we can use bitnode multipliers
+        if (formulas_available) {
+            //adjust the number
+            favor_for_donate * ns.getBitNodeMultipliers().FavorToDonateToFaction
+        }
+        //calculate the favor that is still needed
+        const favor_needed = favor_for_donate - favor - rep_to_favor
+        //if we need to get more rep or favor
+        if (favor_needed > 0) {
+            //add to list
+            factions_to_work_for.push(faction)
+        }
+    }
+    //return the list of factions
+    return factions_to_work_for
+}
+
+
+//function that returns a list of companies to work for
+export function get_companies_to_work_for(ns) {
+    //create a variable to fill
+    let companies_to_work_for = []
+
 }
