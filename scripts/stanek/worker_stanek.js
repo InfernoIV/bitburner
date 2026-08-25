@@ -1,6 +1,8 @@
+//booster fragment
+const TYPE_BOOSTER = 18
+//time to wait
+const TIME_WAIT = 5
 
-import * as CONSTANTS from "scripts/constants.js"
-import * as log from "scripts/sub/log.js"
 
 /*
 baseCost                    1.6            
@@ -8,15 +10,21 @@ ns.stanek.chargeFragment    0.4
 */
 //function that charges stanek fragments, receives the size of the grid as arguments
 export async function main(ns) {
+    //guard clause
+    if (ns.args.length < 1) {
+        //indicate issue
+        ns.tprint(ns.args.length + " ARGUMENTS FOR 'worker_stanek.js'!")
+        //exit
+        ns.exit()
+    }
     //get the fragments
-    var fragments = ns.args[0]
-
+    let fragments = ns.args[0]
     //create a list for chargeable fragments
-    var fragments_chargeable = []
+    let fragments_chargeable = []
     //for each fragment
     for (const fragment of fragments) {
         //if not a booster type
-        if (fragment.type != 18) { 
+        if (fragment.type != TYPE_BOOSTER) { 
             //add to chargeable list
             fragments_chargeable.push(fragment)
         }
@@ -30,6 +38,6 @@ export async function main(ns) {
             await ns.stanek.chargeFragment(fragment.x, fragment.y)    
         }
         //failsafe to prevent script from going haywire
-        await ns.sleep(CONSTANTS.TIME.WAIT)
+        await ns.sleep(TIME_WAIT)
     }
 }

@@ -1,7 +1,12 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING } from "./config.js"
 
 
+//constants
+//import { } from "scripts/constants/.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
 
 
@@ -12,7 +17,7 @@ export class sleeve_obj {
 
     init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
     }
 
     
@@ -28,8 +33,8 @@ export function get_sleeve_activity(sleeve_number) {
     const sleeve = ns.sleeve.getSleeve(i)
     //get sleeve task
     const task = ns.sleeve.getTask(i)
-    //variable to fill
-    var data
+    //letiable to fill
+    let data
 
     switch (task.type) {
         case "BLADEBURNER": //SleeveBladeburnerTask

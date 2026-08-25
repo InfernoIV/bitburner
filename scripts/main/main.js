@@ -1,8 +1,14 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING, TIME_WAIT } from "./config.js"
 
-import * as log from "scripts/util/log.js"
+
+//constants
 import { RAM } from "scripts/ram/constants.js"
+
+
+//functions
+import * as log from "scripts/util/log.js"
+
 
 //ram manager
 import {
@@ -15,12 +21,11 @@ export async function main(ns) {
     //initialize main
     await init(ns)
     //init ram manager
-    var ram_manager = new ram_obj()
+    let ram_manager = new ram_obj()
     //init ram manager
     await ram_manager.init(ns, RAM.MAIN)
     //log
     log.info(ns, "Main", "Starting main loop", true)
-
     // @ignore-infinite
     while (true) {
         //import functionality
@@ -28,7 +33,7 @@ export async function main(ns) {
         //let the manager manage all functionality
         await ram_manager.manage_functionalities(ns)
         //wait a bit (what is the lowest time we can pick?)
-        await ns.sleep(CONSTANTS.TIME.WAIT)
+        await ns.sleep(TIME_WAIT)
     }
 }
 
@@ -36,19 +41,6 @@ export async function main(ns) {
 /** @param {NS} ns */
 async function init(ns) {
     //disable logging
-    log.disable(ns, CONFIG.DISABLE_LOGGING)
+    log.disable(ns, DISABLE_LOGGING)
 }
-
-
-/*
-base                1.6
-ns.killall          
-ns.ui.openTail      0
-ns.ui.resizeTail    0
-ns.ui.moveTail      0
-ns.disableLog       0
-ns.ui.windowSize    0
-ns.atExit           0
-*/
-
 

@@ -1,68 +1,30 @@
-//This API requires Source-File 4 to use outside of BitNode 4. Additionally, outside of BitNode 4 the RAM cost of all these functions is multiplied by 16/4/1 based on Source-File 4 levels.
-
-/*
-https://github.com/bitburner-official/bitburner-src/blob/dev/markdown/bitburner.singularity.md
-Singularity		Singularity API
-*/
+//config
+import { DISABLE_LOGGING, CRIME_CHANCE_MIN, SKILL_MIN } from "./config.js"
 
 
-import * as CONSTANTS from "scripts/constants.js"
-import * as log from "scripts/sub/log.js"
+//constants
+import { GYMS, UNIVERSITIES, WORK_TYPE } from "./constants.js"
 
 
-const gyms = {
-    "Sector-12": "Powerhouse Gym", //or "Iron Gym"?
-    "Aevum": "Crush Fitness Gym", //or "Snap Fitness Gym"?
-    "Volhaven": "Millenium Fitness Gym",
-}
+//functions
+import * as log from "scripts/util/log.js"
 
-const universities = {
-    "Sector-12": "Rothman University",
-    "Aevum": "Summit University",
-    "Volhaven": "ZB Institute of Technology",
-}
-
-const work_type = {
-    FACTION: "FACTION",
-    COMPANY: "COMPANY",
-    CRIME: "CRIME",
-    CREATE_PROGRAM: "CREATE_PROGRAM",
-    STUDY: "CLASS",
-    GRAFTING: "GRAFTING",
-}
-
-
-const focus_type = {
-    MONEY: "money", //How much money is given
-    KARMA: "karma", //Amount of karma lost for successfully committing this crime
-    KILLS: "kills", //How many people die as a result of this crime
-    HACKING: "hacking_exp", //hacking exp gained from crime	
-    STRENGTH: "strength_exp", //strength exp gained from crime
-    DEXTERITY: "dexterity_exp", //dexterity exp gained from crime
-    AGILITY: "agility_exp", //agility exp gained from crime
-    DEFENSE: "defense_exp", //defense exp gained from crime
-    CHARISMA: "charisma_exp", //charisma exp gained from crime
-    INTELLIGENCE: "intelligence_exp" //intelligence exp gained from crime
-}
 
 export class singularity_light_obj {
     constructor() {
-        this.available = true
         this.tor_owned = false
-
         //config
         //min chance for a crime
-        this.crime_min_chance = 0.65 //65% chance
-
+        this.crime_min_chance = CRIME_CHANCE_MIN //65% chance
         //minimum skill
-        this.skill_min = 50
+        this.skill_min = SKILL_MIN
 
     }
 
 
     init(ns, handles) {
         //disable logging
-        ns.disableLog("singularity.upgradeHomeRam")
+        log.disable(ns, DISABLE_LOGGING)
 
         //get tools
         const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
@@ -122,22 +84,22 @@ export class singularity_light_obj {
         const skills = ns.getPlayer().skills
         //hacking < combat < charisma
         if (skills.hacking < this.skill_min) {
-            return this.perform_action(ns, work_type.STUDY, "Algorithms")
+            return this.perform_action(ns, WORK_TYPE.STUDY, "Algorithms")
 
         } else if (skills.strength < this.skill_min) {
-            return this.perform_action(ns, work_type.STUDY, "str")
+            return this.perform_action(ns, WORK_TYPE.STUDY, "str")
 
         } else if (skills.defense < this.skill_min) {
-            return this.perform_action(ns, work_type.STUDY, "def")
+            return this.perform_action(ns, WORK_TYPE.STUDY, "def")
 
         } else if (skills.dexterity < this.skill_min) {
-            return this.perform_action(ns, work_type.STUDY, "dex")
+            return this.perform_action(ns, WORK_TYPE.STUDY, "dex")
 
         } else if (skills.agility < this.skill_min) {
-            return this.perform_action(ns, work_type.STUDY, "agi")
+            return this.perform_action(ns, WORK_TYPE.STUDY, "agi")
 
         } else if (skills.charisma < this.skill_min) {
-            return this.perform_action(ns, work_type.STUDY, "Leadership")
+            return this.perform_action(ns, WORK_TYPE.STUDY, "Leadership")
         }
         //we have all the stats we need
         return false
@@ -147,9 +109,9 @@ export class singularity_light_obj {
     //commit crime
     commit_crime(ns) {
         //save best crime
-        var best_crime = "Mug"
+        let best_crime = "Mug"
         //best score
-        var best_score = 0
+        let best_score = 0
         //get crimes
         for (const name in ns.enums.CrimeType) {
             //get the actual crime
@@ -163,7 +125,7 @@ export class singularity_light_obj {
             }
         }
         //default to mug for now
-        this.perform_action(ns, work_type.CRIME, best_crime)
+        this.perform_action(ns, WORK_TYPE.CRIME, best_crime)
     }
 
 
@@ -172,11 +134,11 @@ export class singularity_light_obj {
     */
     perform_action(ns, type, activity, formulas_available = false) {
         //get player
-        var player = ns.getPlayer()
+        let player = ns.getPlayer()
         //flag to keep track if we need to switch
-        var flag_switch_work = false
+        let flag_switch_work = false
         //get current work
-        var current_work = ns.singularity.getCurrentWork()
+        let current_work = ns.singularity.getCurrentWork()
         //if not working
         if (current_work == null || current_work == undefined) {
             //set flag
@@ -191,32 +153,32 @@ export class singularity_light_obj {
             } else {
                 //depending on the type
                 switch (type) {
-                    case work_type.FACTION:
+                    case WORK_TYPE.FACTION:
                         flag_switch_work = (activity != current_work.factionName)
                         break
 
-                    case work_type.COMPANY:
+                    case WORK_TYPE.COMPANY:
                         //we need to check for promotion
                         flag_switch_work = true
                         //stop
                         break
 
-                    case work_type.CRIME:
+                    case WORK_TYPE.CRIME:
                         flag_switch_work = (activity != current_work.crimeType)
                         //stop
                         break
 
-                    case work_type.CREATE_PROGRAM:
+                    case WORK_TYPE.CREATE_PROGRAM:
                         flag_switch_work = (activity != current_work.programName)
                         //stop
                         break
 
-                    case work_type.STUDY:
+                    case WORK_TYPE.STUDY:
                         flag_switch_work = (activity != current_work.classType)
                         //stop
                         break
 
-                    case work_type.GRAFTING:
+                    case WORK_TYPE.GRAFTING:
                         flag_switch_work = (activity != current_work.augmentation)
                         //stop
                         break
@@ -231,7 +193,7 @@ export class singularity_light_obj {
             //depending on the type
             switch (type) {
 
-                case work_type.FACTION:
+                case WORK_TYPE.FACTION:
                     //get best work type
                     const work_type_best = this.get_best_work_faction(ns, player, activity, formulas_available)
                     //if not working
@@ -254,7 +216,7 @@ export class singularity_light_obj {
                     //already working for the best type
                     return true
 
-                case work_type.COMPANY:
+                case WORK_TYPE.COMPANY:
                     //get best company work   
                     const jobfield = this.get_best_work_company(ns, player)
                     //apply to company or try to get promotion (will cancel current job & job work for another company)
@@ -278,11 +240,11 @@ export class singularity_light_obj {
                     //we don't have the job, return failure
                     return false
 
-                case work_type.CRIME:
+                case WORK_TYPE.CRIME:
                     //commit crime (calc for best crime has already happened)
                     return ns.singularity.commitCrime(activity, true)
 
-                case work_type.STUDY:
+                case WORK_TYPE.STUDY:
                     //get city
                     const city = ns.getPlayer().city
                     //guard clause: if not in a correct city
@@ -291,9 +253,9 @@ export class singularity_light_obj {
                         return
                     }
                     //get university
-                    const university = universities[city]
+                    const university = UNIVERSITIES[city]
                     //get gym
-                    const gym = gyms[city]
+                    const gym = GYMS[city]
                     //check for stats
                     switch (activity) {
                         case "hacking":
@@ -325,11 +287,11 @@ export class singularity_light_obj {
                                 "'")
                     }
 
-                case work_type.CREATE_PROGRAM:
+                case WORK_TYPE.CREATE_PROGRAM:
                     //ns.singularity.createProgram()
                     return true
 
-                case work_type.GRAFTING:
+                case WORK_TYPE.GRAFTING:
                     //skip for now
                     return true
 

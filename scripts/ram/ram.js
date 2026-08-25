@@ -1,6 +1,15 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING } from "./config.js"
 
+
+//constants
+import { RAM } from "scripts/constants/ram.js"
+import { SERVER } from "scripts/constants/servers.js"
+import { HANDLE } from "scripts/constants/handles.js"
+import { SCRIPT } from "scripts/constants/scripts.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
 
 
@@ -82,17 +91,17 @@ export class ram_obj {
     //sets the basic information
     async init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
-        //log.info(ns, "Ram", "CONSTANTS.RAM: " + JSON.stringify(CONSTANTS.RAM), true)
+        log.disable(ns, DISABLE_LOGGING)
+        //log.info(ns, "Ram", "RAM: " + JSON.stringify(RAM), true)
         //ns.ui.openTail()
         //save initial ram cost
-        this.ram_used = Math.ceil((CONSTANTS.RAM.MAIN + CONSTANTS.RAM.RAM) * 100) / 100
+        this.ram_used = Math.ceil((RAM.MAIN + RAM.RAM) * 100) / 100
         //allocate ram
         ns.ramOverride(this.ram_used)
         //log
         log.info(ns, "Ram", "Starting with RAM: " + this.ram_used, true)
         //save the starting ram
-        this.ram_start = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
+        this.ram_start = ns.getServer(SERVER.HOME).maxRam
         //if running on low ram
         if (this.ram_start < 128) {
             //log 
@@ -135,7 +144,7 @@ export class ram_obj {
         //check if we have intelligence to fill bitnode multipliers
         if (this.get_source_file_level(5) > 0) {
             //register handle
-            if (await this.register_handle(ns, CONSTANTS.HANDLE.INTELLIGENCE, {}, 4)) {
+            if (await this.register_handle(ns, HANDLE.INTELLIGENCE, {}, 4)) {
                 //get bitnode multipliers
                 this.bitnode_multipliers = ns.getBitNodeMultipliers()
             }
@@ -184,9 +193,9 @@ export class ram_obj {
             }
         }
         //get ram cost
-        const ram_cost = CONSTANTS.RAM[handle]
+        const ram_cost = RAM[handle]
         //get ram left
-        const ram_max = ns.getServer(CONSTANTS.SERVER.HOME).maxRam
+        const ram_max = ns.getServer(SERVER.HOME).maxRam
         //calculate total usage / need
         let ram_need = this.ram_used + ram_cost + this.ram_reserve + ram_worker
         //round
@@ -198,9 +207,9 @@ export class ram_obj {
             return false
         }
         //kill share script on home
-        ns.kill(CONSTANTS.SCRIPT.WORKER.SHARE)
+        ns.kill(SCRIPT.WORKER.SHARE)
 
-        var message = "Registered '" + handle + "' for " + this.ram_used + " + " + ram_cost
+        let message = "Registered '" + handle + "' for " + this.ram_used + " + " + ram_cost
         //if we have reserved ram
         if (this.ram_reserve > 0.0) {
             //add to message
@@ -243,7 +252,7 @@ export class ram_obj {
 
     //gets the source file level, including counting if you're in the bitnode
     get_source_file_level(source_file) {
-        var level = 0
+        let level = 0
         //check if we have the source file
         if (this.source_files_owned.hasOwnProperty(source_file)) {
             //get the level
@@ -263,71 +272,71 @@ export class ram_obj {
     async import(ns) {
         //register each handle and return if not successfull (e.g. no ram)
         //indicate if stanek is available to join asap
-        await this.register_handle(ns, CONSTANTS.HANDLE.STANEK_AVAILABLE, {}, 13)
+        await this.register_handle(ns, HANDLE.STANEK_AVAILABLE, {}, 13)
         //if we started on low ram and ram has grown bigger
-        if (this.ram_start < 128 && ns.getServer(CONSTANTS.SERVER.HOME).maxRam >= 128) {
+        if (this.ram_start < 128 && ns.getServer(SERVER.HOME).maxRam >= 128) {
             //start boot script
-            ns.spawn(CONSTANTS.SCRIPT.BOOT)
+            ns.spawn(SCRIPT.BOOT)
             //stop
             ns.exit()
         }
         
         
         //root for rooting servers, enabling hack
-        if (ns.getServer(CONSTANTS.SERVER.HOME).maxRam <= 64) {
+        if (ns.getServer(SERVER.HOME).maxRam <= 64) {
             //singularity for automating player training, actions and upgrading RAM 
-            await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY_LIGHT, new singularity_light_obj(), 4, 1)
+            await this.register_handle(ns, HANDLE.SINGULARITY_LIGHT, new singularity_light_obj(), 4, 1)
             //root for rooting servers, enabling hack
-            await this.register_handle(ns, CONSTANTS.HANDLE.ROOT, new root_obj())
+            await this.register_handle(ns, HANDLE.ROOT, new root_obj())
             //hack for money
-            await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())
+            await this.register_handle(ns, HANDLE.HACK, new hack_obj())
             //darknet for money (and is really cheap in ram cost)
-            await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())
+            await this.register_handle(ns, HANDLE.DARKNET, new darknet_obj())
         } else {
 
             //AUTOMATION
-            await this.register_handle(ns, CONSTANTS.HANDLE.SINGULARITY, new singularity_obj(), 4, 1, "", 5.8)
+            await this.register_handle(ns, HANDLE.SINGULARITY, new singularity_obj(), 4, 1, "", 5.8)
             //if darknet is available, we save 2 GBs (on singularity)
-            await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET_AVAILABLE, {}, 15, 1, CONSTANTS.HANDLE
+            await this.register_handle(ns, HANDLE.DARKNET_AVAILABLE, {}, 15, 1, HANDLE
                 .SINGULARITY)
 
             //join stanek asap
-            await this.register_handle(ns, CONSTANTS.HANDLE.STANEK, new stanek_obj(), 13, 1, "", 2.0)
+            await this.register_handle(ns, HANDLE.STANEK, new stanek_obj(), 13, 1, "", 2.0)
 
             //IMPROVE AUTOMATION
-            await this.register_handle(ns, CONSTANTS.HANDLE.SLEEVE, new sleeve_obj(), 10)
+            await this.register_handle(ns, HANDLE.SLEEVE, new sleeve_obj(), 10)
 
             //BASE
-            await this.register_handle(ns, CONSTANTS.HANDLE.ROOT, new root_obj())
-            await this.register_handle(ns, CONSTANTS.HANDLE.HACK, new hack_obj())
-            await this.register_handle(ns, CONSTANTS.HANDLE.DARKNET, new darknet_obj())
+            await this.register_handle(ns, HANDLE.ROOT, new root_obj())
+            await this.register_handle(ns, HANDLE.HACK, new hack_obj())
+            await this.register_handle(ns, HANDLE.DARKNET, new darknet_obj())
 
             //GO
-            await this.register_handle(ns, CONSTANTS.HANDLE.GO, new go_obj())
+            await this.register_handle(ns, HANDLE.GO, new go_obj())
 
             //extend GO
-            await this.register_handle(ns, CONSTANTS.HANDLE.GO_ANALYSIS, {}, 0, 0, CONSTANTS.HANDLE.GO)
-            await this.register_handle(ns, CONSTANTS.HANDLE.GO_CHEAT, {}, 14, 2, CONSTANTS.HANDLE.GO_ANALYSIS)
+            await this.register_handle(ns, HANDLE.GO_ANALYSIS, {}, 0, 0, HANDLE.GO)
+            await this.register_handle(ns, HANDLE.GO_CHEAT, {}, 14, 2, HANDLE.GO_ANALYSIS)
 
             //EXTEND SINGULARITY
-            await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 6, 1, CONSTANTS
+            await this.register_handle(ns, HANDLE.BLADEBURNER, new bladeburner_obj(), 6, 1, CONSTANTS
                 .HANDLE.SINGULARITY)
-            await this.register_handle(ns, CONSTANTS.HANDLE.BLADEBURNER, new bladeburner_obj(), 7, 1, CONSTANTS
+            await this.register_handle(ns, HANDLE.BLADEBURNER, new bladeburner_obj(), 7, 1, CONSTANTS
                 .HANDLE.SINGULARITY)
-            await this.register_handle(ns, CONSTANTS.HANDLE.GRAFTING, new grafting_obj(), 10, 1, CONSTANTS.HANDLE
+            await this.register_handle(ns, HANDLE.GRAFTING, new grafting_obj(), 10, 1, HANDLE
                 .SINGULARITY)
 
             //EXTEND FUNCTIONALITY
-            await this.register_handle(ns, CONSTANTS.HANDLE.CLOUD, new cloud_obj())
-            //await this.register_handle(ns, CONSTANTS.HANDLE.CODING_CONTRACT, new coding_contract_obj())
-            await this.register_handle(ns, CONSTANTS.HANDLE.STOCK, new stock_obj())
-            await this.register_handle(ns, CONSTANTS.HANDLE.GANG, new gang_obj(), 2)
-            //await this.register_handle(ns, CONSTANTS.HANDLE.HACKNET, new hacknet_obj())//, 9)
-            await this.register_handle(ns, CONSTANTS.HANDLE.CORPORATION, new corporation_obj(), 3)
+            await this.register_handle(ns, HANDLE.CLOUD, new cloud_obj())
+            //await this.register_handle(ns, HANDLE.CODING_CONTRACT, new coding_contract_obj())
+            await this.register_handle(ns, HANDLE.STOCK, new stock_obj())
+            await this.register_handle(ns, HANDLE.GANG, new gang_obj(), 2)
+            //await this.register_handle(ns, HANDLE.HACKNET, new hacknet_obj())//, 9)
+            await this.register_handle(ns, HANDLE.CORPORATION, new corporation_obj(), 3)
 
             //log.info(ns, "Ram", "Import complete: '" + [...this.registration.entries()] + "'", true)
         }
         //add ui
-        await this.register_handle(ns, CONSTANTS.HANDLE.UI, new ui_obj())
+        await this.register_handle(ns, HANDLE.UI, new ui_obj())
     }
 }

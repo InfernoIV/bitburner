@@ -1,6 +1,12 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING, STREAK_WIN, STREAK_LOSS, BOARD_SIZE, CHEAT_CHANCE } from "./config.js"
 
+
+//constants
+import { HANDLE } from "scripts/constants/handles.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
 
 
@@ -12,7 +18,7 @@ export class go_obj {
     //getting the game to a steady state
     init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
         //Returns the color of the current player ("White" | "Black"), or 'None' if the game is over.
         const current_player = ns.go.getCurrentPlayer()
         //if not our turn
@@ -71,7 +77,7 @@ export class go_obj {
             //it should be our turn, so make a move		
         }
         //make a move
-        this.make_move(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.GO_ANALYSIS), handles.hasOwnProperty(CONSTANTS.HANDLE.GO_CHEAT))
+        this.make_move(ns, handles.hasOwnProperty(HANDLE.GO_ANALYSIS), handles.hasOwnProperty(HANDLE.GO_CHEAT))
     }
 
     /*
@@ -82,7 +88,7 @@ export class go_obj {
         //Returns the name of the opponent faction in the current subnet.
         const opponent_current = ns.go.getOpponent()
         //default to same opponent
-        var opponent_next = opponent_current
+        let opponent_next = opponent_current
         //get stats
         const stats = ns.go.analysis.getStats()
         //if we won a match
@@ -103,24 +109,24 @@ export class go_obj {
             //log message
             //log.warning(ns, "Go", "Lost a match vs " + opponent_current + " (" + this.loss_streak + ")", true)
         }
-        var change_opponent = false
-        var change_message = ""
+        let change_opponent = false
+        let change_message = ""
         //if we have gotten a winstreak of x, resulting in rep to favor conversion
-        if (stats[opponent_current].winStreak >= CONFIG.STREAK_WIN) {
+        if (stats[opponent_current].winStreak >= STREAK_WIN) {
             //go to next
             change_opponent = true
             //set message
-            change_message = "Won " + CONFIG.STREAK_WIN + "x in a row"
-        } else if (this.loss_streak >= CONFIG.STREAK_LOSS) {
+            change_message = "Won " + STREAK_WIN + "x in a row"
+        } else if (this.loss_streak >= STREAK_LOSS) {
             //go to next
             change_opponent = true
             //set message
-            change_message = "Lost " + CONFIG.STREAK_LOSS + " in a row"
+            change_message = "Lost " + STREAK_LOSS + " in a row"
         }
         //if we want to change opponent
         if (change_opponent) {
             //determine the next index
-            var opponent_index = this.opponent_list.indexOf(opponent_current) + 1
+            let opponent_index = this.opponent_list.indexOf(opponent_current) + 1
             //check if out of bounds
             //TODO: integrate strategies for each opponent
             if (opponent_index >= this.opponent_list.length) { //2) { 
@@ -153,7 +159,7 @@ export class go_obj {
         }
 
         //default size
-        var board_size = CONFIG.BOARD_SIZE //5 | 7 | 9 | 13
+        let board_size = BOARD_SIZE //5 | 7 | 9 | 13
         //depending on the opponent, decide the size
         //TODO: decide on size
         switch (opponent_next) {
@@ -204,7 +210,7 @@ export class go_obj {
         The current valid moves for white can also be seen by simply calling ns.go.analysis.getValidMoves(true). */
         const moves_valid = ns.go.analysis.getValidMoves()
         //flag if we can play a move
-        var flag_valid_move = false
+        let flag_valid_move = false
         //for each row
         for (const row of moves_valid) {
             //if it includes a valid move (true)
@@ -250,7 +256,7 @@ export class go_obj {
             return
         }
         //gather information
-        var information = this.gather_information(ns, can_analyze, can_cheat)
+        let information = this.gather_information(ns, can_analyze, can_cheat)
         //add current information
         information.previous_moves = previous_moves
         information.state_game = state_game
@@ -284,9 +290,9 @@ export class go_obj {
         //start from 1 from corner first?
         //This idea can also be improved to focus on a specific area or corner first, rather than spread across the whole board right away.
         //from left to right 
-        for (var x = 0; x < this.board_size; x++) {
+        for (let x = 0; x < this.board_size; x++) {
             //from top to bottom
-            for (var y = 0; y < this.board_size; y++) {
+            for (let y = 0; y < this.board_size; y++) {
                 //if a valid move
                 const valid_move = information.moves_valid[x][y]
                 // Leave some spaces to make it harder to capture our pieces. -> We don't want to run out of empty node connections!
@@ -307,9 +313,9 @@ export class go_obj {
             }
         }
         //we need to play in reserved space
-        for (var x = 0; x < this.board_size; x++) {
+        for (let x = 0; x < this.board_size; x++) {
             //from top to bottom
-            for (var y = 0; y < this.board_size; y++) {
+            for (let y = 0; y < this.board_size; y++) {
                 //if a valid move
                 const valid_move = information.moves_valid[x][y]
                 //if a valid move and not reserved
@@ -333,12 +339,12 @@ export class go_obj {
     play_aggressive(ns, information) {
 
         //TODO
-        var x = 0
-        var y = 0
+        let x = 0
+        let y = 0
 
         //only cheat when you need to!
         //if we can x% cheat
-        if (information.cheat_chance == CONFIG.CHEAT_CHANCE) {
+        if (information.cheat_chance == CHEAT_CHANCE) {
             /* Attempts to destroy an empty node, leaving an offline dead space that does not count as territory or provide open node access to adjacent routers.
             Success chance can be seen via ns.go.cheat.getCheatSuccessChance()
             Warning: if you fail to play a cheat move, your turn will be skipped. 
@@ -357,10 +363,10 @@ export class go_obj {
             After your first cheat attempt, if you fail, there is a small (~10%) chance you will instantly be ejected from the subnet.*/
             //ns.go.cheat.repairOfflineNode(x,y)
 
-            var x1 = x
-            var x2 = x
-            var y1 = y
-            var y2 = y
+            let x1 = x
+            let x2 = x
+            let y1 = y
+            let y2 = y
             /*Attempts to place two routers at once on empty nodes. 
             Note that this ignores other move restrictions, so you can suicide your own routers if they have no access to empty ports and do not capture any enemy routers.
             Success chance can be seen via ns.go.cheat.getCheatSuccessChance()
@@ -379,8 +385,8 @@ export class go_obj {
 
     //gather all information, to be used to determine actions
     gather_information(ns, can_analyze, can_cheat) {
-        //variable to fill
-        var information = {}
+        //letiable to fill
+        let information = {}
         /*Retrieves a simplified version of the board state. "X" represents black pieces, "O" white, and "." empty points. 
         "#" are dead nodes that are not part of the subnet. (They are not territory nor open nodes.)
         For example, a 5x5 board might look like this:

@@ -1,6 +1,12 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING, SKILL_LEVEL_MIN, CLASH_WIN_CHANCE, ASCENSION_MIN_MULT, EQUIPMENT_MIN_PERCENTAGE, MEMBER_NAME } from "./config.js"
 
+
+//constants
+import { EQUIPMENT, TASKS, TASK, KARMA_NEEDED, MEMBERS_MAX, GANG_FOCUS, GANG_FACTION, GANG_NAMES } from "./constants.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
 
 
@@ -12,22 +18,22 @@ export class gang_obj {
     //set information
     init(ns, handles) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
         
         //TODO
         //set the softcap
         //this.GangSoftcap = currentNodeMults.GangSoftcap
         
         //determine the type according to the mults
-        this.focus = CONSTANTS.GANG_FOCUS.combat
+        this.focus = GANG_FOCUS.combat
         //set hostname
-        this.faction = CONSTANTS.GANG_FACTION.combat
+        this.faction = GANG_FACTION.combat
         //if hacking is better in this node?
         if (false) {
             //set focus to hacking
-            this.focus = CONSTANTS.GANG_FOCUS.hacking
+            this.focus = GANG_FOCUS.hacking
             //set hostname
-            this.faction = CONSTANTS.GANG_FACTION.hacking
+            this.faction = GANG_FACTION.hacking
         }
         //Check if you're in a gang. Does not require API access.
         this.gang_started = ns.gang.inGang()
@@ -36,9 +42,9 @@ export class gang_obj {
         //check if need to check
         if (gang_started) {
             //for each possible member
-            for (let i = 0; i < CONSTANTS.GANG_MEMBERS_MAX; i++) {
+            for (let i = 0; i < MEMBERS_MAX; i++) {
                 //create the member name
-                const member_name = CONFIG.GANG_MEMBER_NAME + i
+                const member_name = MEMBER_NAME + i
                 //Get information about a specific gang member.
                 const member_information = ns.gang.getMemberInformation(member_name)
                 //valid member if not null? TODO: check
@@ -52,19 +58,19 @@ export class gang_obj {
                 }
             }
         }
-        //create variable to fill
+        //create letiable to fill
         this.tasks = []
         //for each task
-        for (const task of CONSTANTS.GANG_TASKS) {
-            //variable to check if correct task
-            var flag_correct_task = false
+        for (const task of TASKS) {
+            //letiable to check if correct task
+            let flag_correct_task = false
             //check if correct type
-            if (this.focus == CONSTANTS.GANG_FOCUS.hacking) {
-                //copy the variable to the flag
+            if (this.focus == GANG_FOCUS.hacking) {
+                //copy the letiable to the flag
                 flag_correct_task = task.isHacking
                 //combat focus
             } else {
-                //copy the variable to the flag
+                //copy the letiable to the flag
                 flag_correct_task = task.isCombat
             }
             //if a correct task
@@ -73,23 +79,23 @@ export class gang_obj {
                 this.tasks.push(task)
             }
         }
-        //create variable to fill
+        //create letiable to fill
         this.equipment = []
         //for each equipment
-        for (const equipment of CONSTANTS.GANG_EQUIPMENT) {
-            //variable to check if correct task
-            var flag_correct_equipment = false
+        for (const equipment of EQUIPMENT) {
+            //letiable to check if correct task
+            let flag_correct_equipment = false
             //for hacking: hack & cha
-            if (this.focus == CONSTANTS.GANG_FOCUS.hacking) {
+            if (this.focus == GANG_FOCUS.hacking) {
                 //check the attributes
                 if (hasattr(equipment.mults, "hack") || hasattr(equipment.mults, "cha")) {
-                    //copy the variable to the flag
+                    //copy the letiable to the flag
                     flag_correct_equipment = true
                 }
                 //combat focus: str & con & dex & def
             } else if (hasattr(equipment.mults, "str") || hasattr(equipment.mults, "def") || hasattr(equipment
                     .mults, "dex") || hasattr(equipment.mults, "agi")) {
-                //copy the variable to the flag
+                //copy the letiable to the flag
                 flag_correct_equipment = true
             }
             //if a correct task
@@ -99,7 +105,7 @@ export class gang_obj {
             }
         }
         //calc number of equipment / augments before next task
-        this.equipment_min = Math.min(CONFIG.GANG_EQUIPMENT_MIN_PERCENTAGE * this.equipment.length)
+        this.equipment_min = Math.min(EQUIPMENT_MIN_PERCENTAGE * this.equipment.length)
     }
 
 
@@ -133,10 +139,10 @@ export class gang_obj {
     */
     manage_members(ns) {
         //for every recruit available         
-        for (let i = this.gang_members_amount; i < CONSTANTS.GANG_MEMBERS_MAX; i++) {
+        for (let i = this.gang_members_amount; i < MEMBERS_MAX; i++) {
             //Recruit a new gang member.
             //check if successfull
-            if (ns.gang.recruitMember(CONFIG.GANG_MEMBER_NAME + i)) {
+            if (ns.gang.recruitMember(GANG_MEMBER_NAME + i)) {
                 //up the count
                 this.gang_members_amount += 1
                 //not successfull
@@ -148,7 +154,7 @@ export class gang_obj {
         //for each member
         for (let i = 0; i < this.gang_members_amount; i++) {
             //create the member name
-            const member_name = CONFIG.GANG_MEMBER_NAME + i
+            const member_name = GANG_MEMBER_NAME + i
             //Get information about a specific gang member.
             const member_information = ns.gang.getMemberInformation(member_name)
             //ascension
@@ -201,13 +207,13 @@ export class gang_obj {
     //manage actions of a gang member
     async manage_actions(ns) {
         //get own gang information
-        var gang_information = ns.gang.getGangInformation()
+        let gang_information = ns.gang.getGangInformation()
         //check if we own all territory
         if (gang_information.territory >= 1) {
             //for each member
-            for (var i = 0; i < this.gang_members_amount; i++) {
+            for (let i = 0; i < this.gang_members_amount; i++) {
                 //create the name
-                const gang_member_name = CONFIG.GANG_MEMBER_NAME + i
+                const gang_member_name = GANG_MEMBER_NAME + i
                 //get information
                 const gang_member_information = ns.gang.getMemberInformation(name)
                 //get money
@@ -218,9 +224,9 @@ export class gang_obj {
             //see if need to clash
             if (this.manage_clash(ns) == true) {
                 //for each member
-                for (var i = 0; i < this.gang_members_amount; i++) {
+                for (let i = 0; i < this.gang_members_amount; i++) {
                     //create the name
-                    const gang_member_name = CONFIG.GANG_MEMBER_NAME + i
+                    const gang_member_name = GANG_MEMBER_NAME + i
                     //get information
                     const gang_member_information = ns.gang.getMemberInformation(name)
                     //check if not performing the task
@@ -232,21 +238,21 @@ export class gang_obj {
                 //not clashing
             } else {
                 //for each member
-                for (var i = 0; i < this.gang_members_amount; i++) {
+                for (let i = 0; i < this.gang_members_amount; i++) {
                     //update the information
                     gang_information = ns.gang.getGangInformation()
                     //create the name
-                    const gang_member_name = CONFIG.GANG_MEMBER_NAME + i
+                    const gang_member_name = GANG_MEMBER_NAME + i
                     //get information
                     const gang_member_information = ns.gang.getMemberInformation(name)
                     //if the wanted is going up
                     if (gang_information.wantedLevelGainRate > 0) {
                         //set to lower wanted
-                        let activity = CONSTANTS.GANG_TASK.VigilanteJustice
+                        let activity = TASK.VigilanteJustice
                         //if scope is hacking
-                        if (this.focus == CONSTANTS.GANG_FOCUS.hacking) {
-                            //set to hacking varaiant
-                            activity = CONSTANTS.GANG_TASK.EthicalHacking
+                        if (this.focus == GANG_FOCUS.hacking) {
+                            //set to hacking letaiant
+                            activity = TASK.EthicalHacking
                         }
                         //set to lower wanted
                         ns.gang.setMemberTask(gang_member_name, activity)
@@ -257,10 +263,10 @@ export class gang_obj {
                     } else {
                         //TODO: do we need charisma?
                         //calc min stat
-                        var stat_min = Math.min(gang_member_information.agi, gang_member_information.def,
+                        let stat_min = Math.min(gang_member_information.agi, gang_member_information.def,
                             gang_member_information.dex, gang_member_information.str)
                         //if hacking focussed
-                        if (this.focus == CONSTANTS.GANG_FOCUS.hacking) {
+                        if (this.focus == GANG_FOCUS.hacking) {
                             //set stats to hacking
                             stat_min = gang_member_information.hack
                         }
@@ -268,19 +274,19 @@ export class gang_obj {
                         const equipment_owned = [].concat(gang_member_information.upgrades, gang_member_information.augmentations).length
                     
                         //if stat is too low
-                        if (stat_min < CONFIG.GANG_SKILL_LEVEL_MIN) {
+                        if (stat_min < SKILL_LEVEL_MIN) {
                             //set activity
-                            var activity = CONSTANTS.GANG_TASK.TrainCombat
+                            let activity = TASK.TrainCombat
                             //if scope is hacking
-                            if (this.focus == CONSTANTS.GANG_FOCUS.hacking) {
-                                //set to hacking varaiant
-                                activity = CONSTANTS.GANG_TASK.TrainHacking
+                            if (this.focus == GANG_FOCUS.hacking) {
+                                //set to hacking letaiant
+                                activity = TASK.TrainHacking
                             }
                             //set to train
                             ns.gang.setMemberTask(gang_member_name, activity)
 
                             //if not all members are unlocked
-                        } else if (this.gang_members_amount < CONSTANTS.GANG_MEMBERS_MAX) {
+                        } else if (this.gang_members_amount < MEMBERS_MAX) {
                             //work on respect
                             this.work_for_respect(ns, gang_member_name, gang_member_information, gang_information)
 
@@ -308,9 +314,9 @@ export class gang_obj {
     //activate clash when we win all
     manage_clash(ns, gang_information) {
         //keep track of win chance
-        var clash_min_chance_win = 1
+        let clash_min_chance_win = 1
         //for each gang
-        for (const other_gang of CONSTANTS.GANG_NAMES) {
+        for (const other_gang of GANG_NAMES) {
             //if player's gang
             if (other_gang == this.faction) {
                 //do nothing
@@ -322,7 +328,7 @@ export class gang_obj {
             clash_min_chance_win = Math.min(clash_min_chance_win, chance_win)
         }
         //check if we have enough chance
-        const should_clash = (clash_min_chance_win >= CONFIG.GANG_CLASH_WIN_CHANCE)
+        const should_clash = (clash_min_chance_win >= CLASH_WIN_CHANCE)
         //set gang to warface according to the chance
         ns.gang.ns.gang.setTerritoryWarfare(should_clash)
         //return if clashing
@@ -333,15 +339,15 @@ export class gang_obj {
     //determines the best activity for money
     work_for_money(ns, gang_member_name, gang_member_information, gang_information) {
         //keep track of best task
-        var best_task = CONSTANTS.GANG_TASK.Unassigned
+        let best_task = TASK.Unassigned
         //keep track of best money
-        var best_score = 0
+        let best_score = 0
         //for each task
         for (const task of this.tasks) {
             //check if task has money
             if (task.baseMoney > 0) {
-                //variable for calculation
-                var statWeight = 0
+                //letiable for calculation
+                let statWeight = 0
                 //check for each stat
                 if (Object.hasOwn(task.params, "hackWeight")) {
                     statWeight += (task.params.hackWeight / 100) * gang_member_information.hack
@@ -369,7 +375,7 @@ export class gang_obj {
                     continue
                 }
                 //set default territory mult
-                var territoryMult = 0.005
+                let territoryMult = 0.005
                 //if there is territory influence
                 if (Object.hasOwn(task.params, "territory")) {
                     //and the influence is on money
@@ -405,15 +411,15 @@ export class gang_obj {
     //determines the best activity for respect
     work_for_respect(ns, gang_member_name, gang_member_information, gang_information) {
         //keep track of best task
-        var best_task = CONSTANTS.GANG_TASK.Unassigned
+        let best_task = TASK.Unassigned
         //keep track of best money
-        var best_score = 0
+        let best_score = 0
         //for each task
         for (const task of this.tasks) {
             //check if task has money
             if (task.baseRespect > 0) {
-                //variable for calculation
-                var statWeight = 0
+                //letiable for calculation
+                let statWeight = 0
                 //check for each stat
                 if (Object.hasOwn(task.params, "hackWeight")) {
                     statWeight += (task.params.hackWeight / 100) * gang_member_information.hack
@@ -441,7 +447,7 @@ export class gang_obj {
                     continue
                 }
                 //set default territory mult
-                var territoryMult = 0.005
+                let territoryMult = 0.005
                 //if there is territory influence
                 if (Object.hasOwn(task.params, "territory")) {
                     //and the influence is on money
@@ -476,12 +482,12 @@ export class gang_obj {
 
 
 export function get_number_of_gang_members(ns) {
-    //variable to fill
-    var gang_members_amount = 0
+    //letiable to fill
+    let gang_members_amount = 0
     //for each possible member
-    for (let i = 0; i < CONSTANTS.GANG_MEMBERS_MAX; i++) {
+    for (let i = 0; i < MEMBERS_MAX; i++) {
         //create the member name
-        const member_name = CONFIG.GANG_MEMBER_NAME + i
+        const member_name = GANG_MEMBER_NAME + i
         //Get information about a specific gang member.
         const member_information = ns.gang.getMemberInformation(member_name)
         //valid member if not null? TODO: check

@@ -1,10 +1,3 @@
-import { SERVER, HANDLE, SCRIPT } from "scripts/constants.js"
-export { SERVER, HANDLE, SCRIPT }
-
-
-
-
-
 /*
 'SINGULARITY' for 6.7 + 63 = 69.7 / 8192 GB (1%)
  'ROOT' for 69.7 + 1.35 = 71.05 / 8192 GB (1%)
@@ -17,8 +10,9 @@ export { SERVER, HANDLE, SCRIPT }
 
 //enum for script ram
 export const RAM = {
-
+    //Uses functions from other scritps
     UI: 0.0,
+
 
     //main scripts
     /*
@@ -26,8 +20,8 @@ export const RAM = {
     */
     MAIN: 1.60,//4.6,   //0.2 is used somewhere: TODO: find out!
 
-    /*
-    
+
+    /*    
     getServer (fn)	2.00GB
     getResetInfo (fn)	1.00GB
     kill (fn)	0.50GB
@@ -37,11 +31,13 @@ export const RAM = {
     */
     RAM: 5.1,
 
+
     /*
     singularity.destroyW0r1dD43m0n   25
     spawn       2
     base        1.6*/
     DESTROY: 28.6,
+
 
     /*
     getPlayer (fn)	0.50GB
@@ -56,9 +52,9 @@ export const RAM = {
 
     getServer (fn)	2.00GB  -> covered in ram
     baseCost (misc)	1.60GB  -> covered in main
-    
     */
     ROOT: 1.2,
+
 
     /*
     exec (fn)	1.30GB
@@ -81,7 +77,6 @@ export const RAM = {
     HACK: 6.05,
 
 
-
     /*
     ns.getBitNodeMultipliers()  4
     - ns.hackAnalyze            1 
@@ -96,6 +91,7 @@ export const RAM = {
     - ns.getWeakenTime    0.05   
     */
     INTELLIGENCE: 5.85,
+
 
     /*
     getServer (fn)	2.00GB  -> covered in ram
@@ -137,8 +133,6 @@ export const RAM = {
 
     singularity.getFactionWorkTypes (fn)	1.00GB
     singularity.getCurrentWork (fn)	0.50GB
-    
-
     */
     SINGULARITY: 88.0,
 
@@ -230,21 +224,22 @@ export const RAM = {
 
 
     /*
-    getServer (fn)	2.00GB
-    exec (fn)	1.30GB
-    getPlayer (fn)	0.50GB
+    getServer (fn)	2.00GB      -> covered in ram
+    exec (fn)	1.30GB          -> covered in hack
+    getPlayer (fn)	0.50GB      -> covered in root
     
     cloud.purchaseServer (fn)	2.25GB
-    cloud.getServerNames (fn)	1.05GB
     cloud.upgradeServer (fn)	0.25GB
     */
-    CLOUD: 4.05, //7.00
+    CLOUD: 2.50,
+
 
     /*
     codingcontract.getContract (fn)	15.00GB
     ls (fn)	0.20GB
     */
     CODING_CONTRACT: 15.20, 
+
 
     /*
     stock.sellStock (fn)	2.50GB
@@ -258,9 +253,11 @@ export const RAM = {
     */
     STOCK: 6.55,
 
+
     /*
     */
    INFILTRATION: 0.0,
+
 
     /*
     bladeburner.joinBladeburnerDivision (fn)	4.00GB
@@ -283,6 +280,7 @@ export const RAM = {
     */
     STANEK_AVAILABLE: 0.0,
 
+
     //boost
     /*
     "Manager":                          10.45 GB
@@ -299,6 +297,7 @@ export const RAM = {
 
     */
     STANEK: 10.45,
+
 
     /*
     gang.ascendMember (fn)	4.00GB
@@ -319,15 +318,18 @@ export const RAM = {
     */
     GANG: 25.0, //30.00
 
+
     /*
 
     */
     CORPORATION: 0.0,   //1.60
 
+
     /*
 
     */
     GRAFTING: 0.0,
+
 
     //worker scripts
     WORKER: {
@@ -337,11 +339,13 @@ export const RAM = {
         */
         WEAKEN: 1.75,
 
+
         /*
         base    1.6
         ns.grow 0.16
         */
         GROW: 1.75,
+
 
         /*
         base    1.6
@@ -349,11 +353,13 @@ export const RAM = {
         */
         HACK: 1.7,
         
+
         /*
         base    1.6
         share   2.4
         */
         SHARE: 4.0,
+
 
         /*
         getServer (fn)	2.00GB
@@ -376,11 +382,13 @@ export const RAM = {
         */
         DARKNET: 14.8,
 
+
         /*
         baseCost                    1.6            
         ns.stanek.chargeFragment    0.4
         */
        STANEK: 2.0,
+
 
         /*
         baseCost (misc)	1.60GB  -> covered in main

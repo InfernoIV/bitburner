@@ -1,5 +1,13 @@
-import * as CONSTANTS from "scripts/constants.js"
+//config
+
+
+//constants
+
+
+//functions
 import * as log from "scripts/sub/log.js"
+import { scan_servers, scan_server } from "scripts/root/root.js"
+
 
 
 /** @param {NS} ns */
@@ -15,32 +23,6 @@ export async function main(ns) {
     } 
 }
 
-//function that provides a list of servers
-function scan_servers(ns) {
-    //create a list of servers
-    var servers_found = [CONSTANTS.SERVER.HOME]
-    //start scanning from home
-    scan_server(ns, servers_found, CONSTANTS.SERVER.HOME)
-    //return
-    return servers_found
-}
-
-
-//function that scans for servers
-function scan_server(ns, servers_found, server_name) {
-    //get neighbours
-    const neighbours = ns.scan(server_name)
-    //for each neighbour found
-    for (const neighbour of neighbours) {
-        //if server is not yet found
-        if (!servers_found.includes(neighbour)) {
-            //add server to list
-            servers_found.push(neighbour)
-            //start scanning from this server
-            scan_server(ns, servers_found, neighbour)
-        }
-    }
-}
 
 /*
 {"hostname":"home","ip":"193.53.71.232","cpuCores":1,"ramUsed":3.8,"maxRam":1024,"organizationName":"Home PC","purchasedByPlayer":true,"backdoorInstalled":false,"baseDifficulty":1,"hackDifficulty":1,"minDifficulty":1,"moneyAvailable":1354483.296306708,"moneyMax":0,"numOpenPortsRequired":5,"openPortCount":4,"requiredHackingSkill":1,"serverGrowth":1}

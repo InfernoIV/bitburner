@@ -1,8 +1,12 @@
+//config
+import {DISABLE_LOGGING, NODES_MAX, RAM_MAX, CORES_MAX, LEVELS_MAX } from "./config.js"
 
 
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//constants
+//import { } from "scripts/constants/.js"
 
+
+//functions
 import * as log from "scripts/util/log.js"
 
 
@@ -13,7 +17,7 @@ export class hacknet_obj {
 
     init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
     }   
 
 
@@ -30,7 +34,7 @@ export class hacknet_obj {
         //get the number of nodes owned
         const nodes_owned = ns.hacknet.numNodes()
         //if we don't own anything
-        if (nodes_owned < CONFIG.NODES_MAX) {
+        if (nodes_owned < NODES_MAX) {
             //buy a node
             ns.hacknet.purchaseNode()
         }
@@ -39,17 +43,17 @@ export class hacknet_obj {
             //get stats
             const node_stats = ns.hacknet.getNodeStats(i)
             //if we need to increase ram
-            if (node_stats.ram < CONFIG.RAM_MAX) {
+            if (node_stats.ram < RAM_MAX) {
                 //upgrade ram
                 ns.hacknet.upgradeRam(i)
             }
             //if we need to increase level
-            if (node_stats.level < CONFIG.LEVELS_MAX) {
+            if (node_stats.level < LEVELS_MAX) {
                 //upgrade level
                 ns.hacknet.upgradeLevel(i)
             }
             //if we need to increase cores
-            if (node_stats.cores < CONFIG.CORES_MAX) {
+            if (node_stats.cores < CORES_MAX) {
                 //upgrade cores
                 ns.hacknet.upgradeCore(i)
             }

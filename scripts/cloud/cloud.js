@@ -1,28 +1,35 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING, MONEY_MIN, RAM_BASE } from "./config.js"
 
+
+//constants
+import { SERVERS_AMOUNT_MAX, SERVER_RAM_MAX } from "./constants.js"
+import { SERVER } from "scripts/constants/servers.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
+import { scan_servers } from "scripts/root/root.js"
+
 
 // Declaration
 export class cloud_obj {
-    constructor() {
-        this.available = true
-    }
+    constructor() {}
 
 
-    //
+    //init
     init(ns, handles) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)                
+        log.disable(ns, DISABLE_LOGGING)                
         //map of servers owned
         this.servers_owned = new Map()
-        //variables that are set once
-        this.server_max_amount = CONSTANTS.SERVERS_AMOUNT_MAX //* currentNodeMults.CloudServerLimit
-        this.server_max_ram = CONSTANTS.SERVER_RAM_MAX //* currentNodeMults.CloudServerMaxRam
+        //letiables that are set once
+        this.server_max_amount = SERVERS_AMOUNT_MAX //* currentNodeMults.CloudServerLimit
+        this.server_max_ram = SERVER_RAM_MAX //* currentNodeMults.CloudServerMaxRam
         //keep track of the lowest ram (to speed up scripts)
         this.ram_lowest = this.server_max_ram        
         //check for existing servers
-        var servers = ns.cloud.getServerNames() //can we use the normal scan for this?
+        let servers = get_cloud_servers(ns) //ns.cloud.getServerNames()
         //check each server
         for (const server of servers) {
             //get the ram
@@ -48,7 +55,7 @@ export class cloud_obj {
     //buy and/or upgrade servers
     manage(ns, handles) {
         //min money to upgrade
-        const money_min = CONFIG.MONEY_MIN
+        const money_min = MONEY_MIN
         //get player
         const player = ns.getPlayer()
         //check if we have enough money
@@ -72,14 +79,14 @@ export class cloud_obj {
     //upgrade the ram of the server
     upgrade_ram(ns) {
         //try to upgrade the server
-        for (var [server, ram] of this.servers_owned) {
+        for (let [server, ram] of this.servers_owned) {
             //check if we need to upgrade at all
             while (ram < this.server_max_ram) {
                 //just try to upgrade
-                var upgraded = ns.cloud.upgradeServer(server, ram * 2)
+                let upgraded = ns.cloud.upgradeServer(server, ram * 2)
                 //if successfull
                 if (upgraded) {
-                    //update the ram variable
+                    //update the ram letiable
                     ram = ram * 2
                     //update the map
                     this.servers_owned.set(server, ram)
@@ -95,10 +102,10 @@ export class cloud_obj {
                     if (this.ram_lowest == this.server_max_ram && this.servers_owned.size == this
                         .server_max_amount) {
                         //log
-                        log.success(ns, "Cloud", "Maximized ram of all cloud servers (" + Format.ram(
+                        /*log.success(ns, "Cloud", "Maximized ram of all cloud servers (" + format.ram(
                             server_max_ram) + ")", true)
                         //toast
-                        ns.toast("Maximized ram of all cloud servers (" + Format.ram(server_max_ram) + ")")
+                        ns.toast("Maximized ram of all cloud servers (" + Format.ram(server_max_ram) + ")")*/
                     }
                 } else {
                     //stop
@@ -112,15 +119,15 @@ export class cloud_obj {
     //buy new servers
     purchase_servers(ns) {
         //try to buy new server
-        var name = ns.cloud.purchaseServer(CONSTANTS.HOSTNAME_CLOUD, CONFIG.RAM_BASE)
+        let name = ns.cloud.purchaseServer(SERVER.CLOUD, RAM_BASE)
         //check if successfull
         if (name != "") {
             //add to the local list
-            this.servers_owned.set(name, CONFIG.RAM_BASE)
+            this.servers_owned.set(name, RAM_BASE)
             //log
-            log.success(ns, "Cloud", "Bought '" + name + "' with '" + CONFIG.RAM_BASE + "' ram")
+            log.success(ns, "Cloud", "Bought '" + name + "' with '" + RAM_BASE + "' ram")
             //toast
-            ns.toast("Bought '" + name + "' with '" + CONFIG.RAM_BASE + "' ram")
+            ns.toast("Bought '" + name + "' with '" + RAM_BASE + "' ram")
             //if all servers bought)
             if (this.servers_owned.size == this.server_max_amount) {
                 //log
@@ -129,7 +136,26 @@ export class cloud_obj {
                 ns.toast("Bought all cloud servers (" + this.server_max_amount + ")")
             }
             //update lowest ram
-            this.ram_lowest = CONFIG.RAM_BASE
+            this.ram_lowest = RAM_BASE
         }
     }
+}
+
+
+//function that returns a list of cloud server names
+function get_cloud_servers(ns) {
+    //list of cloud servers
+    let cloud_servers = []
+    //scan servers
+    const found_servers = scan_servers(ns)
+    //for each server
+    for (const server of found_servers) {
+        //if it contains the cloud name
+        if (server.includes(SERVER.CLOUD)) {
+            //add to list
+            cloud_servers.push(server)
+        }
+    }
+    //return the list
+    return cloud_servers
 }

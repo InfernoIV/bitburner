@@ -1,10 +1,16 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING, MARKET_DEMAND_MIN, LOOPS_MAX, TIME_BETWEEN_ROUNDS, CLICK_SLEEP_TIME, TIME_BETWEEN_KEYS, TIME_WAIT } from "./config.js"
 
 
+//constants
+import { INFILTRATION_LOCATION, GUARD_COMPLIMENTS, KEY } from "./constants.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
 
 
+//globals
 const wnd = eval("window")
 const doc = wnd["document"]
 
@@ -20,7 +26,7 @@ export class infiltration_obj {
 
     init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
     }
 
 
@@ -28,7 +34,7 @@ export class infiltration_obj {
         //keep track if we did anything
         var performed_any_infiltration = false
         //debug
-        if (this.loop >= CONFIG.LOOPS_MAX) {
+        if (this.loop >= LOOPS_MAX) {
             if(this.printOnce) {
                 this.printOnce = false
                 ns.alert("Stopping Infiltration")
@@ -39,7 +45,7 @@ export class infiltration_obj {
             return
         }
         // Get all locations that can be infiltrated where we are
-        const locations = CONSTANTS.INFILTRATION_LOCATION[ns.getPlayer().city]
+        const locations = INFILTRATION_LOCATION[ns.getPlayer().city]
         //for each location
         for (const location of locations) {
             //go to location
@@ -64,7 +70,7 @@ export class infiltration_obj {
                 .raw`\d{1,}`, "g"))[0])
 
             //if market demand is too low
-            if (market_demand < CONFIG.MARKET_DEMAND_MIN) {
+            if (market_demand < MARKET_DEMAND_MIN) {
                 //go to next
                 continue
             }
@@ -117,7 +123,7 @@ export class infiltration_obj {
             for (var i = 0; i < max_clearance_level; i++) {
                 log.info(ns, "Singularity", "Round " + i, true)
                 //wait a little bit
-                await ns.sleep(CONFIG.TIME_BETWEEN_ROUNDS)
+                await ns.sleep(TIME_BETWEEN_ROUNDS)
                 var header = doc.getElementsByTagName("h4")[1]
                 //get the type
                 const type = header.innerText
@@ -142,17 +148,17 @@ export class infiltration_obj {
                             //wait until
                             if (status.includes("Distracted")) { //should contain: Guarding / Distracted /  Alerted 
                                 //attack
-                                await pressKey(ns, CONSTANTS.KEY.SPACE)
+                                await pressKey(ns, KEY.SPACE)
                                 //stop
                                 break
                             }
                             //wait a little bit
-                            await ns.sleep(CONSTANTS.TIME.WAIT)
+                            await ns.sleep(TIME_WAIT)
                         }
                         //debug
                         ns.alert("Completed: 'Attack the sentinel'")
                         ns.ui.openTail()
-                        await ns.sleep(CONSTANTS.TIME.WAIT)
+                        await ns.sleep(TIME_WAIT)
                         ns.exit()
                         //stop
                         break
@@ -168,12 +174,12 @@ export class infiltration_obj {
                         for (let i = 0; i < 50; i++) { //while (true) {
                             const text = text_box.innerText
                             //log the information found
-                            log.info(ns, "Infiltration", "Text: " + text + " (" + CONSTANTS.GUARD_COMPLIMENTS
-                                .includes(text) + ") => " + JSON.stringify(CONSTANTS.GUARD_COMPLIMENTS), true)
+                            log.info(ns, "Infiltration", "Text: " + text + " (" + GUARD_COMPLIMENTS
+                                .includes(text) + ") => " + JSON.stringify(GUARD_COMPLIMENTS), true)
                             //if this is a complement
-                            if (CONSTANTS.GUARD_COMPLIMENTS.includes(text)) {
+                            if (GUARD_COMPLIMENTS.includes(text)) {
                                 //send
-                                await pressKey(ns, CONSTANTS.KEY.SPACE)
+                                await pressKey(ns, KEY.SPACE)
                                 //debug
                                 log.success(ns, "Infiltration", "Send compliment: " + text_box.innerText, true)
                                 //next 
@@ -181,7 +187,7 @@ export class infiltration_obj {
                             } else {
                                 log.info(ns, "Infiltration", "Go to next compliment", true)
                                 //go to next entry
-                                await pressKey(ns, CONSTANTS.KEY.UP)
+                                await pressKey(ns, KEY.UP)
                             }
                         }
                         //debug
@@ -199,10 +205,10 @@ export class infiltration_obj {
                         //get the data    
                         data = header.parentElement.children[1].innerText.split("\n")
                         log.info(ns, "Infiltration", "Code of " + data.length + ", data:  '" + data + "'", true)
-
+                        var direction
                         for (let i = 0; i < data.length; i++) {
                             //get the direction
-                            const direction = header.parentElement.children[1].innerText.split("\n")[i]
+                            direction = header.parentElement.children[1].innerText.split("\n")[i]
                         }
                         //click(get_element("button", "Cancel"))
                         ns.ui.openTail()
@@ -210,19 +216,19 @@ export class infiltration_obj {
                         //depending on the data: send key strokes
                         switch (direction) {
                             case "↑":
-                                await pressKey(ns, CONSTANTS.KEY.UP)
+                                await pressKey(ns, KEY.UP)
                                 break
 
                             case "←":
-                                await pressKey(ns, CONSTANTS.KEY.LEFT)
+                                await pressKey(ns, KEY.LEFT)
                                 break
 
                             case "→":
-                                await pressKey(ns, CONSTANTS.KEY.RIGHT)
+                                await pressKey(ns, KEY.RIGHT)
                                 break
 
                             case "↓":
-                                await pressKey(ns, CONSTANTS.KEY.DOWN)
+                                await pressKey(ns, KEY.DOWN)
                                 break
 
                             default:
@@ -232,8 +238,8 @@ export class infiltration_obj {
                                 ns.exit()
                         }
                         //temporary
-                        await ns.sleep(CONSTANTS.TIME.WAIT)
-
+                        await ns.sleep(TIME_WAIT)
+                        
                         //debug
                         ns.alert("Completed: 'Enter the code'")
                         //stop                    
@@ -251,7 +257,7 @@ export class infiltration_obj {
 
                         //click(get_element("button", "Cancel"))
                         ns.ui.openTail()
-                        await ns.sleep(CONSTANTS.TIME.WAIT)
+                        await ns.sleep(TIME_WAIT)
                         ns.exit()
 
                         //should work when the correct data is selected
@@ -331,14 +337,14 @@ export class infiltration_obj {
                             const column = 0
                             //move down to the row
                             for (let i = 0; i < row; i++) {
-                                await pressKey(ns, CONSTANTS.KEY.DOWN)
+                                await pressKey(ns, KEY.DOWN)
                             }
                             //move right to the column
                             for (let i = 0; i < column; i++) {
-                                await pressKey(ns, CONSTANTS.KEY.RIGHT)
+                                await pressKey(ns, KEY.RIGHT)
                             }
                             //select
-                            await pressKey(ns, CONSTANTS.KEY.SPACE)
+                            await pressKey(ns, KEY.SPACE)
                         }
                         //debug
                         ns.alert("Completed: 'Match the symbols!'")
@@ -379,7 +385,7 @@ export class infiltration_obj {
         } catch (err) {
             //log
             log.error(ns, "Infiltration", "manage_infiltration error: " + err, true)
-            await ns.sleep(CONSTANTS.TIME.WAIT)
+            await ns.sleep(TIME_WAIT)
             ns.ui.openTail()
             ns.exit()
 
@@ -418,7 +424,7 @@ const click = async elem => {
         isTrusted: true
     })
     //if we chose to wait: wait
-    if (CONFIG.CLICK_SLEEP_TIME) await ns.sleep(CONFIG.CLICK_SLEEP_TIME)
+    //if (CLICK_SLEEP_TIME) await ns.sleep(CLICK_SLEEP_TIME)
 }
 
 

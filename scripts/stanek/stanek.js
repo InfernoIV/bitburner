@@ -1,7 +1,13 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING } from "./config.js"
 
 
+//constants
+import { SCRIPT } from "scripts/constants/scripts.js"
+import { SERVER } from "scripts/constants/server.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
 
 
@@ -17,7 +23,7 @@ export class stanek_obj {
     */
     init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
     }
 
 
@@ -45,7 +51,7 @@ export class stanek_obj {
         //get height
         const height = ns.stanek.giftHeight()
         //get fragments placed
-        var fragments = this.get_fragments(ns)
+        let fragments = this.get_fragments(ns)
         //if we have no fragments
         if (fragments.length == 0) {
             //place fragments
@@ -55,7 +61,7 @@ export class stanek_obj {
         }
 
         //start worker
-        var result = ns.exec(CONSTANTS.SCRIPT.WORKER.STANEK, CONSTANTS.SERVER.HOME, {
+        let result = ns.exec(SCRIPT.WORKER.STANEK, SERVER.HOME, {
             preventDuplicates: true,
             threads: threads,
         }, fragments)
@@ -80,17 +86,17 @@ export class stanek_obj {
     place_fragments(ns, width, height) {
 
         //keep track of possible fragments
-        var fragments_possible = []
+        let fragments_possible = []
         //also save the ID's seperately
-        var fragments_possible_ids = new Map()
+        let fragments_possible_ids = new Map()
         //calculate total grid size
         const size_total = width * height
         //get all possible fragments
         const fragments_all = ns.stanek.fragmentDefinitions()
         //keep track of current size
-        var size_current = 0
+        let size_current = 0
         //keep track of the minimal fragment size
-        var size_min = 0
+        let size_min = 0
 
         //while there are still fragments to place
         while ((size_current + size_min) < size_total) {
@@ -142,7 +148,7 @@ export class stanek_obj {
     //function that determines the surface of the fragment
     determine_size(fragment) {
         //convert to string, then count all the "trues"
-        var count = (fragment.shape.toString().match(/true/g) || []).length
+        let count = (fragment.shape.toString().match(/true/g) || []).length
         //return the count
         return count
     }
@@ -151,7 +157,7 @@ export class stanek_obj {
     //function that gets the minimal size of fragment left in the list
     get_min_size(fragments_all, fragments_possible_ids) {
         //keep track of min size
-        var min_size = 99
+        let min_size = 99
         //for each fragment possible
         for (const fragment of fragments_all) {
             //if already registered
@@ -180,11 +186,11 @@ export class stanek_obj {
     //determine the best possible placements of the fragments
     determine_placements(ns, fragments_possible) {
         //keep track of initial list
-        var fragments_to_place = fragments_possible
+        let fragments_to_place = fragments_possible
         //keep track of iterations
-        var iteration = 0
+        let iteration = 0
         //keep track of success outside of the while loop
-        var success = false
+        let success = false
         //keep trying for amount of iterations equal to the number of fragments (so we start with another fragment each time)
         while (iteration < fragments.to_place.length) {
             //clear the grid
@@ -230,7 +236,7 @@ export class stanek_obj {
     */
     determine_placement(ns, fragments_to_place) {
         //copy the list
-        var fragments_left = fragments_to_place
+        let fragments_left = fragments_to_place
         //remove the first fragment and save it
         const fragment = fragments_left.shift()
 
@@ -250,7 +256,7 @@ export class stanek_obj {
                             return true
                         }
                         //we can still place fragments: go deeper
-                        var result = this.determine_placement(ns, fragments_left)
+                        let result = this.determine_placement(ns, fragments_left)
                         //if deeper placement sucessfull
                         if (result == true) {
                             //we have placed all, return
@@ -270,7 +276,7 @@ export class stanek_obj {
     //function that gets all fragments
     get_fragments(ns) {
         //create overview of fragments
-        var fragments = []
+        let fragments = []
         //for each x
         for (let x = 0; x < width; x++) {
             //for each y

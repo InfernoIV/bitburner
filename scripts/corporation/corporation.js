@@ -1,8 +1,13 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING, RP_MIN_TO_BUY_TA2 } from "./config.js"
 
+
+//constants
+import { INVESTMENT_ROUNDS_MAX, VALUATION_REQUIRED_FOR_BRIBE, DIVISIONS_MAX } from "./constants.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
-
 
 
 // Declaration
@@ -12,9 +17,9 @@ export class corporation_obj {
 
     init(ns, handles) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
         //maximum amount of divisions
-        this.max_divisions = CONSTANTS.DIVISIONS_MAX //TODO: check how this works outside of BN3
+        this.max_divisions = DIVISIONS_MAX //TODO: check how this works outside of BN3
         //this.investment_round = 0
     }
 

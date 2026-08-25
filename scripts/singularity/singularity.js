@@ -1,13 +1,26 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING, TIME_WAIT, CRIME_CHANCE_MIN, CRIME_TIME_MAX, SF_12_MULT, SKILL_MIN, AUGMENTS_INSTALL_MIN, KILLS_MIN  } from "./config.js"
 
 
+//constants
+import { GYMS, UNIVERSITIES, WORK_TYPE, COMPANY_FACTIONS } from "./constants.js"
+import { SERVER } from "scripts/constants/servers.js"
+import { FILE_EXTENSION } from "scripts/constants/files.js"
+import { TOOLS } from "scripts/constants/tools.js"
+import { HANDLE } from "scripts/constants/handles.js"
+import { AUGMENT } from "scripts/constants/augments.js"
+import { SCRIPT } from "scripts/constants/scripts.js"
+import { FACTION } from "scripts/constants/factions.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
 import { sell_all_stocks } from "scripts/stock/stock.js"
 
 
 export class singularity_obj {
     constructor() {
+        //keep track if tor is owned
         this.tor_owned = false
         //set a default value
         this.next_bitnode = 12
@@ -19,15 +32,15 @@ export class singularity_obj {
     */
     init(ns, handles) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
         //get tools
-        const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
-        this.brute_ssh = executables.includes(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)
-        this.ftp_crack = executables.includes(CONSTANTS.TOOLS.HACKING.FTP_CRACK)
-        this.relay_smtp = executables.includes(CONSTANTS.TOOLS.HACKING.RELAY_SMTP)
-        this.http_worm = executables.includes(CONSTANTS.TOOLS.HACKING.HTTP_WORM)
-        this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
-        this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
+        const executables = ns.ls(SERVER.HOME, FILE_EXTENSION.EXECUTABLE)
+        this.brute_ssh = executables.includes(TOOLS.HACKING.BRUTE_SSH)
+        this.ftp_crack = executables.includes(TOOLS.HACKING.FTP_CRACK)
+        this.relay_smtp = executables.includes(TOOLS.HACKING.RELAY_SMTP)
+        this.http_worm = executables.includes(TOOLS.HACKING.HTTP_WORM)
+        this.sql_inject = executables.includes(TOOLS.HACKING.SQL_INJECT)
+        this.darknet = executables.includes(TOOLS.DARKNET)
         //determine next bitnode
         this.next_bitnode = determine_next_bitnode(ns)[0]
         //log
@@ -48,16 +61,16 @@ export class singularity_obj {
     */
     async manage(ns, handles) {
         //try to destroy bitnode
-        this.destroy_bitnode(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE), handles.hasOwnProperty(
-            CONSTANTS.HANDLE.BLADEBURNER))
+        this.destroy_bitnode(ns, handles.hasOwnProperty(HANDLE.INTELLIGENCE), handles.hasOwnProperty(
+            HANDLE.BLADEBURNER))
         //test
-        await this.join_stanek(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STANEK_AVAILABLE))
+        await this.join_stanek(ns, handles.hasOwnProperty(HANDLE.STANEK_AVAILABLE))
         //upgrade home
         this.upgrade_home(ns)
         //check if we don't own tor
         if (!this.tor_owned) {
             //try to buy tor
-            this.manage_tor(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.DARKNET_AVAILABLE))
+            this.manage_tor(ns, handles.hasOwnProperty(HANDLE.DARKNET_AVAILABLE))
             //tor owned
         } else {
             //buy tools from tor
@@ -66,35 +79,35 @@ export class singularity_obj {
         //manage (joining of) faction (invites)
         this.manage_factions(ns)
         //manage player actions
-        const travel_blocked = this.manage_player(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.DARKNET), handles
-            .hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
+        const travel_blocked = this.manage_player(ns, handles.hasOwnProperty(HANDLE.DARKNET), handles
+            .hasOwnProperty(HANDLE.INTELLIGENCE))
         //check if we can travel
         if (!travel_blocked) {
             //test
-            await this.join_stanek(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STANEK_AVAILABLE))
+            await this.join_stanek(ns, handles.hasOwnProperty(HANDLE.STANEK_AVAILABLE))
             //manage player location
             this.manage_location(ns)
         }
         //manage augments
-        this.manage_augments(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
+        this.manage_augments(ns, handles.hasOwnProperty(HANDLE.INTELLIGENCE))
         //install augments
-        this.install_augments(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.STOCK))
+        this.install_augments(ns, handles.hasOwnProperty(HANDLE.STOCK))
     }
 
 
     destroy_bitnode(ns, bitnode_multipliers_available, bladeburner_available) {
         //if we have the red pill installed
-        if (ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT
+        if (ns.singularity.getOwnedAugmentations(false).includes(AUGMENT
             .TRP)) {
             //get the required hacking level
-            var world_deamon_hacking = ns.getServer(CONSTANTS.SERVER.WORLD_DEAMON).requiredHackingSkill
+            let world_deamon_hacking = ns.getServer(SERVER.WORLD_DEAMON).requiredHackingSkill
             //log.info(ns, "Singularity", "world_deamon_hacking: " + world_deamon_hacking, true)
             //get player
             const level_hacking = ns.getPlayer().skills.hacking
             //if bladeburner completed the final black op or enough hacking level
             if (level_hacking >= world_deamon_hacking || false) {
                 //replace this script with the destroy script
-                ns.spawn(CONSTANTS.SCRIPT.DESTROY, 1, 
+                ns.spawn(SCRIPT.DESTROY, 1, 
                     this.next_bitnode, level_hacking >= world_deamon_hacking)
             }
         }
@@ -127,54 +140,54 @@ export class singularity_obj {
         //if darknet tools is not yet bought
         if (!this.darknet) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.DARKNET)) {
+            if (ns.singularity.purchaseProgram(TOOLS.DARKNET)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.DARKNET + "'", true)
+                log.info(ns, "Singularity", "Bought '" + TOOLS.DARKNET + "'", true)
                 //set flag
                 this.darknet = true
             }
         }
         if (!this.brute_ssh) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)) {
+            if (ns.singularity.purchaseProgram(TOOLS.HACKING.BRUTE_SSH)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.BRUTE_SSH + "'", true)
+                log.info(ns, "Singularity", "Bought '" + TOOLS.HACKING.BRUTE_SSH + "'", true)
                 //set flag
                 this.brute_ssh = true
             }
         }
         if (!this.ftp_crack) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.FTP_CRACK)) {
+            if (ns.singularity.purchaseProgram(TOOLS.HACKING.FTP_CRACK)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.FTP_CRACK + "'", true)
+                log.info(ns, "Singularity", "Bought '" + TOOLS.HACKING.FTP_CRACK + "'", true)
                 //set flag
                 this.ftp_crack = true
             }
         }
         if (!this.relay_smtp) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.RELAY_SMTP)) {
+            if (ns.singularity.purchaseProgram(TOOLS.HACKING.RELAY_SMTP)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.RELAY_SMTP + "'", true)
+                log.info(ns, "Singularity", "Bought '" + TOOLS.HACKING.RELAY_SMTP + "'", true)
                 //set flag
                 this.relay_smtp = true
             }
         }
         if (!this.http_worm) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.HTTP_WORM)) {
+            if (ns.singularity.purchaseProgram(TOOLS.HACKING.HTTP_WORM)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.HTTP_WORM + "'", true)
+                log.info(ns, "Singularity", "Bought '" + TOOLS.HACKING.HTTP_WORM + "'", true)
                 //set flag
                 this.http_worm = true
             }
         }
         if (!this.sql_inject) {
             //try to buy
-            if (ns.singularity.purchaseProgram(CONSTANTS.TOOLS.HACKING.SQL_INJECT)) {
+            if (ns.singularity.purchaseProgram(TOOLS.HACKING.SQL_INJECT)) {
                 //log 
-                log.info(ns, "Singularity", "Bought '" + CONSTANTS.TOOLS.HACKING.SQL_INJECT + "'", true)
+                log.info(ns, "Singularity", "Bought '" + TOOLS.HACKING.SQL_INJECT + "'", true)
                 //set flag
                 this.sql_inject = true
             }
@@ -190,7 +203,7 @@ export class singularity_obj {
         //Upgrade home computer RAM.
         if (ns.singularity.upgradeHomeRam()) {
             //get server
-            const server = ns.getServer(CONSTANTS.SERVER.HOME)
+            const server = ns.getServer(SERVER.HOME)
             //log
             log.success(ns, "Singularity", "Upgraded home RAM to " + server.maxRam, true)
         }
@@ -210,7 +223,7 @@ export class singularity_obj {
         //get factions
         const factions_joined = player.factions
         //set target city
-        var target_city = ""
+        let target_city = ""
         //get augments
         const augments_owned = ns.singularity.getOwnedAugmentations(true)
         //city factions
@@ -318,7 +331,7 @@ export class singularity_obj {
             if (player.city != target_city) {
 
                 //check money
-                const money = ns.getServer(CONSTANTS.SERVER.HOME).moneyAvailable
+                const money = ns.getServer(SERVER.HOME).moneyAvailable
                 //check if enough
                 if (money >= 200000) {
                     log.info(ns, "Singularity", "Traveling to city: '" + target_city + ", currently in '" + player
@@ -358,7 +371,7 @@ export class singularity_obj {
             //move to the church
             ns.singularity.goToLocation("Church of the Machine God")
             //wait a little bit
-            await ns.sleep(CONSTANTS.TIME.WAIT)
+            await ns.sleep(TIME_WAIT)
             //get invites
             const invites = ns.singularity.checkFactionInvitations()
             //if we have the invite we seek
@@ -403,7 +416,7 @@ export class singularity_obj {
         //work for faction, ignoring favor
         if (this.work_for_faction(ns, formulas_available, true)) return false
         //if we don't have enough kills for certains factions
-        if (ns.getPlayer().numPeopleKilled < CONFIG.KILLS_MIN) {
+        if (ns.getPlayer().numPeopleKilled < KILLS_MIN) {
             //commit murder
             if (this.commit_murder(ns)) return false
         }
@@ -438,9 +451,9 @@ export class singularity_obj {
     //function that manages augments (buying the most expensive one first before going to the next)    
     manage_augments(ns, formulas_available) {
         //create a list of augments and their prices
-        var augments = new Map()
+        let augments = new Map()
         //get bought augments
-        var augments_bought = ns.singularity.getOwnedAugmentations(true)
+        let augments_bought = ns.singularity.getOwnedAugmentations(true)
         //get factions
         const factions = ns.getPlayer().factions
         //for each faction
@@ -450,13 +463,13 @@ export class singularity_obj {
             //for each augment
             for (const augment of augments_faction) {
                 //if not owned or is NeuroFlux Governor (can be stacked)
-                if (!augments_bought.includes(augment) || augment == CONSTANTS.AUGMENT.NFG) {
+                if (!augments_bought.includes(augment) || augment == AUGMENT.NFG) {
                     //get the price
-                    var price = ns.singularity.getAugmentationPrice(augment)
+                    let price = ns.singularity.getAugmentationPrice(augment)
                     //get the rep requirement
-                    var rep = ns.singularity.getAugmentationRepReq(augment)
+                    let rep = ns.singularity.getAugmentationRepReq(augment)
                     //set target faction
-                    var target_faction = faction
+                    let target_faction = faction
                     //check if we already saves the augment
                     if (augments.has(augment)) {
                         //get the saved faction
@@ -528,8 +541,8 @@ export class singularity_obj {
 
     //function that donates to the faction
     donate_to_get_rep(ns, faction, rep_difference, formulas_available) {
-        //variable to fill
-        var money = 0
+        //letiable to fill
+        let money = 0
         //if we can use formulas
         if (formulas_available) {
             //just calc
@@ -553,19 +566,19 @@ export class singularity_obj {
     //function that checks if we want to install augments
     install_augments(ns, has_stocks) {
         //refresh bought augments
-        var augments_bought = ns.singularity.getOwnedAugmentations(true)
+        let augments_bought = ns.singularity.getOwnedAugmentations(true)
         //get augments installed
-        var augments_owned = ns.singularity.getOwnedAugmentations(false)
+        let augments_owned = ns.singularity.getOwnedAugmentations(false)
         //if we have bought at least 5 augments or we have the red pill
-        if (((augments_bought.length - augments_owned.length) >= CONFIG.AUGMENTS_INSTALL_MIN) || 
+        if (((augments_bought.length - augments_owned.length) >= AUGMENTS_INSTALL_MIN) || 
         //we have bought the red pill but not yet installed
-            (ns.singularity.getOwnedAugmentations(true).includes(CONSTANTS.AUGMENT.TRP) && !ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP))) {
+            (ns.singularity.getOwnedAugmentations(true).includes(AUGMENT.TRP) && !ns.singularity.getOwnedAugmentations(false).includes(AUGMENT.TRP))) {
             //get factions
             const factions = ns.getPlayer().factions
             //get best rep
-            var best_rep = 0
+            let best_rep = 0
             //get best faction
-            var best_faction = ""
+            let best_faction = ""
             //for each faction
             for (const faction of factions) {
                 //get rep
@@ -585,14 +598,14 @@ export class singularity_obj {
             }
 
             //placeholder
-            var success = true
+            let success = true
             //keep trying
             while (success) {
                 //try to buy NFG
-                success = ns.singularity.purchaseAugmentation(best_faction, CONSTANTS.AUGMENT.NFG)
+                success = ns.singularity.purchaseAugmentation(best_faction, AUGMENT.NFG)
             }
             //install augments
-            ns.singularity.installAugmentations(CONSTANTS.SCRIPT.BOOT)
+            ns.singularity.installAugmentations(SCRIPT.BOOT)
         }
     }
 
@@ -604,23 +617,23 @@ export class singularity_obj {
         //get skills
         const skills = ns.getPlayer().skills
         //hacking < combat < charisma
-        if (skills.hacking < CONFIG.SKILL_MIN) {
-            return this.perform_action(ns, CONSTANTS.WORK_TYPE.STUDY, "Algorithms")
+        if (skills.hacking < SKILL_MIN) {
+            return this.perform_action(ns, WORK_TYPE.STUDY, "Algorithms")
 
-        } else if (skills.strength < CONFIG.SKILL_MIN) {
-            return this.perform_action(ns, CONSTANTS.WORK_TYPE.STUDY, "str")
+        } else if (skills.strength < SKILL_MIN) {
+            return this.perform_action(ns, WORK_TYPE.STUDY, "str")
 
-        } else if (skills.defense < CONFIG.SKILL_MIN) {
-            return this.perform_action(ns, CONSTANTS.WORK_TYPE.STUDY, "def")
+        } else if (skills.defense < SKILL_MIN) {
+            return this.perform_action(ns, WORK_TYPE.STUDY, "def")
 
-        } else if (skills.dexterity < CONFIG.SKILL_MIN) {
-            return this.perform_action(ns, CONSTANTS.WORK_TYPE.STUDY, "dex")
+        } else if (skills.dexterity < SKILL_MIN) {
+            return this.perform_action(ns, WORK_TYPE.STUDY, "dex")
 
-        } else if (skills.agility < CONFIG.SKILL_MIN) {
-            return this.perform_action(ns, CONSTANTS.WORK_TYPE.STUDY, "agi")
+        } else if (skills.agility < SKILL_MIN) {
+            return this.perform_action(ns, WORK_TYPE.STUDY, "agi")
 
-        } else if (skills.charisma < CONFIG.SKILL_MIN) {
-            return this.perform_action(ns, CONSTANTS.WORK_TYPE.STUDY, "Leadership")
+        } else if (skills.charisma < SKILL_MIN) {
+            return this.perform_action(ns, WORK_TYPE.STUDY, "Leadership")
         }
         //we have all the stats we need
         return false
@@ -632,11 +645,11 @@ export class singularity_obj {
     */
     work_for_faction(ns, formulas_available, ignore_favor = false) {
         //bought red pill
-        const have_red_pill = ns.singularity.getOwnedAugmentations(true).includes(CONSTANTS.AUGMENT.TRP)
+        const have_red_pill = ns.singularity.getOwnedAugmentations(true).includes(AUGMENT.TRP)
         //if red pill is not yet gotten and daedalus is unlocked
-        if (!have_red_pill && ns.getPlayer().factions.includes(CONSTANTS.FACTION.DAEDALUS)) {
+        if (!have_red_pill && ns.getPlayer().factions.includes(FACTION.DAEDALUS)) {
             //set to work for faction
-            this.perform_action(ns, CONSTANTS.WORK_TYPE.FACTION, CONSTANTS.FACTION.DAEDALUS, formulas_available)
+            this.perform_action(ns, WORK_TYPE.FACTION, FACTION.DAEDALUS, formulas_available)
             //indicate sucess
             return true
         }
@@ -645,19 +658,19 @@ export class singularity_obj {
         const augments_owned = ns.singularity.getOwnedAugmentations(true)
         //get factions
         const factions = ns.getPlayer().factions
-        //variable to fill
-        var target_faction = ""
+        //letiable to fill
+        let target_faction = ""
         //for each faction
         for (const faction of factions) {
             //save highest rep needed
-            var rep_highest = 0
+            let rep_highest = 0
             //check if we have enough rep for the augments
             //get augmnets
             const augments = ns.singularity.getAugmentationsFromFaction(faction)
             //for each augment the faction offers
             for (const augment of augments) {
                 //if neurflux governor
-                if (augment == CONSTANTS.AUGMENT.NFG) {
+                if (augment == AUGMENT.NFG) {
                     //ignore
                     continue
                 }
@@ -690,7 +703,7 @@ export class singularity_obj {
             const favor = ns.singularity.getFactionFavor(faction)
             const rep_to_favor = Math.log1p(rep / 30000) /
                 0.019802627296179712 //(rep / 25000) / 0.019802627296179712
-            var favor_for_donate = 150
+            let favor_for_donate = 150
             //if we can use bitnode multipliers
             if (formulas_available) {
                 //adjust the number
@@ -710,7 +723,7 @@ export class singularity_obj {
         //if a target faction is set
         if (target_faction != "") {
             //set to work for faction
-            this.perform_action(ns, CONSTANTS.WORK_TYPE.FACTION, target_faction, formulas_available)
+            this.perform_action(ns, WORK_TYPE.FACTION, target_faction, formulas_available)
             //indicate sucess
             return true
         }
@@ -729,12 +742,12 @@ export class singularity_obj {
         const company_reputation_needed_for_faction = 400000
         //get factions
         const factions_joined = ns.getPlayer().factions
-        //variable to fill
-        var target_company = ""
+        //letiable to fill
+        let target_company = ""
         //for each company faction
-        for (const faction in CONSTANTS.COMPANY_FACTIONS) {
+        for (const faction in COMPANY_FACTIONS) {
             //get info
-            const info = CONSTANTS.COMPANY_FACTIONS[faction]
+            const info = COMPANY_FACTIONS[faction]
             //if faction is already joined
             if (factions_joined.includes(faction)) {
                 //go to next
@@ -758,7 +771,7 @@ export class singularity_obj {
         //if there is an company set
         if (target_company != "") {
             //work for company
-            this.perform_action(ns, CONSTANTS.WORK_TYPE.COMPANY, target_company, formulas_available)
+            this.perform_action(ns, WORK_TYPE.COMPANY, target_company, formulas_available)
             //indicate success
             return true
         }
@@ -775,9 +788,9 @@ export class singularity_obj {
     //commit crime
     commit_crime(ns) {
         //save best crime
-        var best_crime = "Mug"
+        let best_crime = "Mug"
         //best score
-        var best_score = 0
+        let best_score = 0
         //get crimes
         for (const name in ns.enums.CrimeType) {
             //get the actual crime
@@ -787,9 +800,9 @@ export class singularity_obj {
             //get crime stats
             const crime_stats = ns.singularity.getCrimeStats(crime)
             //check for chance and time
-            if (crime_chance >= CONFIG.CRIME_CHANCE_MIN && crime_stats.time <= CONFIG.CRIME_TIME_MAX) {
+            if (crime_chance >= CRIME_CHANCE_MIN && crime_stats.time <= CRIME_TIME_MAX) {
                 //calc score (money / time)
-                var score = crime_stats.money / crime_stats.time
+                let score = crime_stats.money / crime_stats.time
                 //if better than what we have
                 if (score > best_score) {
                     //set score
@@ -800,29 +813,29 @@ export class singularity_obj {
             }
         }
         //default to mug for now
-        this.perform_action(ns, CONSTANTS.WORK_TYPE.CRIME, best_crime)
+        this.perform_action(ns, WORK_TYPE.CRIME, best_crime)
     }
 
     
     commit_murder(ns) {
-        //variable for preferred crime
-        var best_crime = ""
+        //letiable for preferred crime
+        let best_crime = ""
         //get chrime change
-        var crime_chance = ns.singularity.getCrimeChance("Homicide")
+        let crime_chance = ns.singularity.getCrimeChance("Homicide")
         //check for chance
-        if (crime_chance >= CONFIG.CRIME_CHANCE_MIN) {
+        if (crime_chance >= CRIME_CHANCE_MIN) {
             best_crime = "Homicide"
         }
         //get chrime change
-        var crime_chance = ns.singularity.getCrimeChance("Assassination")
+        crime_chance = ns.singularity.getCrimeChance("Assassination")
         //check for chance
-        if (crime_chance >= CONFIG.CRIME_CHANCE_MIN) {
+        if (crime_chance >= CRIME_CHANCE_MIN) {
             best_crime = "Assassination"
         }
         //if we have a crime
         if (best_crime != "") {
             //default to mug for now
-            this.perform_action(ns, CONSTANTS.WORK_TYPE.CRIME, best_crime)
+            this.perform_action(ns, WORK_TYPE.CRIME, best_crime)
             //indicate success
             return true
         }
@@ -847,11 +860,11 @@ export class singularity_obj {
     */
     perform_action(ns, type, activity, formulas_available = false) {
         //get player
-        var player = ns.getPlayer()
+        let player = ns.getPlayer()
         //flag to keep track if we need to switch
-        var flag_switch_work = false
+        let flag_switch_work = false
         //get current work
-        var current_work = ns.singularity.getCurrentWork()
+        let current_work = ns.singularity.getCurrentWork()
         //if not working
         if (current_work == null || current_work == undefined) {
             //set flag
@@ -866,32 +879,32 @@ export class singularity_obj {
             } else {
                 //depending on the type
                 switch (type) {
-                    case CONSTANTS.WORK_TYPE.FACTION:
+                    case WORK_TYPE.FACTION:
                         flag_switch_work = (activity != current_work.factionName)
                         break
 
-                    case CONSTANTS.WORK_TYPE.COMPANY:
+                    case WORK_TYPE.COMPANY:
                         //we need to check for promotion
                         flag_switch_work = true
                         //stop
                         break
 
-                    case CONSTANTS.WORK_TYPE.CRIME:
+                    case WORK_TYPE.CRIME:
                         flag_switch_work = (activity != current_work.crimeType)
                         //stop
                         break
 
-                    case CONSTANTS.WORK_TYPE.CREATE_PROGRAM:
+                    case WORK_TYPE.CREATE_PROGRAM:
                         flag_switch_work = (activity != current_work.programName)
                         //stop
                         break
 
-                    case CONSTANTS.WORK_TYPE.STUDY:
+                    case WORK_TYPE.STUDY:
                         flag_switch_work = (activity != current_work.classType)
                         //stop
                         break
 
-                    case CONSTANTS.WORK_TYPE.GRAFTING:
+                    case WORK_TYPE.GRAFTING:
                         flag_switch_work = (activity != current_work.augmentation)
                         //stop
                         break
@@ -906,7 +919,7 @@ export class singularity_obj {
             //depending on the type
             switch (type) {
 
-                case CONSTANTS.WORK_TYPE.FACTION:
+                case WORK_TYPE.FACTION:
                     //get best work type
                     const work_type_best = this.get_best_work_faction(ns, player, activity, formulas_available)
                     //if not working
@@ -929,7 +942,7 @@ export class singularity_obj {
                     //already working for the best type
                     return true
 
-                case CONSTANTS.WORK_TYPE.COMPANY:
+                case WORK_TYPE.COMPANY:
                     //get best company work   
                     const jobfield = this.get_best_work_company(ns, player)
                     //apply to company or try to get promotion (will cancel current job & job work for another company)
@@ -953,11 +966,11 @@ export class singularity_obj {
                     //we don't have the job, return failure
                     return false
 
-                case CONSTANTS.WORK_TYPE.CRIME:
+                case WORK_TYPE.CRIME:
                     //commit crime (calc for best crime has already happened)
                     return ns.singularity.commitCrime(activity, true)
 
-                case CONSTANTS.WORK_TYPE.STUDY:
+                case WORK_TYPE.STUDY:
                     //get city
                     const city = ns.getPlayer().city
                     //guard clause: if not in a correct city
@@ -966,9 +979,9 @@ export class singularity_obj {
                         return
                     }
                     //get university
-                    const university = CONSTANTS.UNIVERSITIES[city]
+                    const university = UNIVERSITIES[city]
                     //get gym
-                    const gym = CONSTANTS.GYMS[city]
+                    const gym = GYMS[city]
                     //check for stats
                     switch (activity) {
                         case "hacking":
@@ -999,11 +1012,11 @@ export class singularity_obj {
                                 "'")
                     }
 
-                case CONSTANTS.WORK_TYPE.CREATE_PROGRAM:
+                case WORK_TYPE.CREATE_PROGRAM:
                     //ns.singularity.createProgram()
                     return true
 
-                case CONSTANTS.WORK_TYPE.GRAFTING:
+                case WORK_TYPE.GRAFTING:
                     //skip for now
                     return true
 
@@ -1021,16 +1034,16 @@ export class singularity_obj {
     //get the best work for a company
     get_best_work_company(ns, player) { //, formulas_available) {
         //determine job field
-        var jobfield = "Software"
+        let jobfield = "Software"
         //from https://github.com/bitburner-official/bitburner-src/blob/dev/src/Company/data/CompanyPositionsMetadata.ts            
         //Software -> CTO (Chief Technology Officer)
         //Hacking %:  85-85-80-75-75-25-70-65
         //Charisma %: 15-15-20-25-25-25-30-35
-        var gains_software = (0.75 * player.skills.hacking) + (0.25 * player.skills.charisma)
+        let gains_software = (0.75 * player.skills.hacking) + (0.25 * player.skills.charisma)
         //Business -> CEO (Chief Executive Officer)
         //Charisma %: 90-85-85-85-90-90
         //Hacking %:  10-15-15-15-10-10            
-        var gains_business = (0.15 * player.skills.hacking) + (0.85 * player.skills.charisma)
+        let gains_business = (0.15 * player.skills.hacking) + (0.85 * player.skills.charisma)
         //if we can use formula's
         /*if(formulas_available) {
             //requires JobName...
@@ -1053,11 +1066,11 @@ export class singularity_obj {
         //get faction work types
         const faction_work_types = ns.singularity.getFactionWorkTypes(faction)
         //default to first work type
-        var work_type_best = faction_work_types[0]
+        let work_type_best = faction_work_types[0]
         //if formulas are available
         if (formulas_available) {
             //save best gains
-            var best_rep = -1
+            let best_rep = -1
             //for each worktype
             for (const work_type of faction_work_types) {
                 //get the gains
@@ -1092,13 +1105,13 @@ export class singularity_obj {
             //check for no enemies
             if (enemies.length > 1) {
                 //set flag to keep track
-                var flag_augments_remaining = false
+                let flag_augments_remaining = false
                 //get augmnets
                 const augments = ns.singularity.getAugmentationsFromFaction(invite)
                 //for each augment the faction offers
                 for (const augment of augments) {
                     //if neurflux governor
-                    if (augment == CONSTANTS.AUGMENT.NFG) {
+                    if (augment == AUGMENT.NFG) {
                         //ignore
                         continue
                     }
@@ -1248,11 +1261,11 @@ export function determine_next_bitnode(ns) {
         //get rest information
         const reset_info = ns.getResetInfo()
         //get the map of source files owned
-        var owned_source_files = reset_info.ownedSF
+        let owned_source_files = reset_info.ownedSF
         //if we already have an entry for this source file
         if (owned_source_files.has(reset_info.currentNode)) {
             //add to existing index
-            var new_level = owned_source_files.get(reset_info.currentNode) + 1
+            let new_level = owned_source_files.get(reset_info.currentNode) + 1
             //check if we need to limit (12 is unlimited
             if (new_level > 3 && reset_info.currentNode != 12) {
                 //cap to 3
@@ -1276,16 +1289,16 @@ export function determine_next_bitnode(ns) {
             sf_12_owned = owned_source_files.get(12)
         }
         //keep track of sum of all owned SF
-        var sum_sf = 0
+        let sum_sf = 0
         //for each source files
-        for (var sf of owned_source_files.keys()) {
+        for (let sf of owned_source_files.keys()) {
             //add it to the sum
             sum_sf += owned_source_files[sf]
         }
         //reduce by SF 12
         sum_sf -= sf_12_owned
         //if we foresee the need for a SF 12
-        if (sum_sf > Math.floor(sf_12_owned * CONFIG.SF_12_MULT)) {
+        if (sum_sf > Math.floor(sf_12_owned * SF_12_MULT)) {
             //focus SF12
             return [12,sf_12_owned+1]
         }
@@ -1326,7 +1339,7 @@ export function get_bitnode_level(ns) {
     //fixed information
     const reset_info = ns.getResetInfo()
     //default to level to 1
-    var level = 1
+    let level = 1
     //if we already have a source file
     if (reset_info.ownedSF.has(reset_info.currentNode)) {
         //add this to the level

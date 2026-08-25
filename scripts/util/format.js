@@ -1,10 +1,12 @@
+//function that formats float to a decimal
 export function float(number, decimals = 2) {
     const divider = parseInt("1" + "0".repeat(decimals))
     return Math.round(number * divider) / divider
 }
 
+
 //function that formats a number to 2 fractions
-export function formatNumber(number) {
+export function number(number) {
     // Use the toLocaleString method to add suffixes to the number
     return number.toLocaleString('en-US', {
         // add suffixes for thousands, millions, and billions
@@ -16,7 +18,8 @@ export function formatNumber(number) {
     })
 }
 
-export function format_time(time) {
+
+export function time(time) {
     let ms = time % 1000
     let ss = Math.floor(time / 1000) % 60
     let mm = Math.floor(time / 1000 / 60) % 60

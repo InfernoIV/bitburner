@@ -1,6 +1,3 @@
-import { SERVER, TOOLS, HANDLE, SCRIPT, FILE_EXTENSION, AUGMENT, FACTION } from "scripts/constants.js"
-export { SERVER, TOOLS, HANDLE, SCRIPT, FILE_EXTENSION, AUGMENT, FACTION }
-
 //gym per city
 export const GYMS = {
     "Sector-12": "Powerhouse Gym", //or "Iron Gym"?

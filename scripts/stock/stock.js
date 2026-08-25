@@ -1,23 +1,29 @@
-//imports
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
-//log
+//config
+import { DISABLE_LOGGING, FORECAST_MIN } from "./config.js"
+
+
+//constants
+import { COMMISSION_FEE, STOCK_SYMBOLS, SERVER_HOSTNAMES } from "./constants.js"
+import { PORT } from "scripts/constants/ports.js"
+
+//functions
 import * as log from "scripts/util/log.js"
-import { formatNumber } from "scripts/util/format.js"
+import * as format from "scripts/util/format.js"
+
 
 // Declaration
 export class stock_obj {
     constructor() {
-        //CONSTANTS.COMMISSION_FEE
-        //CONFIG.FORECAST_MIN
+        //COMMISSION_FEE
+        //FORECAST_MIN
     }
 
 
     init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
         //create port
-        this.port = ns.getPortHandle(CONSTANTS.PORT.HACK_REQUEST)
+        this.port = ns.getPortHandle(PORT.HACK_REQUEST)
         //remove the data from the port
         this.port.clear()
         //if we have the accounts
@@ -25,7 +31,7 @@ export class stock_obj {
             let message_long = ""
             let message_short = ""
             //for each order
-            for (const symbol of CONSTANTS.STOCK_SYMBOLS) { //ns.stock.getSymbols()) {
+            for (const symbol of STOCK_SYMBOLS) {
                 //get stocks
                 const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
                 //if there are longs
@@ -87,7 +93,7 @@ export class stock_obj {
                         const profit = ns.stock.sellStock(data.symbol, sharesLong)
                         //log
                         log.success(ns, "Stock", "Sold longs: '" + data.symbol + "' * " + sharesLong +
-                            " for a profit of " + formatNumber(profit),
+                            " for a profit of " + format.number(profit),
                             true)
 
                         //if shorts
@@ -96,7 +102,7 @@ export class stock_obj {
                         const profit = ns.stock.sellStock(data.symbol, sharesShort)
                         //log
                         log.success(ns, "Stock", "Sold shorts: '" + data.symbol + "' * " + sharesShort +
-                            " for a profit of " + formatNumber(profit),
+                            " for a profit of " + format.number(profit),
                             true)
 
                         //invalid type
@@ -113,7 +119,7 @@ export class stock_obj {
                 //try
                 try {
                     //for each order
-                    for (const symbol of CONSTANTS.STOCK_SYMBOLS) { 
+                    for (const symbol of STOCK_SYMBOLS) { 
                         //get stocks
                         const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
                         //if we have longs
@@ -180,78 +186,13 @@ export class stock_obj {
 
 
     get_server_hostnames(symbol) {
-        //depending on the symbols, return the corresponding hostnames
-        switch (symbol) {
-            case "ECP":
-                return ["ecorp"] //"Ecorp"
-            case "MGCP":
-                return ["megacorp"] //"MegaCorp"
-            case "BLD":
-                return ["blade"] //"Blade"
-            case "CLRK":
-                return ["clarkinc"] //"Clarke Incorporated"
-            case "OMTK":
-                return ["omnitek"] //"OmniTek Incorporated"
-            case "FSIG":
-                return ["4sigma"] //"Four Sigma"
-            case "KGI":
-                return ["kuai-gong"] //"KuaiGong International"
-            case "FLCM":
-                return ["fulcrumtech", "fulcrumassets"] //"Fulcrum Technologies"
-            case "STM":
-                return ["stormtech"] //"Storm Technologies"
-            case "DCOMM":
-                return ["defcomm"] //"DefComm"
-            case "HLS":
-                return ["helios"] //"Helios Labs"
-            case "VITA":
-                return ["vitalife"] //"VitaLife"
-            case "ICRS":
-                return ["icarus"] //"Icarus Microsystems"
-            case "UNV":
-                return ["univ-energy"] //"Universal Energy"
-            case "AERO":
-                return ["aerocorp"] //"AeroCorp"
-            case "OMN":
-                return ["omnia"] //"Omnia Cybersystems"
-            case "SLRS":
-                return ["solaris"] //"Solaris Space Systems"
-            case "GPH":
-                return ["global-pharm"] //"Global Pharmaceuticals"
-            case "NVMD":
-                return ["nova-med"] //"Nova Medical"
-            case "LXO":
-                return ["lexo-corp"] //"LexoCorp"
-            case "RHOC":
-                return ["rho-construction"] //"Rho Construction"
-            case "APHE":
-                return ["alpha-ent"] //"Alpha Enterprises"
-            case "SYSC":
-                return ["syscore"] //"SysCore Securities"
-            case "CTK":
-                return ["computek"] //"CompuTek"
-            case "NTLK":
-                return ["netlink"] //"NetLink Technologies"
-            case "OMGA":
-                return ["omega-net"] //"Omega Software"
-            case "FNS":
-                return ["foodnstuff"] //"FoodNStuff"
-            case "JGN":
-                return ["joesguns"] //"Joe's Guns"
-            case "SGC":
-                return ["sigma-cosmetics"] //"Sigma Cosmetics"
-            case "CTYS":
-                return ["catalyst"] //"Catalyst Ventures"
-            case "MDYN":
-                return ["microdyne"] //"Microdyne Technologies"
-            case "TITN":
-                return ["titan-labs"] //"Titan Laboratories"
-
-                //No server avaialable
-            case "WDS": //"Watchdog Security",
-            default:
-                return []
+        //if there is no hostname for this symbol
+        if (!SERVER_HOSTNAMES.has(symbol)) {
+            //return empy
+            return []
         }
+        //get the hostname from the map
+        return SERVER_HOSTNAMES.get(symbol)
     }
 }
 
@@ -267,7 +208,7 @@ export function sell_all_stocks(ns) {
     if (ns.stock.hasWseAccount() && ns.stock.hasTixApiAccess()) {
         try {
             //for each order
-            for (const symbol of CONSTANTS.STOCK_SYMBOLS) {
+            for (const symbol of STOCK_SYMBOLS) {
                 //get stocks
                 const [sharesLong, avgLongPrice, sharesShort, avgShortPrice] = ns.stock.getPosition(symbol)
                 //if we have longs

@@ -1,6 +1,17 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING } from "./config.js"
 
+
+//constants
+import { SERVER } from "scripts/constants/servers.js"
+import { PORT } from "scripts/constants/ports.js"
+import { TOOLS } from "scripts/constants/tools.js"
+import { FILE_EXTENSION } from "scripts/constants/files.js"
+import { SCRIPT } from "scripts/constants/scripts.js"
+import { RAM } from "scripts/ram/constants.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
 
 
@@ -16,9 +27,9 @@ export class darknet_obj {
 
     init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
         //create port object
-        this.port = ns.getPortHandle(CONSTANTS.PORT.DARKNET)
+        this.port = ns.getPortHandle(PORT.DARKNET)
         //empty the port
         this.port.clear()
         //log
@@ -36,18 +47,18 @@ export class darknet_obj {
         }
         //check if we have the tool
         //get server information
-        const tools = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
+        const tools = ns.ls(SERVER.HOME, FILE_EXTENSION.EXECUTABLE)
         //if we have don't have the tool
-        if (!tools.includes(CONSTANTS.TOOLS.DARKNET)) {
+        if (!tools.includes(TOOLS.DARKNET)) {
             //stop
             return
         }
         //scan from home
         const servers_darknet = ns.dnet.probe()
         //if darkweb server is available
-        if (servers_darknet.includes(CONSTANTS.SERVER.DARKWEB)) {
+        if (servers_darknet.includes(SERVER.DARKWEB)) {
             //get server information
-            const server_info = ns.getServer(CONSTANTS.SERVER.DARKWEB)
+            const server_info = ns.getServer(SERVER.DARKWEB)
             //check if already something running (e.g. with save + exit)
             if (server_info.ramUsed > 0.0) {
                 //signal start is done, to speed up execution
@@ -58,14 +69,14 @@ export class darknet_obj {
                 return
             }
             //calc ram costs
-            const threads = Math.floor(server_info.maxRam / CONSTANTS.RAM.WORKER.DARKNET)
+            const threads = Math.floor(server_info.maxRam / RAM.WORKER.DARKNET)
             //copy scripts
-            var result = ns.scp(CONSTANTS.SCRIPT.TO_COPY.DARKNET, CONSTANTS.SERVER.DARKWEB)
+            let result = ns.scp(SCRIPT.TO_COPY.DARKNET, SERVER.DARKWEB)
             //start worker
-            result = ns.exec(CONSTANTS.SCRIPT.WORKER.DARKNET, CONSTANTS.SERVER.DARKWEB, {
+            result = ns.exec(SCRIPT.WORKER.DARKNET, SERVER.DARKWEB, {
                 preventDuplicates: true,
                 threads: threads,
-            }, CONSTANTS.SERVER.DARKWEB, threads)
+            }, SERVER.DARKWEB, threads)
             //check if ok
             if (result == false) {
                 //debug
@@ -103,7 +114,7 @@ export class darknet_obj {
                     //check if we have a password
                     case "get":
                         //password to return    
-                        var password = ""
+                        let password = ""
                         //check if we have a password
                         if (this.passwords.has(data.hostname)) {
                             //set password

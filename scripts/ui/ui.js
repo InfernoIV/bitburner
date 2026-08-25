@@ -1,30 +1,22 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING, FONT, COLOR, BORDER} from "./config.js"
+
+
+//constants
+import { DEADALUS, WORLD_DEAMON_HACKING } from "./constants.js"
+import { HANDLE } from "scripts/constants/handle.js"
+import { PORT } from "scripts/constants/port.js"
+import { AUGMENT } from "scripts/constants/augments.js"
+import { GANG_MEMBERS_MAX } from "scripts/gang/constants.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
-import {
-    formatNumber
-} from "scripts/util/format.js"
-
-import {
-    get_number_of_hacking_tools_owned
-} from "scripts/root/root.js"
-
-import {
-    GANG_MEMBERS_MAX,
-    GANG_MEMBER_NAME,
-} from "scripts/gang/constants.js"
-
-import {
-    get_sleeve_activity
-} from "scripts/sleeve/sleeve.js"
-
-import {
-    get_number_of_gang_members
-} from "scripts/gang/gang.js"
-
-import { 
-    get_bitnode_level, determine_next_bitnode
-} from "scripts/singularity/singularity.js"
+import * as format from "scripts/util/format.js"
+import { get_number_of_hacking_tools_owned } from "scripts/root/root.js"
+import { get_sleeve_activity } from "scripts/sleeve/sleeve.js"
+import { get_number_of_gang_members } from "scripts/gang/gang.js"
+import { get_bitnode_level, determine_next_bitnode } from "scripts/singularity/singularity.js"
 
 
 const wnd = eval("window")
@@ -46,7 +38,7 @@ export class ui_obj {
     //TODO: how to handle added handles (e.g. home grows in ram and another functionality is launched) -> how to trigger / add?
     init(ns, handles) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
         //align text left
         doc.getElementById("overview-money-hook").style.textAlign = "left"
         doc.getElementById("overview-hack-hook").style.textAlign = "left"
@@ -73,29 +65,28 @@ export class ui_obj {
         })
 
         //add information to existing rows
-        this.add_to_existing(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
+        this.add_to_existing(ns, handles.hasOwnProperty(HANDLE.INTELLIGENCE))
 
         //add extended stats
         this.add_stats(ns)
 
         //if we have sleeves: add sleeve information
-        if (handles.hasOwnProperty(CONSTANTS.HANDLE.SLEEVE)) this.add_sleeves(ns)
+        if (handles.hasOwnProperty(HANDLE.SLEEVE)) this.add_sleeves(ns)
 
         //add bitnode information
-        this.add_bitnode(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.SINGULARITY), handles.hasOwnProperty(CONSTANTS
-            .HANDLE.INTELLIGENCE))
+        this.add_bitnode(ns, handles.hasOwnProperty(HANDLE.SINGULARITY), handles.hasOwnProperty(HANDLE.INTELLIGENCE))
 
         //if we have bladeburner
-        if (handles.hasOwnProperty(CONSTANTS.HANDLE.BLADEBURNER)) this.add_bladeburner(ns)
+        if (handles.hasOwnProperty(HANDLE.BLADEBURNER)) this.add_bladeburner(ns)
 
         //add hacking information
         this.add_hacking(ns)
 
         //if we have gang
-        if (handles.hasOwnProperty(CONSTANTS.HANDLE.GANG)) this.add_gang(ns)
+        if (handles.hasOwnProperty(HANDLE.GANG)) this.add_gang(ns)
 
         //if we have corporation
-        if (handles.hasOwnProperty(CONSTANTS.HANDLE.CORPORATION)) this.add_corporation(ns)
+        if (handles.hasOwnProperty(HANDLE.CORPORATION)) this.add_corporation(ns)
 
         //add go statistics
         //this.add_go(ns)
@@ -111,7 +102,7 @@ export class ui_obj {
     //add information to existing rows
     add_to_existing(ns, has_intelligence) {
         //deadalus requirements
-        var world_deamon_hacking = CONSTANTS.WORLD_DEAMON_HACKING
+        let world_deamon_hacking = WORLD_DEAMON_HACKING
         //if can get more information
         if (has_intelligence) {
             //get the bitnode multipliers
@@ -123,24 +114,24 @@ export class ui_obj {
             world_deamon_hacking += "?"
         }
         //money
-        doc.getElementById("overview-money-hook").innerText = "/$" + formatNumber(CONSTANTS.DEADALUS.MONEY)
+        doc.getElementById("overview-money-hook").innerText = "/$" + format.number(DEADALUS.MONEY)
         //hacking
         doc.getElementById("overview-hack-hook").innerText = "/" + world_deamon_hacking
         //combat
-        doc.getElementById("overview-str-hook").innerText = "/" + CONSTANTS.DEADALUS.COMBAT
-        doc.getElementById("overview-def-hook").innerText = "/" + CONSTANTS.DEADALUS.COMBAT
-        doc.getElementById("overview-dex-hook").innerText = "/" + CONSTANTS.DEADALUS.COMBAT
-        doc.getElementById("overview-agi-hook").innerText = "/" + CONSTANTS.DEADALUS.COMBAT
+        doc.getElementById("overview-str-hook").innerText = "/" + DEADALUS.COMBAT
+        doc.getElementById("overview-def-hook").innerText = "/" + DEADALUS.COMBAT
+        doc.getElementById("overview-dex-hook").innerText = "/" + DEADALUS.COMBAT
+        doc.getElementById("overview-agi-hook").innerText = "/" + DEADALUS.COMBAT
     }
 
 
     add_location(ns) {
         //GROUP: location
-        this.add_data(ns, CONFIG.COLOR.LOCATION, "City",
+        this.add_data(ns, COLOR.LOCATION, "City",
             "ns.getPlayer().city", true
         )
 
-        this.add_data(ns, CONFIG.COLOR.LOCATION, "Location",
+        this.add_data(ns, COLOR.LOCATION, "Location",
             "ns.getPlayer().location", true,
         )
         //add a border
@@ -159,7 +150,7 @@ export class ui_obj {
 
         this.add_data(ns, "#ff0000", "Karma",
             "formatNumber(ns.getPlayer().karma)", true,
-            formatNumber(gang_karma), false,
+            format.number(gang_karma), false,
             "/"
         )
 
@@ -178,14 +169,14 @@ export class ui_obj {
 
     add_hacking(ns) {
         //GROUP: hack
-        this.add_data(ns, CONFIG.COLOR.HACK, "Hack_tools",
+        this.add_data(ns, COLOR.HACK, "Hack_tools",
             "get_number_of_hacking_tools_owned(ns)", true,
             "5", false,
             "/"
         )
-        this.add_data(ns, CONFIG.COLOR.HACK, "Hack_target",
-            "ns.peek(CONSTANTS.PORT.HACK_TARGET).target", true,
-            "ns.peek(CONSTANTS.PORT.HACK_TARGET).activity", true,
+        this.add_data(ns, COLOR.HACK, "Hack_target",
+            "ns.peek(PORT.HACK_TARGET).target", true,
+            "ns.peek(PORT.HACK_TARGET).activity", true,
             ":"
         )
         //add a border
@@ -196,13 +187,13 @@ export class ui_obj {
     //bitnode 2
     add_gang(ns) {
         //gang members
-        this.add_data(ns, CONFIG.COLOR.GANG, "Gang_Members",
+        this.add_data(ns, COLOR.GANG, "Gang_Members",
             "get_number_of_gang_members(ns)", true,
             GANG_MEMBERS_MAX, false,
             "/"
         )
         //gang territory
-        this.add_data(ns, CONFIG.COLOR.GANG, "Gang_Territory",
+        this.add_data(ns, COLOR.GANG, "Gang_Territory",
             "ns.gang.getGangInformation().territory*100", true,
             "%"
         )
@@ -221,7 +212,7 @@ export class ui_obj {
         }
         /*
         //funds - public
-        this.add_data(ns, CONFIG.COLOR.CORPORATION, "Corp_funds",
+        this.add_data(ns, COLOR.CORPORATION, "Corp_funds",
             "ns.corporation.getCorporation().funds", true,
             "ns.corporation.getCorporation().public", true,
             "=>"
@@ -234,7 +225,7 @@ export class ui_obj {
             //get the division
             ns.corporation.getDivision(divisionName)
             //division
-            this.add_data(ns, CONFIG.COLOR.CORPORATION, "Corp_div_" + divisionName,
+            this.add_data(ns, COLOR.CORPORATION, "Corp_div_" + divisionName,
                 "ns.corporation.getDivision(divisionName).industry", true,
 
         )
@@ -242,21 +233,21 @@ export class ui_obj {
         
         
         //shares
-        this.add_data(ns, CONFIG.COLOR.CORPORATION, "Corp_Shares",
+        this.add_data(ns, COLOR.CORPORATION, "Corp_Shares",
             "ns.corporation.getCorporation().totalShares-ns.corporation.getCorporation().investorShares-ns.corporation.getCorporation().issuedShares", true,
             "ns.corporation.getCorporation().totalShares-ns.corporation.getCorporation().investorShares", true,
             "/"
         )
 
         //valuation - public
-        this.add_data(ns, CONFIG.COLOR.CORPORATION, "Corp_valuation",
+        this.add_data(ns, COLOR.CORPORATION, "Corp_valuation",
             "ns.corporation.getCorporation().valuation", true,
             "", true,
             ""
         )
 
         //investments
-        this.add_data(ns, CONFIG.COLOR.CORPORATION, "Corp_Investment",
+        this.add_data(ns, COLOR.CORPORATION, "Corp_Investment",
             "ns.corporation.getInvestmentOffer().round", true,
             "formatNumber(ns.corporation.getInvestmentOffer().funds)", true,
             "="
@@ -271,12 +262,12 @@ export class ui_obj {
     //bitnode 4
     add_bitnode(ns, has_singularity, has_intelligence) {
         //add bitnode information
-        this.add_data(ns, CONFIG.COLOR.BITNODE, "Bitnode",
+        this.add_data(ns, COLOR.BITNODE, "Bitnode",
             "ns.getResetInfo().currentNode", true,
             "get_bitnode_level(ns)", true,
             "."
         )
-        this.add_data(ns, CONFIG.COLOR.BITNODE, "Next BN",
+        this.add_data(ns, COLOR.BITNODE, "Next BN",
             "determine_next_bitnode(ns)[0]", true,
             "determine_next_bitnode(ns)[1]", true,
             "."
@@ -284,19 +275,19 @@ export class ui_obj {
         //if we have singularity
         if (has_singularity) {
             //add if we have the red pill
-            this.add_data(ns, CONFIG.COLOR.BITNODE, "Red_Pill",
-                "ns.singularity.getOwnedAugmentations(false).includes(CONSTANTS.AUGMENT.TRP)", true
+            this.add_data(ns, COLOR.BITNODE, "Red_Pill",
+                "ns.singularity.getOwnedAugmentations(false).includes(AUGMENT.TRP)", true
             )
         }
-        //variable to change
-        var deadalus_augments = "/??"
+        //letiable to change
+        let deadalus_augments = "/??"
         //if we have intelligence unlocked
         if (has_intelligence) {
             //get the augment requirements
             deadalus_augments = "/" + ns.getBitNodeMultipliers().DaedalusAugsRequirement
         }
         //add augment requirement
-        this.add_data(ns, CONFIG.COLOR.BITNODE, "Augments",
+        this.add_data(ns, COLOR.BITNODE, "Augments",
             "ns.getResetInfo().ownedAugs.size", true,
             deadalus_augments)
         //add a border
@@ -307,14 +298,14 @@ export class ui_obj {
     //bitnode 6 / 7
     add_bladeburner(ns) {
         //add bladeburner stamina
-        this.add_data(ns, CONFIG.COLOR.BLADEBURNER, "Stamina",
+        this.add_data(ns, COLOR.BLADEBURNER, "Stamina",
             "ns.bladeburner.getStamina()[0]", true,
             "ns.bladeburner.getStamina()[1]", true,
             "/"
         )
 
         //add black ops overview
-        this.add_data(ns, CONFIG.COLOR.BLADEBURNER, "Black_Ops",
+        this.add_data(ns, COLOR.BLADEBURNER, "Black_Ops",
             "ns.bladeburner.getBlackOpNames().indexOf(ns.bladeburner.getNextBlackOp().name)", true,
             ns.bladeburner.getBlackOpNames().length, false,
             "/"
@@ -331,7 +322,7 @@ export class ui_obj {
         //for each sleeve
         for (let i = 0; i < sleeves_owned; i++) {
             //add sleeve (activity & shock)
-            this.add_data(ns, CONFIG.COLOR.SLEEVE,
+            this.add_data(ns, COLOR.SLEEVE,
                 "Sleeve_" + i,
                 "get_sleeve_activity(" + i + ")", true,
                 "ns.sleeve.getSleeve(" + i + ").shock", true)
@@ -345,13 +336,13 @@ export class ui_obj {
         //get thet opponents
         const opponents = ns.go.analysis.getStats().keys()
         //save the last id
-        var last_id = ""
+        let last_id = ""
         //for each opponent, skip the NO AI
         for (const i = 1; i < opponents.length; i++) {
             //get the opponent
             const opponent = opponents.keys()[i]
             //add the opponent data
-            this.add_data(ns, CONFIG.COLOR.GO,
+            this.add_data(ns, COLOR.GO,
                 //name in which the " " is replaced by "_"
                 "Go_" + opponent.replace(/ /g, "_"),
                 "ns.go.analysis.getStats().get(opponent).wins", true,
@@ -380,22 +371,22 @@ export class ui_obj {
         //get the table
         const table = doc.getElementsByTagName("tbody")[0]
 
-        var row = table.insertRow(this.index)
+        let row = table.insertRow(this.index)
         this.index += 1
         row.style.color = color
-        row.style.font = CONFIG.FONT
+        row.style.font = FONT
         row.id = name.toLowerCase()
 
-        var cell0 = row.insertCell(0)
+        let cell0 = row.insertCell(0)
         cell0.id = "custom-hook-" + name.toLowerCase() + "-0"
         cell0.innerText = name
 
 
-        var cell1 = row.insertCell(1)
+        let cell1 = row.insertCell(1)
         cell1.id = "custom-hook-" + name.toLowerCase() + "-1"
         cell1.style.textAlign = "right"
 
-        var cell2 = row.insertCell(2)
+        let cell2 = row.insertCell(2)
         cell2.id = "custom-hook-" + name.toLowerCase() + "-2"
 
         //add id to list of nodes
@@ -415,18 +406,18 @@ export class ui_obj {
 
         //get the table
         const table = doc.getElementsByTagName("tbody")[0]
-        var row = table.insertRow(this.index)
+        let row = table.insertRow(this.index)
         this.index += 1
         row.style.color = color
-        row.style.font = CONFIG.FONT
+        row.style.font = FONT
         row.id = name.toLowerCase()
-        var cell0 = row.insertCell(0)
+        let cell0 = row.insertCell(0)
         cell0.innerText = name
 
-        var cell1 = row.insertCell(1)
+        let cell1 = row.insertCell(1)
         cell1.innerText = value_1
 
-        var cell2 = row.insertCell(2)
+        let cell2 = row.insertCell(2)
         cell2.innerText = value_2
 
         //add id to list of nodes
@@ -439,7 +430,7 @@ export class ui_obj {
         //get the element
         const element = doc.getElementById(name.toLowerCase())
         //set border
-        element.style.borderBottom = CONFIG.BORDER
+        element.style.borderBottom = BORDER
     }
 
 
@@ -462,7 +453,7 @@ export class ui_obj {
 //function to be executed
 function update(ns, name, function_1, eval_1, function_2, eval_2, divider) {
     //create value 1
-    var value_1 = function_1
+    let value_1 = function_1
     //if we need to eval
     if (eval_1) {
         //eval the value
@@ -476,7 +467,7 @@ function update(ns, name, function_1, eval_1, function_2, eval_2, divider) {
     }
 
     //create value 2
-    var value_2 = function_2
+    let value_2 = function_2
     //if we need to eval
     if (eval_2) {
         //eval the value

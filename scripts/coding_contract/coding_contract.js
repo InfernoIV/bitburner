@@ -1,9 +1,13 @@
+//config
+import { DISABLE_LOGGING } from "./config.js"
 
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
 
+//constants
+import { PORT } from "scripts/constants/ports.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
-
 
 
 // Declaration
@@ -13,9 +17,9 @@ export class coding_contract_obj {
 
     init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
         //create port object
-        this.port = ns.getPortHandle(CONSTANTS.PORT.CODING_CONTRACT)
+        this.port = ns.getPortHandle(PORT.CODING_CONTRACT)
         //clear the data from the port
         this.port.clear()
     }
@@ -27,9 +31,9 @@ export class coding_contract_obj {
     //function that manages the actions of coding contracts: reads port for other programs to post their found coding contracts to (e.g. root or darknet)
     async manage(ns) {
         //while there is data
-        while (this.port.peek() != CONSTANTS.PORT.NO_DATA) {
+        while (this.port.peek() != PORT.NO_DATA) {
             //get data
-            var data = this.port.read
+            let data = this.port.read
             //log
             log.info(ns, "Coding_Contract", "Received from '" + data.origin + "': '" + JSON.stringify(data) + "'",
                 true)
@@ -355,10 +359,10 @@ export class coding_contract_obj {
 Attempts a coding contract, returning a reward string on success or empty string on failure.
 attempt(answer, filename, host)     10 GB
 	
-Generate a dummy contract. -> Generate a dummy contract on the current server with no reward. Used to test various algorithms.
+Generate a dummy contract. -> Generate a dummy contract on the current server with no reward. Used to test letious algorithms.
 createDummyContract(type, host)     2 GB
 	
-Get various data about a specific contract. -> The returned object includes the type, data, description as well as methods for getting the number of tries remaining and submitting your answer.
+Get letious data about a specific contract. -> The returned object includes the type, data, description as well as methods for getting the number of tries remaining and submitting your answer.
 Depending on the type of the contract, the data is typed differently. 
 Using type-narrowing, you can get the correct type of the data:
 const contract = ns.codingcontract.getContract(fileName, hostName);
@@ -454,7 +458,7 @@ Running in Terminal
 Interacting through Scripts
     See the Coding Contract API. 
     Interacting with Coding Contracts via the Terminal can be tedious the more contracts you solve. 
-    Consider using the APIs to automate various aspects of your solution. 
+    Consider using the APIs to automate letious aspects of your solution. 
     For example, some contracts have long solutions while others have even longer solutions. 
     You might want to use the APIs to automate the process of submitting your solution rather than copy and paste a long solution into an answer box. 
     The APIs can also be used to find out useful information about a contract including the number of attempts you have left, the type of contract and its difficulty. 
@@ -462,7 +466,7 @@ Interacting through Scripts
 
     However, using the APIs comes at a cost. 
     Like most functions in other APIs, almost all of the functions in the APIs have a RAM cost.
-    Depending on which function you use, the initial RAM on your home server might not be enough to allow you to use various API functions. 
+    Depending on which function you use, the initial RAM on your home server might not be enough to allow you to use letious API functions. 
     Plan on upgrading the RAM on your home server if you want to use the APIs.
 
     The getContractTypes function is free, and returns a list of all of the contract types currently in the game.
@@ -562,7 +566,7 @@ There are currently four possible rewards for solving a Coding Contract:
         Company reputation ⇒ Specific faction reputation or all factions' reputation (50% chance for each). If the fallback reward is also invalid, the reward defaults to Money.
 
     For example, if a contract is set to reward "All Factions' Reputation" but you have not joined any factions at the time of submission, you will receive Money instead.
-    The amount of the reward varies based on the difficulty of the problem posed by the Coding Contract.
+    The amount of the reward leties based on the difficulty of the problem posed by the Coding Contract.
 
 Notes
     The scp CLI command and the ns.scp API do not work on Coding Contracts.

@@ -1,15 +1,11 @@
-import "scripts/constants.js"
-
 //default name of gang members
-export const GANG_MEMBER_NAME = "Thug-"
-
-
+export const MEMBER_NAME = "Thug-"
 
 //constants
-export const GANG_KARMA_NEEDED = -54000
+export const KARMA_NEEDED = -54000
 
 //maximum number of gang members
-export const GANG_MEMBERS_MAX = 12
+export const MEMBERS_MAX = 12
 //focus of the gang
 export const GANG_FOCUS = {
     combat: "combat",
@@ -35,7 +31,7 @@ export const GANG_NAMES = [
     "The Black Hand",           //hacking   hacking: ??? => haveBackdooredServer(SpecialServers.TheBlackHandServer)
 ]
 //tasks for gang members
-export const GANG_TASK = {
+export const TASK = {
     Unassigned: "Unassigned",                           //idle
     //hacking
     Ransomware: "Ransomware",                           //Diff: 1 - Earns money (3) - Slightly increases respect (0.00005) - Slightly increases wanted level (0.0001)"
@@ -70,7 +66,7 @@ ns.gang.getTaskStats(name)                          1   Get stats of a task.
 ns.gang.getTaskNames()                              0   List member task names.
 */
 //tasks with data
-export const GANG_TASKS = [{
+export const TASKS = [{
     name: "Ransomware",
     desc: "Assign this gang member to create and distribute ransomware. Earns money - Slightly increases respect - Slightly increases wanted level",
     isCombat: false,
@@ -418,7 +414,7 @@ ns.gang.getEquipmentStats(equipName)                2   Get stats of an equipmen
 ns.gang.getEquipmentType(equipName)                 2   Get type of an equipment.
 */
 //list of gang equipment
-export const GANG_EQUIPMENT = [
+export const EQUIPMENT = [
     //weapons
     {
         name: "Baseball Bat",

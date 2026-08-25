@@ -1,4 +1,13 @@
-import * as CONSTANTS from "scripts/constants.js"
+//config
+import { TIME_WAIT } from "./config.js"
+
+
+//constants
+import { PORT } from "scripts/constants/ports.js"
+import { SERVER } from "scripts/constants/servers.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
 
 
@@ -13,19 +22,19 @@ export async function main(ns) {
     //disable logging
     log.disable("sleep")
     //keep track of backdoored servers
-    var backdoored_server = []
+    let backdoored_server = []
     //get port object
-    const port = ns.getPortHandle(CONSTANTS.PORT.BACKDOOR)
+    const port = ns.getPortHandle(PORT.BACKDOOR)
     //clear all existing data
     port.clear()
     //loop endless
     while (true) {
         //if there is any data
-        if (port.peek() != CONSTANTS.PORT.NO_DATA) {
+        if (port.peek() != PORT.NO_DATA) {
             //get the server name
             const server = port.read()
             //check if we need to ignore
-            if (server == CONSTANTS.SERVER.WORLD_DEAMON) {
+            if (server == SERVER.WORLD_DEAMON) {
                 //go to next
                 continue
             }
@@ -35,10 +44,10 @@ export async function main(ns) {
                 try {
                     //create a list to hold the route
                     let route = []
-                    //create a variable to save current server, and set it to current hostname
+                    //create a letiable to save current server, and set it to current hostname
                     let step = server
                     //while not found home
-                    while (step != CONSTANTS.SERVER.HOME) {
+                    while (step != SERVER.HOME) {
                         //save the first scan result
                         let nextStep = ns.scan(step)[0]
                         //add current to the start of the list
@@ -67,7 +76,7 @@ export async function main(ns) {
                         log.error(ns, "Backdoor", "Failed to backdoor server '" + server + "': " + err, true)
                     }
                     //connect to home
-                    ns.singularity.connect(CONSTANTS.SERVER.HOME)
+                    ns.singularity.connect(SERVER.HOME)
 
                 } catch (err) {
                     //log error
@@ -76,6 +85,6 @@ export async function main(ns) {
             }
         }
         //wait a little bit
-        await ns.sleep(CONSTANTS.TIME.WAIT)
+        await ns.sleep(TIME_WAIT)
     }
 }

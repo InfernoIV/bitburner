@@ -1,6 +1,3 @@
-import { TIME } from "scripts/constants.js"
-export { TIME }
-
 //available infiltration locations
 export const INFILTRATION_LOCATION = {
     "Aevum": ["AeroCorp", "Bachman & Associates", "Clarke Incorporated", "ECorp",

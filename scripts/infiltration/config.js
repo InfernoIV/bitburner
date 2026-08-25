@@ -1,5 +1,5 @@
 //logging to be disabled 
-export const DISABLE_LOGGING = null
+export const DISABLE_LOGGING = []
 
 //minumum amount of market demand to do an infiltration
 export const MARKET_DEMAND_MIN = 66.6
@@ -15,3 +15,6 @@ export const CLICK_SLEEP_TIME = null
 
 //time between key presses
 export const TIME_BETWEEN_KEYS = 1100
+
+//time
+export const TIME_WAIT = 5

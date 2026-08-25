@@ -22,3 +22,6 @@ export const AUGMENTS_INSTALL_MIN = 5
 
 //minimum amount of kills to have
 export const KILLS_MIN = 30
+
+//minimum amount of time to wait
+export const TIME_WAIT = 5

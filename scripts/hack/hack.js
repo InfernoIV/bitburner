@@ -1,8 +1,18 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config
+import { DISABLE_LOGGING, CHANCE_HACK_MIN, TIME_WEAKEN_MAX, TIME_WAIT } from "./config.js"
 
+
+//constants
+import { STATE } from "./constants.js"
+import { RAM } from "scripts/constants/ram.js"
+import { PORT } from "scripts/constants/ports.js"
+import { HANDLE } from "scripts/constants/handles.js"
+
+
+//functions
 import * as log from "scripts/util/log.js"
-import { format_time } from "scripts/util/format.js"
+import * as format from "scripts/util/format.js"
+
 
 // Declaration
 export class hack_obj {
@@ -12,23 +22,23 @@ export class hack_obj {
         this.hack_target = ""
         this.time_of_next_check = Date.now()
         //config
-        this.hack_chance_min = CONFIG.CHANCE_HACK_MIN
-        this.time_between = CONFIG.TIME_WAIT
+        this.hack_chance_min = CHANCE_HACK_MIN
+        this.time_between = TIME_WAIT
     }
 
 
     init(ns, handles) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
+        log.disable(ns, DISABLE_LOGGING)
         //create port objects
-        this.port_hack_request = ns.getPortHandle(CONSTANTS.PORT.HACK_REQUEST)
-        this.port_hack_target = ns.getPortHandle(CONSTANTS.PORT.HACK_TARGET)
+        this.port_hack_request = ns.getPortHandle(PORT.HACK_REQUEST)
+        this.port_hack_target = ns.getPortHandle(PORT.HACK_TARGET)
         //remove the data from the port
         this.port_hack_request.clear()
         //remove the data from the port
         this.port_hack_target.clear()
         //save if formula's are available to use
-        this.formulas_available = handles.hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE)
+        this.formulas_available = handles.hasOwnProperty(HANDLE.INTELLIGENCE)
         //wait a little bit before starting
         this.time_of_next_check = Date.now() + this.time_between
         //log
@@ -47,19 +57,19 @@ export class hack_obj {
         //get player
         const player = ns.getPlayer()
         //set flag if we need to find a new target
-        var flag_new_target = true
+        let flag_new_target = true
         //set flag if we need to empty the server
-        var empty_the_server = false
+        let empty_the_server = false
         //if there is anything that should be done
-        if (this.port_hack_request.peek() != CONSTANTS.PORT.NO_DATA) {
+        if (this.port_hack_request.peek() != PORT.NO_DATA) {
             //default to false
             flag_new_target = false
-            //variable to fill
-            var data = null
+            //letiable to fill
+            let data = null
             //failsafe
             try {
                 //while there is data in the port
-                while (this.port_hack_request.peek() != CONSTANTS.PORT.NO_DATA) {
+                while (this.port_hack_request.peek() != PORT.NO_DATA) {
                     //get port data
                     data = this.port_hack_request.peek()
                     //if this is not a hack request
@@ -70,7 +80,7 @@ export class hack_obj {
                         break
                     }
                     //if we dont' have enough stats & tools
-                    if (!handles[CONSTANTS.HANDLE.ROOT].servers_money.has(data.hostname)) {
+                    if (!handles[HANDLE.ROOT].servers_money.has(data.hostname)) {
                         //log
                         log.warning(ns, "Hack", "Current skills/tools to low for stock target '" + data.hostname +
                             "'", true)
@@ -87,7 +97,7 @@ export class hack_obj {
                         continue
                     }
                     //if we take too long for a weaken cycle (>= 5 mins)
-                    if (ns.getWeakenTime(data.hostname) >= CONFIG.TIME_WEAKEN_MAX) {
+                    if (ns.getWeakenTime(data.hostname) >= TIME_WEAKEN_MAX) {
                         //log
                         log.warning(ns, "Hack", "Weaken takes too long for stock target '" + data.hostname +
                             "'", true)
@@ -147,7 +157,7 @@ export class hack_obj {
         //if we aren't handling port requests
         if (flag_new_target) {
             //get target
-            this.find_target(ns, handles[CONSTANTS.HANDLE.ROOT].servers_money, player)
+            this.find_target(ns, handles[HANDLE.ROOT].servers_money, player)
         }
 
         //if there is no target
@@ -167,18 +177,18 @@ export class hack_obj {
             this.time_of_next_check = Date.now() + this.time_between
         } else {
             //get the executing servers
-            var execute_servers = handles[CONSTANTS.HANDLE.ROOT].servers_ram
+            let execute_servers = handles[HANDLE.ROOT].servers_ram
             //re-set the wait time, to be set later
-            var time_wait = 0
+            let time_wait = 0
             //get server data
             const server_info = ns.getServer(this.hack_target)
             //check the state
             const state = this.check_target(ns, server_info, empty_the_server)
-            var percentage = 0
+            let percentage = 0
             //depending on the state
             switch (state) {
                 //if we need to weaken
-                case CONSTANTS.STATE.WEAKEN:
+                case STATE.WEAKEN:
                     //weaken the server
                     time_wait = this.weaken_server(ns, execute_servers)
                     //calc percentrage
@@ -186,7 +196,7 @@ export class hack_obj {
                         .hackDifficulty / server_info.minDifficulty) * 100)
                     //debug
                     log.info(ns, "Hack", "Started weaken for '" + this.hack_target + "' = " + percentage + "% => " +
-                        format_time(
+                        format.time(
                             time_wait), true)
                     //write to port
                     this.write_data_to_port(ns, "W: " + percentage + "%")
@@ -194,7 +204,7 @@ export class hack_obj {
                     break
 
                     //if we need to grow
-                case CONSTANTS.STATE.GROW:
+                case STATE.GROW:
                     //set the time to wait
                     time_wait = this.grow_server(ns, execute_servers)
                     //calc percentrage
@@ -202,7 +212,7 @@ export class hack_obj {
                         .moneyAvailable / server_info.moneyMax) * 100)
                     //debug
                     log.info(ns, "Hack", "Started grow for '" + this.hack_target + "' = " + percentage + "% => " +
-                        format_time(time_wait),
+                        format.time(time_wait),
                         true)
                     //write to port
                     this.write_data_to_port(ns, "G " + percentage + "%")
@@ -210,11 +220,11 @@ export class hack_obj {
                     break
 
                     //if we need to hack
-                case CONSTANTS.STATE.HACK:
+                case STATE.HACK:
                     //set the time to wait
                     time_wait = this.hack_server(ns, execute_servers)
                     //debug
-                    log.info(ns, "Hack", "Started hack for '" + this.hack_target + "' => " + format_time(time_wait))
+                    log.info(ns, "Hack", "Started hack for '" + this.hack_target + "' => " + format.time(time_wait))
                     //write to port
                     this.write_data_to_port(ns, "Hack")
                     //stop
@@ -251,7 +261,7 @@ export class hack_obj {
     */
     find_target(ns, servers_money, player) {
         //get current hacking level
-        var hacking_level_current = player.skills.hacking
+        let hacking_level_current = player.skills.hacking
         //if change in situation
         if (hacking_level_current > this.hack_level_previous) {
             //update hack level
@@ -259,17 +269,17 @@ export class hack_obj {
             //clear hack target
             this.hack_target = ""
             //set a value to track the best server
-            var best_value = -1
+            let best_value = -1
             //for each server we can hack
             for (const [server_name, money_max] of servers_money) {
                 //placeholder
-                var new_value = 0
+                let new_value = 0
                 //or use hackAnalyze(host)? -> requires mock server (and thus formula's)
                 //TODO: add calculation for ram / threads? (needed vs available?)
                 //if formula's are available
                 if (this.formulas_available) {
                     //get server
-                    var server = ns.getServer(server_name)
+                    let server = ns.getServer(server_name)
                     //set money to max
                     server.moneyAvailable = server.moneyMax
                     //set security to min
@@ -315,7 +325,7 @@ export class hack_obj {
 
     calculate(ns, player) {
         //get server
-        var server = ns.getServer(this.hack_target)
+        let server = ns.getServer(this.hack_target)
         //set money to max
         server.moneyAvailable = server.moneyMax
         //set security to min
@@ -384,7 +394,7 @@ export class hack_obj {
         //map which has key = ram, value = threads object
         this.ram_to_threads = new Map()
         //set min ram for a batch
-        this.ram_min = CONSTANTS.RAM.WORKER.HACK + CONSTANTS.RAM.WORKER.GROW + (2 * CONSTANTS.RAM.WORKER.WEAKEN)
+        this.ram_min = RAM.WORKER.HACK + RAM.WORKER.GROW + (2 * RAM.WORKER.WEAKEN)
         //just let all servers work with max ram usage
         //this.threads.weaken = 1
 
@@ -429,8 +439,8 @@ export class hack_obj {
                 //check security increase of grow 
                 const threads_weaken_2 = Math.ceil(impact_grow / weaken_effect)
                 //calc ram cost
-                const ram_cost_best = (index * CONSTANTS.RAM.WORKER.HACK) + (threads_grow * CONSTANTS.RAM.WORKER
-                    .GROW) + ((threads_weaken_1 + threads_weaken_2) * CONSTANTS.RAM.WORKER.WEAKEN)
+                const ram_cost_best = (index * RAM.WORKER.HACK) + (threads_grow * RAM.WORKER
+                    .GROW) + ((threads_weaken_1 + threads_weaken_2) * RAM.WORKER.WEAKEN)
                 //save to map (overwriting what exists: this should be better)
                 this.ram_to_threads.set(ram_cost_best, {
                     hack: index,
@@ -444,11 +454,11 @@ export class hack_obj {
             //get money per hack thread
             const money_stolen = ns.hackAnalyze(this.hack_target)
             //set max hack threads
-            var max_hack_threads = Math.ceil(this.money_target / money_stolen)
-            //variable to set, cap to 100 threads
-            var max_threads = Math.min(max_hack_threads, 100)
+            let max_hack_threads = Math.ceil(this.money_target / money_stolen)
+            //letiable to set, cap to 100 threads
+            let max_threads = Math.min(max_hack_threads, 100)
             //set job size on a 1:1:1:1 ratio
-            const job_size = CONSTANTS.RAM.WORKER.HACK + CONSTANTS.RAM.WORKER.GROW + (2 * CONSTANTS.RAM.WORKER
+            const job_size = RAM.WORKER.HACK + RAM.WORKER.GROW + (2 * RAM.WORKER
                 .WEAKEN)
             //calc for ram cost
             for (let index = 1; index < max_threads; index++) {
@@ -471,14 +481,14 @@ export class hack_obj {
         //if security is not min
         if (server.hackDifficulty > server.minDifficulty) {
             //lower security
-            return CONSTANTS.STATE.WEAKEN
+            return STATE.WEAKEN
             //if money is not max
         } else if (server.moneyAvailable < server.moneyMax) {
             //grow money
-            return CONSTANTS.STATE.GROW
+            return STATE.GROW
         }
         //ready for hacking
-        return CONSTANTS.STATE.HACK
+        return STATE.HACK
     }
 
 
@@ -487,25 +497,25 @@ export class hack_obj {
         //for each server
         for (const [server, ram_available] of execute_servers) {
             //calc job size
-            const job_size = CONSTANTS.RAM.WORKER.WEAKEN
+            const job_size = RAM.WORKER.WEAKEN
             //get the number of threads we can run
             const threads = Math.floor(ram_available / job_size)
             //if possible to run
             if (threads > 0) {
                 //copy the script
-                if (!ns.scp(CONSTANTS.SCRIPT.TO_COPY.HACK, server)) {
+                if (!ns.scp(SCRIPT.TO_COPY.HACK, server)) {
                     //debug
-                    log.warning(ns, "Hack", "error copying '" + CONSTANTS.SCRIPT.TO_COPY.HACK + "' to " + server)
+                    log.warning(ns, "Hack", "error copying '" + SCRIPT.TO_COPY.HACK + "' to " + server)
                     ns.ui.openTail()
                     ns.exit()
                     //go to next
                     continue
                 }
                 //run the script
-                var result = ns.exec(CONSTANTS.SCRIPT.WORKER.WEAKEN, server, threads, this.hack_target)
+                let result = ns.exec(SCRIPT.WORKER.WEAKEN, server, threads, this.hack_target)
                 //check for result
                 if (result == false) {
-                    log.warning(ns, "Hack", "W: Failed to start '" + CONSTANTS.SCRIPT.WORKER.GROW + "' on '" +
+                    log.warning(ns, "Hack", "W: Failed to start '" + SCRIPT.WORKER.GROW + "' on '" +
                         server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads +
                         " threads => " + threads * job_size + " GB", true)
                     log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
@@ -526,38 +536,38 @@ export class hack_obj {
         <-------------------->		weaken = 0 + (2 * buffer)
         */
         //keep track of job delay
-        var job_delay = 0
+        let job_delay = 0
         //ram calc
-        const job_size = CONSTANTS.RAM.WORKER.GROW + CONSTANTS.RAM.WORKER.WEAKEN
+        const job_size = RAM.WORKER.GROW + RAM.WORKER.WEAKEN
         //do stuff
         for (const [server, ram_available] of execute_servers) {
             //copy the script
-            if (!ns.scp(CONSTANTS.SCRIPT.TO_COPY.HACK, server)) {
+            if (!ns.scp(SCRIPT.TO_COPY.HACK, server)) {
                 //debug
-                log.warning(ns, "Hack", "error copying '" + CONSTANTS.SCRIPT.TO_COPY.HACK + "' to " + server)
+                log.warning(ns, "Hack", "error copying '" + SCRIPT.TO_COPY.HACK + "' to " + server)
             }
             //if we can run the total job on this server
             if (job_size < ram_available) {
                 //calc threads
                 const threads = Math.floor(ram_available / job_size)
                 //execute scripts with the correct timing
-                var result = ns.exec(CONSTANTS.SCRIPT.WORKER.GROW, server, threads, this.hack_target, this.delay
+                let result = ns.exec(SCRIPT.WORKER.GROW, server, threads, this.hack_target, this.delay
                     .grow.grow +
                     job_delay)
                 //check for result
                 if (result == false) {
-                    log.warning(ns, "Hack", "GW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.GROW + "' on '" +
+                    log.warning(ns, "Hack", "GW: Failed to start '" + SCRIPT.WORKER.GROW + "' on '" +
                         server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads +
                         " threads => " + threads * job_size + " GB", true)
                     log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
                 }
                 //start 2
-                result = ns.exec(CONSTANTS.SCRIPT.WORKER.WEAKEN, server, threads, this.hack_target, this.delay.grow
+                result = ns.exec(SCRIPT.WORKER.WEAKEN, server, threads, this.hack_target, this.delay.grow
                     .weaken +
                     job_delay)
                 //check for result
                 if (result == false) {
-                    log.warning(ns, "Hack", "GW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.WEAKEN + "' on '" +
+                    log.warning(ns, "Hack", "GW: Failed to start '" + SCRIPT.WORKER.WEAKEN + "' on '" +
                         server + "' for " + threads + " threads (" + ram_available + ") GB with " + threads +
                         " threads => " + threads * job_size + " GB", true)
                     log.info(ns, ns.pid, "Server: '" + JSON.stringify(ns.getServer(server)) + "'")
@@ -581,27 +591,27 @@ export class hack_obj {
           <-------------------->		weaken = 0 + (2 * buffer)
         */
         //set the job delab
-        var job_delay = 0
+        let job_delay = 0
         //get the threads
-        var ram_options = Array.from(this.ram_to_threads.keys())
+        let ram_options = Array.from(this.ram_to_threads.keys())
         //log.info(ns, "Singularity", "ram_options: " + ram_options, true)
         //for each server
-        for (var [server, ram_server] of execute_servers) {
-            //save to local variable
-            var ram_available = ram_server
+        for (let [server, ram_server] of execute_servers) {
+            //save to local letiable
+            let ram_available = ram_server
             //log.info(ns, "Hack", "this.ram_min: " + this.ram_min)
             //ns.ui.openTail()
             //if not enough ram for basic version
             //while (ram_available < this.ram_min) {
             //get closest lower key, which provides the threads
-            var ram_cost = getClosestValue(ram_options,
+            let ram_cost = getClosestValue(ram_options,
                 ram_available
             ) //ram_options.filter( function(i, ram_available){ return i <= ram_available })//.pop()
             //log.info(ns, "Singularity", "ram_available: " + ram_available + ", ram_cost: " + ram_cost, true)
             //if not enough ram
             if (ram_cost > ram_available) {
                 //get the index
-                var index = ram_options.indexOf(ram_cost)
+                let index = ram_options.indexOf(ram_cost)
                 //if this is the lowest index
                 if (index == 0) {
                     //go to next
@@ -612,58 +622,58 @@ export class hack_obj {
             }
             //copy scripts
             //copy the script
-            if (!ns.scp(CONSTANTS.SCRIPT.TO_COPY.HACK, server)) {
+            if (!ns.scp(SCRIPT.TO_COPY.HACK, server)) {
                 //debug
-                log.warning(ns, "Hack", "error copying '" + CONSTANTS.SCRIPT.TO_COPY.HACK + "' to " + server)
+                log.warning(ns, "Hack", "error copying '" + SCRIPT.TO_COPY.HACK + "' to " + server)
                 //go to next
                 continue
             }
 
             //get threads from ram_to_threads
-            var threads = this.ram_to_threads.get(ram_cost)
+            let threads = this.ram_to_threads.get(ram_cost)
             //log.info(ns, "Singularity", "Threads: " + JSON.stringify(threads), true)
             //execute scripts with the correct timing
             //hack
-            if (!ns.exec(CONSTANTS.SCRIPT.WORKER.HACK, server, threads.hack, this.hack_target, this
+            if (!ns.exec(SCRIPT.WORKER.HACK, server, threads.hack, this.hack_target, this
                     .delay.hack.hack +
                     job_delay)) {
                 //log if failed
-                log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.HACK + "' on '" +
+                log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.HACK + "' on '" +
                     server + "' for " + threads.hack + " threads  = " + (threads
-                        .hack * CONSTANTS.RAM.WORKER.HACK) + "/" + ram_available + " GB => Server: " + JSON
+                        .hack * RAM.WORKER.HACK) + "/" + ram_available + " GB => Server: " + JSON
                     .stringify(ns.getServer(server)) + "'", true)
             }
 
             //weaken 1
-            if (!ns.exec(CONSTANTS.SCRIPT.WORKER.WEAKEN, server, threads.weaken_1, this.hack_target, this
+            if (!ns.exec(SCRIPT.WORKER.WEAKEN, server, threads.weaken_1, this.hack_target, this
                     .delay.hack.weaken_1 +
                     job_delay)) {
                 //log if failed
-                log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.WEAKEN + "' on '" +
+                log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.WEAKEN + "' on '" +
                     server + "' for " + threads.weaken_1 + " threads  = " + (threads
-                        .weaken_1 * CONSTANTS.RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " +
+                        .weaken_1 * RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " +
                     JSON.stringify(ns.getServer(server)) + "'", true)
             }
 
             //grow
-            if (!ns.exec(CONSTANTS.SCRIPT.WORKER.GROW, server, threads.grow, this.hack_target, this.delay
+            if (!ns.exec(SCRIPT.WORKER.GROW, server, threads.grow, this.hack_target, this.delay
                     .hack.grow +
                     job_delay)) {
                 //log if failed
-                log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.GROW + "' on '" +
+                log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.GROW + "' on '" +
                     server + "' for " + threads.grow + " threads  = " + (threads
-                        .grow * CONSTANTS.RAM.WORKER.GROW) + "/" + ram_available + " GB => Server: " + JSON
+                        .grow * RAM.WORKER.GROW) + "/" + ram_available + " GB => Server: " + JSON
                     .stringify(ns.getServer(server)) + "'", true)
             }
 
             //weaken 2
-            if (!ns.exec(CONSTANTS.SCRIPT.WORKER.WEAKEN, server, threads.weaken_2, this.hack_target, this
+            if (!ns.exec(SCRIPT.WORKER.WEAKEN, server, threads.weaken_2, this.hack_target, this
                     .delay.hack.weaken_2 +
                     job_delay)) {
                 //log if failed
-                log.warning(ns, "Hack", "HWGW: Failed to start '" + CONSTANTS.SCRIPT.WORKER.WEAKEN + "' on '" +
+                log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.WEAKEN + "' on '" +
                     server + "' for " + threads.weaken_2 + " threads  = " + (threads
-                        .weaken_2 * CONSTANTS.RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " +
+                        .weaken_2 * RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " +
                     JSON.stringify(ns.getServer(server)) + "'", true)
             }
 
@@ -681,7 +691,7 @@ export class hack_obj {
 
 function getClosestValue(myArray, myValue) {
     //optional
-    var i = 0;
+    let i = 0;
     while (myArray[++i] < myValue);
     return myArray[--i];
 }

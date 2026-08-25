@@ -1,5 +1,17 @@
-import * as CONSTANTS from "scripts/constants.js"
+//config
+
+
+//constants
+import { SERVER } from "scripts/constants/servers.js"
+import { PORT } from "scripts/constants/ports.js"
+
+
+//functions
 import * as log from "scripts/sub/log.js"
+
+
+
+
 
 //config
 const type = "Find Largest Prime Factor"
@@ -12,19 +24,19 @@ export async function main(ns) {
     //try
     try {
         //generate contract
-        const file_name = ns.codingcontract.createDummyContract(type, CONSTANTS.SERVER.HOME)
+        const file_name = ns.codingcontract.createDummyContract(type, SERVER.HOME)
 
         //get contract
-        const contract = ns.codingcontract.getContract(file_name, CONSTANTS.SERVER.HOME)
+        const contract = ns.codingcontract.getContract(file_name, SERVER.HOME)
         //debug
         log.info(ns, "Coding_Contract", "type: " + contract.type + ", data: " + contract.data + ", description: " +
             description, true)
 
         /*
         //indicate that a contract has been found
-        ns.tryWritePort(CONSTANTS.PORT.CODING_CONTRACT, {
+        ns.tryWritePort(PORT.CODING_CONTRACT, {
             filename: file_name,
-            hostname: CONSTANTS.SERVER.HOME
+            hostname: SERVER.HOME
         })*/
 
         //if error

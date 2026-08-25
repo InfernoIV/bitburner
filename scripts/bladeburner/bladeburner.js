@@ -1,6 +1,12 @@
-import * as CONSTANTS from "./constants.js"
-import * as CONFIG from "./config.js"
+//config 
+import { DISABLE_LOGGING, CHANCE_MIN } from "./config.js"
 
+
+//constants
+import { BLADE_BURNER_ACTION_TYPE, COMBAT_LEVEL_MIN } from "./constants.js"
+
+
+//functions
 import * as log from 'scripts/util/log.js'
 
 
@@ -17,8 +23,7 @@ export class bladeburner_obj {
     */
     init(ns) {
         //disable logging
-        log.disable(ns, CONFIG.DISABLE_LOGGING)
-        //ns.disableLog("")
+        log.disable(ns, DISABLE_LOGGING)
         //list all operations
         this.operations = ns.bladeburner.getOperationNames()
         //reverse the order of the operations (higher = better -> lower = better), so you start checking the best contract first
@@ -48,10 +53,10 @@ export class bladeburner_obj {
         //get skill levels
         const skills = ns.getPlayer().skills
         //if we have enough stats
-        if (skills.agility >= CONSTANTS.MIN_COMBAT_LEVEL &&
-            skills.defense >= CONSTANTS.MIN_COMBAT_LEVEL &&
-            skills.dexterity >= CONSTANTS.MIN_COMBAT_LEVEL &&
-            skills.strength >= CONSTANTS.MIN_COMBAT_LEVEL) {
+        if (skills.agility >= COMBAT_LEVEL_MIN &&
+            skills.defense >= COMBAT_LEVEL_MIN &&
+            skills.dexterity >= COMBAT_LEVEL_MIN &&
+            skills.strength >= COMBAT_LEVEL_MIN) {
             this.can_start = ns.bladeburner.joinBladeburnerDivision()
         }
     }
@@ -82,7 +87,7 @@ export class bladeburner_obj {
         upgrade_skills(ns)
         //Get Bladeburner stamina.
         const [stamina_current, stamina_max] = ns.bladeburner.getStamina()
-
+        //TODO: handle stamina
         //black op > op > contract > basic
 
         //Get an object with the name and rank requirement of the next BlackOp that can be completed.
@@ -96,13 +101,13 @@ export class bladeburner_obj {
                 //Set team size to max?
                 //await evaluate.exec(ns, "ns.bladeburner.setTeamSize('" + type + "','"  + name + "'," + size + "')" )
                 //Get estimate success chance of an action.
-                const chance = ns.bladeburner.getActionEstimatedSuccessChance(CONSTANTS.BLADE_BURNER_ACTION_TYPE
+                const chance = ns.bladeburner.getActionEstimatedSuccessChance(BLADE_BURNER_ACTION_TYPE
                     .black_op, next_black_op)
                 //if enough chance
-                if (chance >= CONFIG.CHANCE_MIN.BLACK_OP) {
+                if (chance >= CHANCE_MIN.BLACK_OP) {
                     //perform black op
                     return {
-                        activity_type: CONSTANTS.BLADE_BURNER_ACTION_TYPE.black_op,
+                        activity_type: BLADE_BURNER_ACTION_TYPE.BLACK_OP,
                         name: next_black_op
                     }
                 }
@@ -111,16 +116,16 @@ export class bladeburner_obj {
         //operations
         for (const operation in this.operations) {
             //Get action count remaining.
-            const action_count_remaining = ns.bladeburner.getActionCountRemaining(CONSTANTS.BLADE_BURNER_ACTION_TYPE
+            const action_count_remaining = ns.bladeburner.getActionCountRemaining(BLADE_BURNER_ACTION_TYPE
                 .OPERATION, operation)
             //Get estimate success chance of an action.
-            const chance_success = ns.bladeburner.getActionEstimatedSuccessChance(CONSTANTS.BLADE_BURNER_ACTION_TYPE
+            const chance_success = ns.bladeburner.getActionEstimatedSuccessChance(BLADE_BURNER_ACTION_TYPE
                 .OPERATION, operation)
             //if we can do it and we have enough chance
-            if (action_count_remaining > 0 && chance_success >= CONFIG.CHANCE_MIN.OPERATION) {
+            if (action_count_remaining > 0 && chance_success >= CHANCE_MIN.OPERATION) {
                 //return this action
                 return {
-                    activity_type: CONSTANTS.BLADE_BURNER_ACTION_TYPE.OPERATION,
+                    activity_type: BLADE_BURNER_ACTION_TYPE.OPERATION,
                     name: operation
                 }
             }
@@ -128,16 +133,16 @@ export class bladeburner_obj {
         //contracts
         for (const contract in this.contracts) {
             //Get action count remaining.
-            const action_count_remaining = ns.bladeburner.getActionCountRemaining(CONSTANTS.BLADE_BURNER_ACTION_TYPE
+            const action_count_remaining = ns.bladeburner.getActionCountRemaining(BLADE_BURNER_ACTION_TYPE
                 .CONTRACT, contract)
             //Get estimate success chance of an action.
-            const chance_success = ns.bladeburner.getActionEstimatedSuccessChance(CONSTANTS.BLADE_BURNER_ACTION_TYPE
+            const chance_success = ns.bladeburner.getActionEstimatedSuccessChance(BLADE_BURNER_ACTION_TYPE
                 .CONTRACT, contract)
             //if we can do it and we have enough chance
             if (action_count_remaining > 0 && chance_success >= 1) {
                 //return this action
                 return {
-                    activity_type: CONSTANTS.BLADE_BURNER_ACTION_TYPE.CONTRACT,
+                    activity_type: BLADE_BURNER_ACTION_TYPE.CONTRACT,
                     name: contract
                 }
             }
@@ -213,9 +218,9 @@ export class bladeburner_obj {
     //determine if to change city
     async change_city(ns) {
         //TODO: enum of cities
-        var cities = "TODO"
-        //variable to save information into
-        var city_information = {}
+        let cities = "TODO"
+        //letiable to save information into
+        let city_information = {}
         //for each city
         for (const city of cities) {
             //Get chaos of a city.
