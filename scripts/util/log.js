@@ -62,7 +62,7 @@ export function disable(ns, types) {
             ns.disableLog(type)
         }
     //should be a single string
-    } else if (types instanceof String) {
+    } else if (typeof types === "string") {
         //disable
         ns.disableLog(types)
     }

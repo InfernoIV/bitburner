@@ -11,6 +11,7 @@ import { SCRIPT } from "scripts/constants/scripts.js"
 
 //functions
 import * as log from "scripts/util/log.js"
+import * as format from "scripts/util/format.js"
 
 
 //object programs
@@ -89,11 +90,9 @@ export class ram_obj {
 
 
     //sets the basic information
-    async init(ns) {
+    async init(ns, handles) {
         //disable logging
         log.disable(ns, DISABLE_LOGGING)
-        //log.info(ns, "Ram", "RAM: " + JSON.stringify(RAM), true)
-        //ns.ui.openTail()
         //save initial ram cost
         this.ram_used = Math.ceil((RAM.MAIN + RAM.RAM) * 100) / 100
         //allocate ram
@@ -167,11 +166,9 @@ export class ram_obj {
 
     //function that registers a class to init and manage (assumes the object has both functions!)
     async register_handle(ns, handle, object, sf_required = 0, sf_level_required = 1, dependency = "", ram_worker =
-        0.0) {
-        //log.info(ns, "Ram", "Registering handle: '" + handle + "' => '" + JSON.stringify(object) + "'", true)
-        //check if we already have this functionality handles
+        0.00) {
+        //if we already registered the handle
         if (this.registration.has(handle)) {
-            //log.info(ns, "Ram", "Handle '" + + "' was already registered", true)
             //stop
             return true
         }
@@ -183,11 +180,12 @@ export class ram_obj {
                 return false
             }
         }
-        //check if we can run this
+        //if it requires a source file
         if (sf_required > 0) {
+            //get the level of the source source
             const level = this.get_source_file_level(sf_required)
+            //if we don't have enough levels
             if (level < sf_level_required) {
-                //log.info(ns, "Ram", "SF " + sf_required + " has too little level: " + level + ", need: " + sf_level_required, true)
                 //not enough levels, stop
                 return false
             }
@@ -197,18 +195,15 @@ export class ram_obj {
         //get ram left
         const ram_max = ns.getServer(SERVER.HOME).maxRam
         //calculate total usage / need
-        let ram_need = this.ram_used + ram_cost + this.ram_reserve + ram_worker
-        //round
-        ram_need = Math.ceil(ram_need * 100) / 100
+        const ram_need = format.float(this.ram_used + ram_cost + this.ram_reserve + ram_worker)
         //check if we can register
-        if ((ram_need) > ram_max) {
-            //log.info(ns, "Ram", "Not enoug ram" + this.ram_used + " + " + ram_cost + " = " + (this.ram_used + ram_cost) + " > " + ram_max + " GB", true)
+        if (ram_need > ram_max) {
             //not enough ram, stop
             return false
         }
         //kill share script on home
         ns.kill(SCRIPT.WORKER.SHARE)
-
+        //create message
         let message = "Registered '" + handle + "' for " + this.ram_used + " + " + ram_cost
         //if we have reserved ram
         if (this.ram_reserve > 0.0) {
@@ -225,9 +220,7 @@ export class ram_obj {
         //log
         log.success(ns, "Ram", message + " = " + ram_need + " / " + ram_max + " GB (" + percentage + "%)", true)
         //update ram
-        this.ram_used += ram_cost
-        //round
-        this.ram_used = Math.ceil(this.ram_used * 100) / 100
+        this.ram_used = format.float(ram_cost + this.ram_used)
         //update reservation for worker
         this.ram_reserve += ram_worker
         //apply ram
@@ -241,10 +234,8 @@ export class ram_obj {
             //init object
             await this.handles[handle].init(ns, this.handles)
         }
-
         //start share script (again), taking reserves for workers into account
         share_exec(ns, this.ram_reserve)
-
         //return success
         return true
     }

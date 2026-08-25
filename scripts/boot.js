@@ -1,15 +1,14 @@
+//config
+
+
 //constants
 import { SERVER } from "scripts/constants/servers.js"
-import {
-    RAM
-} from "scripts/ram/constants.js"
+import { SCRIPT } from "scripts/constants/scripts.js"
+import { RAM } from "scripts/constants/ram.js"
 
 
 //functions
-import {
-    scan_servers,
-    scan_server
-} from "scripts/root/root.js"
+import { scan_servers, scan_server } from "scripts/root/root.js"
 
 
 //main
@@ -26,7 +25,7 @@ export async function main(ns) {
     //manipulate UI to get list of all servers?
 
     //boot main
-    ns.spawn(CONSTANTS.SCRIPT.MAIN, {
+    ns.spawn(SCRIPT.MAIN, {
         threads: 1,
         spawnDelay: 0,
         ramOverride: RAM.MAIN

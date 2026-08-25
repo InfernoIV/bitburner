@@ -35,7 +35,6 @@ export class ui_obj {
     }
 
 
-    //TODO: how to handle added handles (e.g. home grows in ram and another functionality is launched) -> how to trigger / add?
     init(ns, handles) {
         //disable logging
         log.disable(ns, DISABLE_LOGGING)
@@ -207,8 +206,8 @@ export class ui_obj {
         //TODO
         //if we don't have a corporation
         if (!ns.corporation.hasCorporation()) {
-            stop
-            //return
+            //stop
+            return
         }
         /*
         //funds - public

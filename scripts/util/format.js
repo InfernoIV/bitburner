@@ -1,7 +1,9 @@
 //function that formats float to a decimal
 export function float(number, decimals = 2) {
+    //check how many decimals are needed 
     const divider = parseInt("1" + "0".repeat(decimals))
-    return Math.round(number * divider) / divider
+    //return the float
+    return parseFloat(Math.round(number * divider) / divider)
 }
 
 
