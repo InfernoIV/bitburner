@@ -300,7 +300,7 @@ export class ram_obj {
             //BASE
             await this.register_handle(ns, HANDLE.ROOT, new root_obj())
             await this.register_handle(ns, HANDLE.HACK, new hack_obj())
-            await this.register_handle(ns, HANDLE.DARKNET, new darknet_obj())
+            //await this.register_handle(ns, HANDLE.DARKNET, new darknet_obj())
 
             //GO
             await this.register_handle(ns, HANDLE.GO, new go_obj())
@@ -310,12 +310,9 @@ export class ram_obj {
             await this.register_handle(ns, HANDLE.GO_CHEAT, {}, 14, 2, HANDLE.GO_ANALYSIS)
 
             //EXTEND SINGULARITY
-            await this.register_handle(ns, HANDLE.BLADEBURNER, new bladeburner_obj(), 6, 1, CONSTANTS
-                .HANDLE.SINGULARITY)
-            await this.register_handle(ns, HANDLE.BLADEBURNER, new bladeburner_obj(), 7, 1, CONSTANTS
-                .HANDLE.SINGULARITY)
-            await this.register_handle(ns, HANDLE.GRAFTING, new grafting_obj(), 10, 1, HANDLE
-                .SINGULARITY)
+            await this.register_handle(ns, HANDLE.BLADEBURNER, new bladeburner_obj(), 6, 1, HANDLE.SINGULARITY)
+            await this.register_handle(ns, HANDLE.BLADEBURNER, new bladeburner_obj(), 7, 1, HANDLE.SINGULARITY)
+            await this.register_handle(ns, HANDLE.GRAFTING, new grafting_obj(), 10, 1, HANDLE.SINGULARITY)
 
             //EXTEND FUNCTIONALITY
             await this.register_handle(ns, HANDLE.CLOUD, new cloud_obj())

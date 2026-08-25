@@ -3,12 +3,12 @@ import { DISABLE_LOGGING } from "./config.js"
 
 
 //constants
-import { TOOLS } from "./constants/tools.js"
-import { FILE_EXTENSION } from "./constants/files.js"
-import { SERVER } from "./constants/servers.js"
-import { SCRIPT } from "./constants/scripts.js"
-import { HANDLE } from "./constants/handles.js"
-import { PORT } from "./constants/ports.js"
+import { TOOLS } from "scripts/constants/tools.js"
+import { FILE_EXTENSION } from "scripts/constants/files.js"
+import { SERVER } from "scripts/constants/servers.js"
+import { SCRIPT } from "scripts/constants/scripts.js"
+import { HANDLE } from "scripts/constants/handles.js"
+import { PORT } from "scripts/constants/ports.js"
 
 
 //functions

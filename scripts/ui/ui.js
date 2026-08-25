@@ -4,10 +4,10 @@ import { DISABLE_LOGGING, FONT, COLOR, BORDER} from "./config.js"
 
 //constants
 import { DEADALUS, WORLD_DEAMON_HACKING } from "./constants.js"
-import { HANDLE } from "scripts/constants/handle.js"
-import { PORT } from "scripts/constants/port.js"
+import { HANDLE } from "scripts/constants/handles.js"
+import { PORT } from "scripts/constants/ports.js"
 import { AUGMENT } from "scripts/constants/augments.js"
-import { GANG_MEMBERS_MAX } from "scripts/gang/constants.js"
+import { MEMBERS_MAX } from "scripts/gang/constants.js"
 
 
 //functions
@@ -148,13 +148,13 @@ export class ui_obj {
         */
 
         this.add_data(ns, "#ff0000", "Karma",
-            "formatNumber(ns.getPlayer().karma)", true,
+            "format.number(ns.getPlayer().karma)", true,
             format.number(gang_karma), false,
             "/"
         )
 
         this.add_data(ns, "#ff0000", "Kills",
-            "formatNumber(ns.getPlayer().numPeopleKilled)", true,
+            "format.number(ns.getPlayer().numPeopleKilled)", true,
             "30", false,
             "/"
         )
@@ -248,7 +248,7 @@ export class ui_obj {
         //investments
         this.add_data(ns, COLOR.CORPORATION, "Corp_Investment",
             "ns.corporation.getInvestmentOffer().round", true,
-            "formatNumber(ns.corporation.getInvestmentOffer().funds)", true,
+            "format.number(ns.corporation.getInvestmentOffer().funds)", true,
             "="
         )
     

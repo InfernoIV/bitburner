@@ -81,7 +81,7 @@ export class stock_obj {
             //get the data
             const data = this.port.peek()
             //if there is port data pending
-            if (data != CONSTANTS.PORT.NO_DATA) {            
+            if (data != PORT.NO_DATA) {            
                 //if it is for us
                 if (data.request == "complete") {
                     //get stocks for this symbol (amount can be changed)

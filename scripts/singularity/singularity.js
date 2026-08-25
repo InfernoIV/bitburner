@@ -681,11 +681,11 @@ export class singularity_obj {
     */
     work_for_faction(ns, formulas_available, ignore_favor = false) {
         //get a list of faction we should work for
-        const factions = get_factions_to_work_for(ns, ignore_favor)
+        const factions = get_factions_to_work_for(ns, formulas_available, ignore_favor)
         //if a target faction is set
-        if (target_faction >= 1) {
+        if (factions.length >= 1) {
             //set to work for the first faction on the list
-            this.perform_action(ns, WORK_TYPE.FACTION, target_faction[0], formulas_available)
+            this.perform_action(ns, WORK_TYPE.FACTION, factions[0], formulas_available)
             //indicate sucess
             return true
         }
@@ -1322,7 +1322,7 @@ export function get_bitnode_level(ns) {
 
 
 //function that returns a list of factions to work for
-export function get_factions_to_work_for(ns, ignore_favor = false) {
+export function get_factions_to_work_for(ns, formulas_available, ignore_favor = false) {
     //create a variable to fill
     let factions_to_work_for = []
 

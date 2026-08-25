@@ -7,7 +7,7 @@ import { STATE } from "./constants.js"
 import { RAM } from "scripts/constants/ram.js"
 import { PORT } from "scripts/constants/ports.js"
 import { HANDLE } from "scripts/constants/handles.js"
-
+import { SCRIPT } from "scripts/constants/scripts.js"
 
 //functions
 import * as log from "scripts/util/log.js"

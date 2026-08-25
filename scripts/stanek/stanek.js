@@ -4,7 +4,7 @@ import { DISABLE_LOGGING } from "./config.js"
 
 //constants
 import { SCRIPT } from "scripts/constants/scripts.js"
-import { SERVER } from "scripts/constants/server.js"
+import { SERVER } from "scripts/constants/servers.js"
 
 
 //functions
