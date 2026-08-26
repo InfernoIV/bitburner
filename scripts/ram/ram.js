@@ -110,6 +110,9 @@ export class ram_obj {
         const reset_information = ns.getResetInfo()
         //get source files
         this.source_files_owned = reset_information.ownedSF
+        //debug
+        //log.info(ns, "Ram", "this.source_files_owned: " + JSON.stringify(Object.fromEntries(this.source_files_owned)), true)
+
         //keep track of which node you are in (this also unlocks functionality)
         this.current_node = reset_information.currentNode
         //set bitnode multipliers
@@ -167,6 +170,7 @@ export class ram_obj {
     //function that registers a class to init and manage (assumes the object has both functions!)
     async register_handle(ns, handle, object, sf_required = 0, sf_level_required = 1, dependency = "", ram_worker =
         0.00) {
+
         //if we already registered the handle
         if (this.registration.has(handle)) {
             //stop
@@ -182,7 +186,7 @@ export class ram_obj {
         }
         //if it requires a source file
         if (sf_required > 0) {
-            //get the level of the source source
+            //get the level of the source source    
             const level = this.get_source_file_level(sf_required)
             //if we don't have enough levels
             if (level < sf_level_required) {
@@ -243,11 +247,11 @@ export class ram_obj {
 
     //gets the source file level, including counting if you're in the bitnode
     get_source_file_level(source_file) {
-        let level = 0
+        let level = 0        
         //check if we have the source file
-        if (this.source_files_owned.hasOwnProperty(source_file)) {
+        if (this.source_files_owned.has(source_file)) {
             //get the level
-            level = this.source_files_owned[source_file]
+            level = this.source_files_owned.get(source_file)
         }
         //check if we are in the node
         if (this.current_node == source_file) {
@@ -263,7 +267,7 @@ export class ram_obj {
     async import(ns) {
         //register each handle and return if not successfull (e.g. no ram)
         //indicate if stanek is available to join asap
-        await this.register_handle(ns, HANDLE.STANEK_AVAILABLE, {}, 13)
+        //await this.register_handle(ns, HANDLE.STANEK_AVAILABLE, {}, 13)
         //if we started on low ram and ram has grown bigger
         if (this.ram_start < 128 && ns.getServer(SERVER.HOME).maxRam >= 128) {
             //start boot script

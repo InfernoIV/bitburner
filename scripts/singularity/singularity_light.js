@@ -4,6 +4,10 @@ import { DISABLE_LOGGING, CRIME_CHANCE_MIN, SKILL_MIN } from "./config.js"
 
 //constants
 import { GYMS, UNIVERSITIES, WORK_TYPE } from "./constants.js"
+import { SERVER } from "scripts/constants/servers.js"
+import { FILE_EXTENSION } from "scripts/constants/files.js"
+import { TOOLS } from "scripts/constants/tools.js"
+import { HANDLE } from "scripts/constants/handles.js"
 
 
 //functions
@@ -27,13 +31,13 @@ export class singularity_light_obj {
         log.disable(ns, DISABLE_LOGGING)
 
         //get tools
-        const executables = ns.ls(CONSTANTS.SERVER.HOME, CONSTANTS.FILE_EXTENSION.EXECUTABLE)
-        this.brute_ssh = executables.includes(CONSTANTS.TOOLS.HACKING.BRUTE_SSH)
-        this.ftp_crack = executables.includes(CONSTANTS.TOOLS.HACKING.FTP_CRACK)
-        this.relay_smtp = executables.includes(CONSTANTS.TOOLS.HACKING.RELAY_SMTP)
-        this.http_worm = executables.includes(CONSTANTS.TOOLS.HACKING.HTTP_WORM)
-        this.sql_inject = executables.includes(CONSTANTS.TOOLS.HACKING.SQL_INJECT)
-        this.darknet = executables.includes(CONSTANTS.TOOLS.DARKNET)
+        const executables = ns.ls(SERVER.HOME, FILE_EXTENSION.EXECUTABLE)
+        this.brute_ssh = executables.includes(TOOLS.HACKING.BRUTE_SSH)
+        this.ftp_crack = executables.includes(TOOLS.HACKING.FTP_CRACK)
+        this.relay_smtp = executables.includes(TOOLS.HACKING.RELAY_SMTP)
+        this.http_worm = executables.includes(TOOLS.HACKING.HTTP_WORM)
+        this.sql_inject = executables.includes(TOOLS.HACKING.SQL_INJECT)
+        this.darknet = executables.includes(TOOLS.DARKNET)
         //determine next bitnode
 
         //log
@@ -45,8 +49,8 @@ export class singularity_light_obj {
         //upgrade home
         this.upgrade_home(ns)
         //manage player
-        this.manage_player(ns, handles.hasOwnProperty(CONSTANTS.HANDLE.DARKNET), handles
-            .hasOwnProperty(CONSTANTS.HANDLE.INTELLIGENCE))
+        this.manage_player(ns, handles.hasOwnProperty(HANDLE.DARKNET), handles
+            .hasOwnProperty(HANDLE.INTELLIGENCE))
     }
 
 
@@ -55,7 +59,7 @@ export class singularity_light_obj {
         //Upgrade home computer RAM.
         if (ns.singularity.upgradeHomeRam()) {
             //get server
-            const server = ns.getServer(CONSTANTS.SERVER.HOME)
+            const server = ns.getServer(SERVER.HOME)
             //log
             log.success(ns, "Singularity", "Upgraded home RAM to " + server.maxRam, true)
         }
