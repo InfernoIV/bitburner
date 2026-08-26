@@ -3,9 +3,6 @@
 
 //constants
 import {
-    SERVER
-} from "scripts/constants/servers.js"
-import {
     SCRIPT
 } from "scripts/constants/scripts.js"
 import {
@@ -15,9 +12,6 @@ import {
 
 //functions
 import * as log from "scripts/util/log.js"
-import {
-    scan_servers
-} from "scripts/root/root.js"
 
 
 //get ui elements
@@ -36,16 +30,23 @@ export async function main(ns) {
         //boot main
         ns.spawn(SCRIPT.MAIN, {
             threads: 1,
-            spawnDelay: 200,
+            spawnDelay: 100,
             ramOverride: RAM.MAIN
         })
     })
-    //go to active scripts
-    click(get_element("p", "Active Scripts").parentElement.parentElement)
-    //wait unti the window opens
-    await ns.sleep(100)
-    //press the ui button to kill all scripts
-    click(get_element("button", "Kill All Scripts"))
+    try {
+        //go to active scripts
+        click(get_element("p", "Active Scripts").parentElement.parentElement)
+        //wait unti the window opens
+        await ns.sleep(100)
+        //press the ui button to kill all scripts
+        click(get_element("button", "Kill All Scripts"))
+    } catch (err) {
+        //log
+        log.warning(ns, "Boot", "Could not click UI elements: " + err)
+    }
+    //exit script (needed?)
+    //ns.exit()
 }
 
 

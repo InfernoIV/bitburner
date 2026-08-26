@@ -47,8 +47,13 @@ export async function main(ns) {
 async function init(ns) {
     //disable logging
     log.disable(ns, DISABLE_LOGGING)
+    try {
     //go back to console
     click(get_element("p", "Active Scripts").parentElement.parentElement.parentElement.firstChild)
+    } catch (err) {
+        //log
+        log.warning(ns, "Boot", "Could not click UI element: " + err)
+    }
 }
 
 function get_element(type, text = "") {
