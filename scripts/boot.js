@@ -8,6 +8,9 @@ import {
 import {
     RAM
 } from "scripts/constants/ram.js"
+import {
+    SERVER
+} from "scripts/constants/servers.js"
 
 
 //functions
@@ -51,7 +54,7 @@ export async function main(ns) {
         //for each server
         for (const server of servers_found) {
             //kill the scripts
-            ns.killall(server, (server == CONSTANTS.SERVER.HOME))
+            ns.killall(server, (server == SERVER.HOME))
         }
 
     }

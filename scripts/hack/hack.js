@@ -1,13 +1,28 @@
 //config
-import { DISABLE_LOGGING, CHANCE_HACK_MIN, TIME_WEAKEN_MAX, TIME_WAIT } from "./config.js"
+import {
+    DISABLE_LOGGING,
+    CHANCE_HACK_MIN,
+    TIME_WEAKEN_MAX,
+    TIME_WAIT
+} from "./config.js"
 
 
 //constants
-import { STATE } from "./constants.js"
-import { RAM } from "scripts/constants/ram.js"
-import { PORT } from "scripts/constants/ports.js"
-import { HANDLE } from "scripts/constants/handles.js"
-import { SCRIPT } from "scripts/constants/scripts.js"
+import {
+    STATE
+} from "./constants.js"
+import {
+    RAM
+} from "scripts/constants/ram.js"
+import {
+    PORT
+} from "scripts/constants/ports.js"
+import {
+    HANDLE
+} from "scripts/constants/handles.js"
+import {
+    SCRIPT
+} from "scripts/constants/scripts.js"
 
 //functions
 import * as log from "scripts/util/log.js"
@@ -295,7 +310,7 @@ export class hack_obj {
                     const time = ns.formulas.weakenTime(server, player)
                     //calculate the new value
                     new_value = money_max / time * chance
-                //use normal functions
+                    //use normal functions
                 } else {
                     //get the chance for the hack
                     const chance = ns.hackAnalyzeChance(server_name)
@@ -449,7 +464,7 @@ export class hack_obj {
                     weaken_2: threads_weaken_2,
                 })
             }
-        //formula's not available: cannot calculate grow..
+            //formula's not available: cannot calculate grow..
         } else {
             //get money per hack thread
             const money_stolen = ns.hackAnalyze(this.hack_target)
@@ -595,94 +610,97 @@ export class hack_obj {
         //get the threads
         let ram_options = Array.from(this.ram_to_threads.keys())
         //log.info(ns, "Singularity", "ram_options: " + ram_options, true)
+        //log.info(ns, "Hack", "this.ram_min: " + this.ram_min, true)
         //for each server
         for (let [server, ram_server] of execute_servers) {
             //save to local letiable
             let ram_available = ram_server
-            //log.info(ns, "Hack", "this.ram_min: " + this.ram_min)
+            
             //ns.ui.openTail()
             //if not enough ram for basic version
-            //while (ram_available < this.ram_min) {
-            //get closest lower key, which provides the threads
-            let ram_cost = getClosestValue(ram_options,
-                ram_available
-            ) //ram_options.filter( function(i, ram_available){ return i <= ram_available })//.pop()
-            //log.info(ns, "Singularity", "ram_available: " + ram_available + ", ram_cost: " + ram_cost, true)
-            //if not enough ram
-            if (ram_cost > ram_available) {
-                //get the index
-                let index = ram_options.indexOf(ram_cost)
-                //if this is the lowest index
-                if (index == 0) {
+            while (ram_available > this.ram_min) {
+                //get closest lower key, which provides the threads
+                let ram_cost = getClosestValue(ram_options,
+                    ram_available
+                ) //ram_options.filter( function(i, ram_available){ return i <= ram_available })//.pop()
+                //log.info(ns, "Singularity", "ram_available: " + ram_available + ", ram_cost: " + ram_cost, true)
+                //if not enough ram
+                if (ram_cost > ram_available) {
+                    //get the index
+                    let index = ram_options.indexOf(ram_cost)
+                    //if this is the lowest index
+                    if (index == 0) {
+                        //go to next
+                        // //continue
+                        break
+                    }
+                    //use 1 index lower
+                    ram_cost = ram_options[index]
+                }
+                //copy scripts
+                //copy the script
+                if (!ns.scp(SCRIPT.TO_COPY.HACK, server)) {
+                    //debug
+                    log.warning(ns, "Hack", "error copying '" + SCRIPT.TO_COPY.HACK + "' to " + server)
                     //go to next
                     continue
                 }
-                //use 1 index lower
-                ram_cost = ram_options[index]
-            }
-            //copy scripts
-            //copy the script
-            if (!ns.scp(SCRIPT.TO_COPY.HACK, server)) {
-                //debug
-                log.warning(ns, "Hack", "error copying '" + SCRIPT.TO_COPY.HACK + "' to " + server)
-                //go to next
-                continue
-            }
 
-            //get threads from ram_to_threads
-            let threads = this.ram_to_threads.get(ram_cost)
-            //log.info(ns, "Singularity", "Threads: " + JSON.stringify(threads), true)
-            //execute scripts with the correct timing
-            //hack
-            if (!ns.exec(SCRIPT.WORKER.HACK, server, threads.hack, this.hack_target, this
-                    .delay.hack.hack +
-                    job_delay)) {
-                //log if failed
-                log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.HACK + "' on '" +
-                    server + "' for " + threads.hack + " threads  = " + (threads
-                        .hack * RAM.WORKER.HACK) + "/" + ram_available + " GB => Server: " + JSON
-                    .stringify(ns.getServer(server)) + "'", true)
-            }
+                //get threads from ram_to_threads
+                let threads = this.ram_to_threads.get(ram_cost)
+                //log.info(ns, "Singularity", "Threads: " + JSON.stringify(threads), true)
+                //execute scripts with the correct timing
+                //hack
+                if (!ns.exec(SCRIPT.WORKER.HACK, server, threads.hack, this.hack_target, this
+                        .delay.hack.hack +
+                        job_delay)) {
+                    //log if failed
+                    log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.HACK + "' on '" +
+                        server + "' for " + threads.hack + " threads  = " + (threads
+                            .hack * RAM.WORKER.HACK) + "/" + ram_available + " GB => Server: " + JSON
+                        .stringify(ns.getServer(server)) + "'", true)
+                }
 
-            //weaken 1
-            if (!ns.exec(SCRIPT.WORKER.WEAKEN, server, threads.weaken_1, this.hack_target, this
-                    .delay.hack.weaken_1 +
-                    job_delay)) {
-                //log if failed
-                log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.WEAKEN + "' on '" +
-                    server + "' for " + threads.weaken_1 + " threads  = " + (threads
-                        .weaken_1 * RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " +
-                    JSON.stringify(ns.getServer(server)) + "'", true)
-            }
+                //weaken 1
+                if (!ns.exec(SCRIPT.WORKER.WEAKEN, server, threads.weaken_1, this.hack_target, this
+                        .delay.hack.weaken_1 +
+                        job_delay)) {
+                    //log if failed
+                    log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.WEAKEN + "' on '" +
+                        server + "' for " + threads.weaken_1 + " threads  = " + (threads
+                            .weaken_1 * RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " +
+                        JSON.stringify(ns.getServer(server)) + "'", true)
+                }
 
-            //grow
-            if (!ns.exec(SCRIPT.WORKER.GROW, server, threads.grow, this.hack_target, this.delay
-                    .hack.grow +
-                    job_delay)) {
-                //log if failed
-                log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.GROW + "' on '" +
-                    server + "' for " + threads.grow + " threads  = " + (threads
-                        .grow * RAM.WORKER.GROW) + "/" + ram_available + " GB => Server: " + JSON
-                    .stringify(ns.getServer(server)) + "'", true)
-            }
+                //grow
+                if (!ns.exec(SCRIPT.WORKER.GROW, server, threads.grow, this.hack_target, this.delay
+                        .hack.grow +
+                        job_delay)) {
+                    //log if failed
+                    log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.GROW + "' on '" +
+                        server + "' for " + threads.grow + " threads  = " + (threads
+                            .grow * RAM.WORKER.GROW) + "/" + ram_available + " GB => Server: " + JSON
+                        .stringify(ns.getServer(server)) + "'", true)
+                }
 
-            //weaken 2
-            if (!ns.exec(SCRIPT.WORKER.WEAKEN, server, threads.weaken_2, this.hack_target, this
-                    .delay.hack.weaken_2 +
-                    job_delay)) {
-                //log if failed
-                log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.WEAKEN + "' on '" +
-                    server + "' for " + threads.weaken_2 + " threads  = " + (threads
-                        .weaken_2 * RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " +
-                    JSON.stringify(ns.getServer(server)) + "'", true)
-            }
+                //weaken 2
+                if (!ns.exec(SCRIPT.WORKER.WEAKEN, server, threads.weaken_2, this.hack_target, this
+                        .delay.hack.weaken_2 +
+                        job_delay)) {
+                    //log if failed
+                    log.warning(ns, "Hack", "HWGW: Failed to start '" + SCRIPT.WORKER.WEAKEN + "' on '" +
+                        server + "' for " + threads.weaken_2 + " threads  = " + (threads
+                            .weaken_2 * RAM.WORKER.WEAKEN) + "/" + ram_available + " GB => Server: " +
+                        JSON.stringify(ns.getServer(server)) + "'", true)
+                }
 
-            //increase job delay
-            job_delay += 4 * this.time_between
-            //lower the ram available
-            ram_available -= ram_cost
+                //increase job delay
+                job_delay += 4 * this.time_between
+                //lower the ram available
+                ram_available -= ram_cost
+
+            }
         }
-        //}
         //return time to wait
         return this.time.weaken + job_delay
     }
