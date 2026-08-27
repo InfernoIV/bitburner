@@ -12,7 +12,9 @@ import {
 
 //functions
 import * as log from "scripts/util/log.js"
-
+import {
+    scan_servers
+} from "scripts/root/root.js"
 
 //get ui elements
 const wnd = eval("window")
@@ -44,9 +46,15 @@ export async function main(ns) {
     } catch (err) {
         //log
         log.warning(ns, "Boot", "Could not click UI elements: " + err)
+        //get servers
+        const servers_found = scan_servers(ns)
+        //for each server
+        for (const server of servers_found) {
+            //kill the scripts
+            ns.killall(server, (server == CONSTANTS.SERVER.HOME))
+        }
+
     }
-    //exit script (needed?)
-    //ns.exit()
 }
 
 
