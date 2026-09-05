@@ -21,7 +21,9 @@ export function share_exec(ns, ram_reserve = 0) {
     //get the available ram
     const ram_available = server_home.maxRam - server_home.ramUsed - ram_reserve
     //check how many times we can run the script
-    const threads = Math.floor(ram_available / RAM.WORKER.SHARE)
+    let threads = Math.floor(ram_available / RAM.WORKER.SHARE)
+    //reduce by 1 (for autoexec reset reasons)
+    threads -= 1
     //debug
     log.info(ns, "Share", "Home has " + ram_available + " GB left, need " +
         RAM.WORKER.SHARE + " GB per threads, resulting into " + threads + " threads for sharing")

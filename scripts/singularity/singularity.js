@@ -46,6 +46,9 @@ import * as log from "scripts/util/log.js"
 import {
     sell_all_stocks
 } from "scripts/stock/stock.js"
+import {
+    get_number_of_hacking_tools_owned
+} from "scripts/root/root.js"
 
 
 export class singularity_obj {
@@ -134,8 +137,10 @@ export class singularity_obj {
             //log.info(ns, "Singularity", "world_deamon_hacking: " + world_deamon_hacking, true)
             //get player
             const level_hacking = ns.getPlayer().skills.hacking
+            //get hacking tools
+            const hacking_tools_owned = get_number_of_hacking_tools_owned(ns) 
             //if bladeburner completed the final black op or enough hacking level
-            if (level_hacking >= world_deamon_hacking || false) {
+            if ((level_hacking >= world_deamon_hacking  && hacking_tools_owned == 5) || false) {
                 //get current bitnode
                 const current_bitnode = ns.getResetInfo().currentNode
                 //check if we are not in BN10.1 (which should be manually destroyed for maximum profitability)
@@ -1326,22 +1331,12 @@ export function get_factions_to_work_for(ns, formulas_available, ignore_favor = 
     //create a variable to fill
     let factions_to_work_for = []
 
-    //bought red pill
-    const have_red_pill = ns.singularity.getOwnedAugmentations(true).includes(AUGMENT.TRP)
-    //if red pill is not yet gotten and daedalus is unlocked
-    if (!have_red_pill && ns.getPlayer().factions.includes(FACTION.DAEDALUS)) {
-        //set to work for faction
-        this.perform_action(ns, WORK_TYPE.FACTION, FACTION.DAEDALUS, formulas_available)
-        //indicate sucess
-        return true
-    }
-
     //get augments owned
     const augments_owned = ns.singularity.getOwnedAugmentations(true)
     //get factions
     const factions = ns.getPlayer().factions
     //letiable to fill
-    let target_faction = ""
+    //let target_faction = ""
     //for each faction
     for (const faction of factions) {
         //save highest rep needed
